@@ -1,0 +1,31 @@
+# 核心 LLM / RAG 框架（LangChain 1.0 架构）
+langchain>=1.0
+langchain-classic>=1.0          # EnsembleRetriever 等遗留组件在 1.0 中迁移至此
+langchain-community>=0.3.0      # BM25Retriever 关键词检索器
+langchain-openai>=0.3.0         # OpenAI 兼容的 ChatOpenAI / OpenAIEmbeddings
+langchain-chroma>=0.2.0         # Chroma 向量库集成
+langchain-text-splitters>=1.0   # 文本分块
+langgraph>=1.0                  # 状态图编排（与 LangChain 1.0 对应）
+
+# 向量库 + 关键词检索
+chromadb>=0.5.0
+rank-bm25>=0.2.2
+
+# 中文分词（用于 BM25 关键词检索）
+jieba>=0.42.1
+
+# PDF 解析回退方案（未安装 MinerU 时使用）
+pymupdf>=1.24.0
+
+# 前端
+streamlit>=1.40.0
+
+# 工具库
+python-dotenv>=1.0.0
+numpy>=1.26.0
+tiktoken>=0.7.0
+pydantic>=2.7.0
+
+# 可选：高精度 PDF 解析。
+# 请参考 https://github.com/opendatalab/MinerU 单独安装
+# mineru>=2.0.0

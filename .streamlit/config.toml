@@ -1,0 +1,18 @@
+# RefMind Streamlit 配置
+
+[theme]
+primaryColor = "#2563EB"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F1F5F9"
+textColor = "#0F172A"
+font = "sans serif"
+
+[server]
+# 默认端口 8501/8502 在部分 Windows 上落入系统保留端口段，改用 8888
+port = 8888
+headless = true
+fileWatcherType = "auto"
+maxUploadSize = 200
+
+[browser]
+gatherUsageStats = false
