@@ -105,7 +105,7 @@ DASHSCOPE_API_KEY="YOUR_DASHSCOPE_API_KEY"
 streamlit run app.py
 ```
 
-应用将在您的浏览器中自动打开。
+应用将在您的浏览器中自动打开，如果未跳转，请在浏览器中打开：http://localhost:8888/
 
 ### 7. 安装 MinerU（可选，用于高精度 PDF 解析）
 
