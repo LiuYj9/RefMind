@@ -17,7 +17,7 @@ import streamlit as st
 
 from refmind import storage
 from refmind.config import settings
-from refmind.llm import stream_translate
+from refmind.llm import get_llm_status, stream_translate
 from refmind.rag import RelevantMemory, answer_question, get_retriever
 from refmind.services import ingest_pdf, remove_document, remove_group
 from refmind.ui import inject_global_css
@@ -113,6 +113,27 @@ def _confirm_delete_dialog(group: storage.Group) -> None:
 def render_sidebar() -> None:
     st.sidebar.markdown("## 📚 RefMind")
     st.sidebar.caption("文献知识库助手")
+
+    # 模型状态指示器
+    status = get_llm_status()
+    if status["fallback_model"]:
+        state = status["circuit_state"]
+        if state == "closed":
+            st.sidebar.success(f"🟢 主模型：{status['primary_model']}")
+        elif state == "open":
+            st.sidebar.warning(
+                f"🔴 主模型熔断（{status['failure_count']}/{status['failure_threshold']}）"
+            )
+            st.sidebar.caption(f"🟡 当前使用备选：{status['fallback_model']}")
+        elif state == "half_open":
+            st.sidebar.info(f"🟠 正在探测主模型恢复...")
+    else:
+        # 未配置备选模型，展示熔断器状态
+        state = status["circuit_state"]
+        if state == "closed":
+            st.sidebar.success(f"� 主模型：{status['primary_model']}")
+        elif state == "open":
+            st.sidebar.warning(f"🔴 {status['primary_model']} 不可用，请检查 API Key 或网络")
 
     if not settings.has_api_key:
         st.sidebar.warning("未配置 API Key，请在「⚙️ 设置」中填写后使用。")

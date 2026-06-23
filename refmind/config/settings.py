@@ -61,6 +61,14 @@ class Settings:
         # 多模态嵌入模型不支持 OpenAI 兼容接口，默认使用文本嵌入模型
         self.embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-v4")
         self.llm_temperature = _get_float("LLM_TEMPERATURE", 0.1)
+        # 模型降级：主模型不可用时自动切换备选模型，恢复后继自动切回
+        self.fallback_llm_model = os.getenv("LLM_FALLBACK_MODEL", "")
+        self.fallback_api_base = os.getenv("LLM_FALLBACK_API_BASE", "")
+        self.llm_health_check_interval = _get_int("LLM_HEALTH_CHECK_INTERVAL", 60)
+        # 熔断器：连续失败 N 次后熔断（Open），冷却后可进入半开状态探测
+        self.llm_circuit_failure_threshold = _get_int(
+            "LLM_CIRCUIT_FAILURE_THRESHOLD", 3
+        )
 
         # PDF 解析
         self.mineru_binary = os.getenv("MINERU_BINARY_PATH", "mineru")
@@ -126,6 +134,10 @@ class Settings:
         "DASHSCOPE_API_KEY": ("dashscope_api_key", str),
         "API_BASE": ("api_base", str),
         "LLM_MODEL": ("llm_model", str),
+        "LLM_FALLBACK_MODEL": ("fallback_llm_model", str),
+        "LLM_FALLBACK_API_BASE": ("fallback_api_base", str),
+        "LLM_HEALTH_CHECK_INTERVAL": ("llm_health_check_interval", int),
+        "LLM_CIRCUIT_FAILURE_THRESHOLD": ("llm_circuit_failure_threshold", int),
         "EMBEDDING_MODEL": ("embedding_model", str),
         "LLM_TEMPERATURE": ("llm_temperature", float),
         "CHUNK_SIZE": ("chunk_size", int),
