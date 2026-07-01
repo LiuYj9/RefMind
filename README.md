@@ -1,148 +1,130 @@
-# RefMind · 智能文献知识库助手
+# RefMind 文献知识库助手
 
-<p align="center">
-  <img src="https://img.shields.io/badge/RefMind-文献知识库助手-blue?style=for-the-badge&logo=readthedocs" />
-  <br/>
-  <sub>基于 LangGraph + LangChain 1.0 的端到端 RAG 文献问答系统</sub>
-</p>
+RefMind 是一个面向科研文献阅读的 RAG 问答系统，基于 LangChain 1.0 与 LangGraph 搭建，
+分为离线知识
 
----
 
-RefMind 专为科研文献阅读场景设计，通过 **高精度 PDF 解析 → 混合检索 RAG → LLM 智能问答** 的完整链路，解决文献信息过载与大模型"幻觉"问题。
 
----
 
-## ✨ 核心功能
 
-| 功能 | 说明 |
-|------|------|
-| 🧠 **混合检索 RAG** | BM25 关键词 + Chroma 向量检索（权重 0.5:0.5），jieba 中文分词 |
-| 📄 **高精度 PDF 解析** | MinerU 结构化解析（公式/表格/排版），自动回退 PyMuPDF |
-| 🔒 **多用户组隔离** | 独立 Chroma 集合 + 持久化目录，组间数据完全隔离 |
-| 💬 **智能长对话记忆** | 最近 30 轮 + 语义相似度过滤，仅保留相关上下文 |
-| 🌐 **文档翻译与摘要** | 流式输出，翻译可结合文献库术语对齐，摘要约 200 字 |
-| 📂 **会话管理** | 同组多会话共享知识库、独立对话历史 |
-| 🛡️ **LLM 熔断降级** | 三态熔断器（CLOSED/OPEN/HALF-OPEN），主模型故障自动切换备选 |
 
----
 
-## �️ 技术栈
 
-| 技术 | 用途 |
-|------|------|
-| Python 3.11+ | 核心语言 |
-| LangChain 1.0 + LangGraph 1.0 | RAG 流程编排与状态管理 |
-| Chroma | 向量存储与检索 |
-| BM25 + jieba | 关键词检索 + 中文分词 |
-| Streamlit | Web 前端 |
-| DashScope | 大模型服务（OpenAI 兼容接口） |
-| SQLite | 元数据持久化 |
 
----
 
-## 🏗️ 架构概览
+
+
+
+
+
+- 离线：PDF 解析清洗 → 按语义切分 Chunk → 标注来源/章节/页码/版本/权限等 metadata
+  → 建立向量索引与 BM25 关键词索引。
+- 在线：Query → 向量 + 关键词混合召回一批候选 → reranker 精排 → 上下文压缩（去重、
+  句级过滤、字数预算）→ LLM 基于压缩后的上下文生成可溯源答案。
+
+目标是在读论文时能快速问答，同时尽量避免大模型脱离原文乱答。
+
+## 功能
+
+- 混合召回：BM25 关键词 + Chroma 向量，等权融合，中文用 jieba 分词
+- 重排精排：召回候选交给 rerank 模型（DashScope gte-rerank，缺失时回退嵌入相似度）
+- 上下文压缩：去除重复分块、剔除离题句子、按字数预算截断，压缩进 Prompt 的内容
+- 分块 metadata：来源、文档 id、页码、章节、版本、权限（按库隔离）、分块序号、字数
+- PDF 解析：优先 MinerU（公式、表格、排版），未安装或失败时回退 PyMuPDF
+- 多文献库隔离：每个库独立的 Chroma 集合与持久化目录，互不干扰
+- 长对话记忆：按语义相似度筛选相关历史，而不是无脑保留最近若干轮
+- 翻译与摘要：流式输出，翻译可结合当前文献库做术语对齐，入库时自动生成摘要
+- 熔断降级：主对话模型连续失败后临时切到备选模型，冷却后再探测切回
+
+## 技术栈
+
+- Python 3.11+
+- LangChain 1.0 + LangGraph（RAG 流程与状态编排）
+- Chroma（向量检索）、rank-bm25 + jieba（关键词检索与中文分词）
+- Streamlit（前端）
+- DashScope（OpenAI 兼容接口的对话/嵌入模型）
+- SQLite（组、文档、会话、消息等元数据）
+
+## 目录结构
 
 ```
-app.py（Streamlit 前端）
-    │
-    ▼
-services/（业务编排层）
-    │
-    ├── rag/（核心层）
-    │   ├── retrieval   ← BM25 + 向量混合检索（EnsembleRetriever）
-    │   ├── memory      ← 语义相关性过滤长对话记忆
-    │   ├── processor   ← 分块 · 向量化 · Chroma 入库
-    │   └── graph       ← LangGraph 状态图（retrieve → generate）
-    │
-    ├── llm/（模型层）
-    │   ├── factory     ← 对话/嵌入模型工厂 + 熔断降级代理
-    │   ├── translation ← 上下文增强翻译
-    │   └── summarization ← 自动摘要
-    │
-    ├── parsing/（解析层）
-    │   └── pdf_parser  ← MinerU（高精度）+ PyMuPDF（回退）
-    │
-    ├── storage/（持久层）
-    │   └── SQLite CRUD（组 · 文档 · 会话 · 消息）
-    │
-    └── config/（配置层）
-        └── .env 驱动，前端设置页可动态修改
+app.py                     Streamlit 前端
+refmind/
+    config/                配置（.env 驱动，前端设置页可改）
+    storage/               SQLite 持久化
+    parsing/               PDF 解析（MinerU + PyMuPDF 回退）
+    llm/                   模型工厂 + 熔断降级、翻译、摘要
+    rag/                   分块入库、混合召回、重排、上下文压缩、记忆、LangGraph 流程
+    services/              上传入库等业务编排
+evaluation/                RAG 评测（检索/生成指标）
+scripts/                   冒烟测试、模型探测等脚本
 ```
 
----
-
-## 🚀 快速开始
+## 快速开始
 
 ```bash
-# 1. 克隆
-git clone https://github.com/LiuYj9/RefMind.git && cd RefMind
+git clone https://github.com/LiuYj9/RefMind.git
+cd RefMind
 
-# 2. 虚拟环境
 python -m venv .venv
-.venv\Scripts\activate        # Windows
+.venv\Scripts\activate            # Windows
 
-# 3. 依赖
 pip install -r requirements.txt
 
-# 4. 配置
-copy .env.example .env        # 编辑 .env 填入 DASHSCOPE_API_KEY
+copy .env.example .env            # 填入 DASHSCOPE_API_KEY
 
-# 5. 启动
-streamlit run app.py           # http://localhost:8888
-
-# 6. 可选：高精度解析
-pip install mineru
+streamlit run app.py              # 默认 http://localhost:8888
 ```
 
----
+需要高精度解析时再额外安装 MinerU：`pip install mineru`。
 
-## 🌟 关键技术点
+## 主要设计
 
-**混合检索** — 向量检索解决语义泛化，BM25 解决专业术语精确匹配，0.5:0.5 权重融合。
+- 分块 metadata：每个 Chunk 带来源、文档 id、页码、章节、版本、权限（按库隔离）、
+  分块序号与字数，既支持答案溯源，也为后续按条件过滤/治理留出空间。
+- 混合召回：向量负责语义泛化，BM25 负责专业术语精确匹配，两者等权融合出候选池。
+- 重排精排：候选交给 reranker 按 (query, chunk) 相关性重新打分排序，优先 DashScope
+  rerank 模型，未安装或失败时回退到嵌入余弦相似度，只保留最相关的前若干条。
+- 上下文压缩：精排后再去掉近似重复分块、按句子粒度剔除离题内容、按字数预算截断，
+  在保留关键证据的同时降低冗余与 token 消耗；嵌入不可用时退化为仅按字数截断。
+- 记忆过滤：用余弦相似度筛掉与当前问题无关的历史消息，控制 token 成本。
+- 无检索即拒答：LangGraph 的 retrieve→generate 流程里，检索为空时直接返回“未找到相关内容”，减少幻觉。
+- 解析容错：MinerU 失败自动回退 PyMuPDF，保证基本可用。
+- 熔断降级：连续失败达到阈值后走备选模型，冷却后半开探测，成功再切回，对上层透明。
+- 动态配置：设置页改完参数写回 `.env`，并清掉模型/检索器缓存即时生效。
 
-**语义过滤记忆** — 不是简单保留最近 N 轮，而是用余弦相似度筛选与当前问题相关的历史消息，降低 token 成本。
+> retrieve 节点一步完成“混合召回 → 重排 → 上下文压缩”，因此评测/线上走的是同一条链路。
 
-**无检索拒答** — LangGraph `retrieve→generate` 流程中，零文档时直接返回"未找到相关内容"，杜绝幻觉。
-
-**PDF 解析容错** — MinerU 优先（公式/表格高精度）→ 失败自动回退 PyMuPDF，兼顾质量与可用性。
-
-**熔断降级** — 三态熔断器：连续失败 3 次熔断走备选 → 冷却 60s → 半开探测 → 成功切回主模型，全程对上层透明。
-
-**多文献库隔离** — SQLite 元数据 + Chroma 向量库均按组隔离，级联删除。
-
-**动态配置** — 前端设置页修改参数后即时写回 `.env`，自动清空模型/检索器缓存生效。
-
----
-
-## ⚙️ 配置项
+## 常用配置
 
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
-| `DASHSCOPE_API_KEY` | 阿里云 DashScope API Key | *必填* |
+| `DASHSCOPE_API_KEY` | DashScope API Key | 必填 |
 | `LLM_MODEL` | 对话模型 | `qwen3.7-plus` |
-| `LLM_FALLBACK_MODEL` | 备选模型（留空禁用降级） | `qwen-turbo` |
-| `LLM_CIRCUIT_FAILURE_THRESHOLD` | 连续失败 N 次熔断 | `3` |
-| `LLM_HEALTH_CHECK_INTERVAL` | 熔断冷却时间（秒） | `60` |
+| `LLM_FALLBACK_MODEL` | 备选模型（留空则不降级） | 空 |
+| `LLM_CIRCUIT_FAILURE_THRESHOLD` | 连续失败多少次熔断 | `3` |
+| `LLM_HEALTH_CHECK_INTERVAL` | 熔断冷却秒数 | `60` |
 | `EMBEDDING_MODEL` | 嵌入模型 | `text-embedding-v4` |
-| `CHUNK_SIZE` | 分块大小 | `1000` |
-| `CHUNK_OVERLAP` | 分块重叠 | `200` |
+| `CHUNK_SIZE` / `CHUNK_OVERLAP` | 分块大小 / 重叠 | `1000` / `200` |
 | `RETRIEVAL_TOP_K` | 检索返回片段数 | `5` |
+| `RECALL_TOP_K` | 重排前的召回候选数 | `20` |
+| `RERANK_ENABLED` | 是否启用重排 | `true` |
+| `RERANK_MODEL` | 重排模型（DashScope） | `gte-rerank-v2` |
+| `RERANK_TOP_N` | 重排后保留片段数 | `5` |
+| `CONTEXT_COMPRESSION_ENABLED` | 是否启用上下文压缩 | `true` |
+| `CONTEXT_MAX_CHARS` | 送入 Prompt 的上下文字数上限 | `4000` |
 | `MEMORY_MAX_TURNS` | 记忆保留轮数 | `30` |
 | `MEMORY_RELEVANCE_THRESHOLD` | 记忆相关性阈值 | `0.3` |
 
-> 更多配置见 `.env.example`
+其余配置见 `.env.example`。
 
----
+## 说明
 
-## 📝 注意事项
+- 对话与嵌入都依赖有效的 `DASHSCOPE_API_KEY`。
+- BM25 是内存索引，文档增删后会自动重建。
+- 数据默认放在 `./data/`（已在 `.gitignore` 忽略）。
 
-- 嵌入与对话模型需有效 `DASHSCOPE_API_KEY`
-- BM25 索引为内存索引，文档变更后自动重建
-- 数据默认存储在 `./data/`（已在 `.gitignore` 中忽略）
-
----
-
-## 🖥️ 界面预览
+## 界面预览
 
 | 对话问答 | 设置页 |
 |----------|--------|

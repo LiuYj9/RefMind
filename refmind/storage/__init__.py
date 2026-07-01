@@ -1,9 +1,4 @@
-"""存储子包：SQLite 持久化（用户组、文档、会话、消息）。
-
-对外统一从本包导入，例如::
-
-    from refmind.storage import init_db, create_group, list_documents
-"""
+"""存储子包：SQLite 持久化（用户组、文档、会话、消息）。"""
 
 from .connection import connect, init_db
 from .models import DocumentRow, Group, Message, Session

@@ -1,10 +1,12 @@
-"""文档处理：将解析后的文档分块、向量化并写入按组隔离的 Chroma 集合。
+"""文档分块、向量化并写入按库隔离的 Chroma 集合。
 
-分块时保留页码元数据，便于回答时溯源引用。
+每个分块都带上溯源与治理所需的 metadata：来源文件、文档 id、页码、章节、
+版本、权限（按文献库隔离）、分块序号与字数，方便检索时过滤与引用。
 """
 
 from __future__ import annotations
 
+import re
 import uuid
 from typing import Any
 
@@ -14,9 +16,12 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from ..config import settings
 from ..llm import get_embedding_model
 
+# markdown 标题，或 "1"、"2.3" 这类编号标题
+_MD_HEADING = re.compile(r"^#{1,6}\s+(.+)$")
+_NUM_HEADING = re.compile(r"^\d+(?:\.\d+){0,3}\.?\s+\S.{0,60}$")
+
 
 def _build_splitter() -> RecursiveCharacterTextSplitter:
-    """构造文本分割器。"""
     return RecursiveCharacterTextSplitter(
         chunk_size=settings.chunk_size,
         chunk_overlap=settings.chunk_overlap,
@@ -24,56 +29,78 @@ def _build_splitter() -> RecursiveCharacterTextSplitter:
     )
 
 
+def _detect_section(text: str, fallback: str) -> str:
+    """从一段文本里找出章节标题；找不到则沿用上一节标题。"""
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        md = _MD_HEADING.match(line)
+        if md:
+            return md.group(1).strip()
+        if _NUM_HEADING.match(line) and not line.endswith(("。", "，", ",")):
+            return line
+        # 首个短行且不像正文句子，视为标题
+        if len(line) <= 40 and not line.endswith(("。", ".", "，", ",", "；", ";")):
+            return line
+        break
+    return fallback
+
+
 def parsed_to_documents(
-    parsed: dict[str, Any], group_id: int, filename: str
+    parsed: dict[str, Any],
+    group_id: int,
+    filename: str,
+    doc_id: int | None = None,
+    version: str | None = None,
 ) -> list[Document]:
-    """将解析后的 PDF 切分为带元数据的 ``Document`` 分块。
-
-    按页切分以便每个分块保留准确页码；若无页码信息则对全文整体切分。
-    """
+    """把解析结果切成带完整 metadata 的分块，按页切分以保留页码与章节。"""
     splitter = _build_splitter()
-    pages = parsed.get("pages") or []
+    parser = parsed.get("parser", "")
     documents: list[Document] = []
+    section = "正文"
+    chunk_index = 0
 
+    def _make(chunk: str, page_no: int, sec: str) -> Document:
+        nonlocal chunk_index
+        meta = {
+            "group_id": group_id,
+            "permission": f"group:{group_id}",
+            "filename": filename,
+            "source": filename,
+            "doc_id": doc_id if doc_id is not None else -1,
+            "version": version or "",
+            "parser": parser,
+            "page": page_no,
+            "section": sec,
+            "chunk_index": chunk_index,
+            "char_count": len(chunk),
+            "chunk_id": str(uuid.uuid4()),
+        }
+        chunk_index += 1
+        return Document(page_content=chunk, metadata=meta)
+
+    pages = parsed.get("pages") or []
     if pages:
         for page in pages:
             page_no = page.get("page", 1)
-            for chunk in splitter.split_text(page.get("text", "")):
-                if not chunk.strip():
-                    continue
-                documents.append(
-                    Document(
-                        page_content=chunk,
-                        metadata={
-                            "group_id": group_id,
-                            "filename": filename,
-                            "page": page_no,
-                            "chunk_id": str(uuid.uuid4()),
-                        },
-                    )
-                )
+            page_text = page.get("text", "")
+            section = _detect_section(page_text, section)
+            for chunk in splitter.split_text(page_text):
+                if chunk.strip():
+                    documents.append(_make(chunk, page_no, section))
     else:
         full_text = parsed.get("markdown", "")
         for i, chunk in enumerate(splitter.split_text(full_text), start=1):
             if not chunk.strip():
                 continue
-            documents.append(
-                Document(
-                    page_content=chunk,
-                    metadata={
-                        "group_id": group_id,
-                        "filename": filename,
-                        "page": i,
-                        "chunk_id": str(uuid.uuid4()),
-                    },
-                )
-            )
+            section = _detect_section(chunk, section)
+            documents.append(_make(chunk, i, section))
 
     return documents
 
 
 def get_vectorstore(group_id: int):
-    """返回某组的 Chroma 向量库（持久化、按组隔离）。"""
     from langchain_chroma import Chroma
 
     return Chroma(
@@ -84,10 +111,7 @@ def get_vectorstore(group_id: int):
 
 
 def ingest_documents(group_id: int, documents: list[Document]) -> int:
-    """将分块向量化并持久化到该组的 Chroma 集合，返回写入的分块数。
-
-    langchain-chroma 会自动持久化，无需显式调用 persist()。
-    """
+    """向量化并写入该库的 Chroma 集合，返回写入分块数。"""
     if not documents:
         return 0
     vectorstore = get_vectorstore(group_id)
@@ -96,10 +120,7 @@ def ingest_documents(group_id: int, documents: list[Document]) -> int:
 
 
 def load_group_documents(group_id: int) -> list[Document]:
-    """从 Chroma 重新加载某组的全部分块。
-
-    用于（重）构建内存中的 BM25 关键词索引：组内文档变更后需重建。
-    """
+    """从 Chroma 读回某库全部分块，用于重建 BM25 索引。"""
     vectorstore = get_vectorstore(group_id)
     raw = vectorstore.get(include=["documents", "metadatas"])
     contents = raw.get("documents") or []
@@ -111,6 +132,5 @@ def load_group_documents(group_id: int) -> list[Document]:
 
 
 def delete_document_chunks(group_id: int, filename: str) -> None:
-    """从某组中删除指定文件名对应的全部分块。"""
     vectorstore = get_vectorstore(group_id)
     vectorstore.delete(where={"filename": filename})

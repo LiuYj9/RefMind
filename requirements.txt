@@ -14,6 +14,9 @@ rank-bm25>=0.2.2
 # 中文分词（用于 BM25 关键词检索）
 jieba>=0.42.1
 
+# 重排模型（DashScope gte-rerank）；未安装时自动回退到嵌入相似度重排
+dashscope>=1.20.0
+
 # PDF 解析回退方案（未安装 MinerU 时使用）
 pymupdf>=1.24.0
 

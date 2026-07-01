@@ -1,13 +1,8 @@
-"""RefMind 的 LangGraph 对话流水线（对应 LangChain 1.0 的 LangGraph 1.0）。
+"""RAG 对话流程：retrieve -> generate -> END。
 
-状态图：``retrieve`` -> ``generate`` -> END。
-
-* ``retrieve``：对当前组执行混合检索，得到参考文档。
-* ``generate``：构造受约束的提示词并调用对话模型；若未检索到文档，
-  则直接返回固定的“未找到”话术。
-
-记忆（相关历史）在图外组装后通过状态传入，保持节点为纯函数（仅依赖 state），
-符合 LangGraph 1.0 的推荐用法。
+retrieve 一步走完"混合召回 → 重排精排 → 上下文压缩"：先混合检索拿到一批候选，
+再用重排模型精排，最后压缩去冗余得到最终上下文。generate 拼提示词调模型作答，
+检索不到内容时直接返回固定话术，避免模型自由发挥。历史消息在图外组装后经 state 传入。
 """
 
 from __future__ import annotations
@@ -20,15 +15,15 @@ from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import END, StateGraph
 
 from ..llm import get_llm
+from ..rag.compression import compress_context
 from ..rag.memory import RelevantMemory
+from ..rag.reranker import rerank
 from ..rag.retrieval import get_retriever
 
-# 检索不到相关内容时的固定回复
 NO_CONTEXT_REPLY = "已检索历史文档，暂未找到相关内容，无法回答"
 
 
 def get_system_prompt() -> str:
-    """返回系统提示词。"""
     return """你是一个专业的文献知识库助手。你需要严格遵循以下规则：
 1. 仅基于用户上传的论文PDF内容回答问题。提供的"参考文档"是从用户上传论文中检索到的片段。
 2. 如果参考文档中没有相关信息，或者信息不足以支撑答案，请直接回复："已检索历史文档，暂未找到相关内容，无法回答"，不要编造或使用外部知识。
@@ -38,21 +33,22 @@ def get_system_prompt() -> str:
 
 
 def format_documents(documents: list[Document]) -> str:
-    """将检索到的分块渲染为带来源标签的文本，用于约束生成与溯源。"""
+    """把检索分块渲染成带来源标签的文本，便于引用溯源。"""
     blocks = []
     for i, doc in enumerate(documents, start=1):
         meta = doc.metadata or {}
         source = meta.get("filename", "未知文档")
         page = meta.get("page", "?")
-        blocks.append(
-            f"[片段{i} | 来源: {source} | 第{page}页]\n{doc.page_content}"
-        )
+        label = f"[片段{i} | 来源: {source} | 第{page}页"
+        section = meta.get("section")
+        if section:
+            label += f" | 章节: {section}"
+        label += "]"
+        blocks.append(f"{label}\n{doc.page_content}")
     return "\n\n".join(blocks)
 
 
 class GraphState(TypedDict, total=False):
-    """状态图的状态结构。"""
-
     question: str
     group_id: int
     history: list[BaseMessage]
@@ -61,16 +57,20 @@ class GraphState(TypedDict, total=False):
 
 
 def _retrieve_node(state: GraphState) -> GraphState:
-    """检索节点：基于组 ID 获取混合检索结果。"""
+    question = state["question"]
     retriever = get_retriever(state["group_id"])
-    documents: list[Document] = []
+    candidates: list[Document] = []
     if retriever is not None:
-        documents = retriever.invoke(state["question"])
+        candidates = retriever.invoke(question)
+    if not candidates:
+        return {"documents": []}
+    # 混合召回 -> 重排精排 -> 上下文压缩
+    reranked = rerank(question, candidates)
+    documents = compress_context(question, reranked)
     return {"documents": documents}
 
 
 def _generate_node(state: GraphState) -> GraphState:
-    """生成节点：构造提示词并调用对话模型。"""
     documents = state.get("documents") or []
     if not documents:
         return {"answer": NO_CONTEXT_REPLY}
@@ -94,7 +94,6 @@ def _generate_node(state: GraphState) -> GraphState:
 
 
 def build_graph():
-    """构建并编译状态图。"""
     workflow = StateGraph(GraphState)
     workflow.add_node("retrieve", _retrieve_node)
     workflow.add_node("generate", _generate_node)
@@ -104,12 +103,10 @@ def build_graph():
     return workflow.compile()
 
 
-# 惰性编译的全局图实例
 _GRAPH = None
 
 
 def _get_graph():
-    """返回缓存的已编译图。"""
     global _GRAPH
     if _GRAPH is None:
         _GRAPH = build_graph()
@@ -119,12 +116,7 @@ def _get_graph():
 def answer_question(
     question: str, group_id: int, memory: RelevantMemory | None = None
 ) -> dict[str, Any]:
-    """执行一次完整的 RAG 流程。
-
-    返回 ``{"answer": str, "documents": list[Document]}``；
-    当提供记忆对象时，会将本轮问答写入记忆。
-    """
-    # 在图外组装相关历史，保持图节点为纯函数
+    """跑一次完整问答，返回 {"answer", "documents"}；传入 memory 则记录本轮。"""
     history: list[BaseMessage] = []
     if memory is not None:
         history = memory.get_relevant_history(question)

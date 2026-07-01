@@ -1,8 +1,4 @@
-"""全局配置。
-
-所有 API 密钥、模型名称与存储路径均通过环境变量读取（由 python-dotenv
-从 ``.env`` 文件加载）。配置在模块导入时解析为单例 ``settings``。
-"""
+"""全局配置：从 .env 读取密钥、模型名与路径，暴露为单例 settings。"""
 
 from __future__ import annotations
 
@@ -23,6 +19,13 @@ def _get_bool(name: str, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _as_bool(value: object) -> bool:
+    """把任意值归一化为布尔（供设置页写回时的类型转换用）。"""
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _get_int(name: str, default: int) -> int:
     """读取整型环境变量，解析失败时返回默认值。"""
     try:
@@ -40,14 +43,9 @@ def _get_float(name: str, default: float) -> float:
 
 
 class Settings:
-    """解析后的应用配置。
-
-    作为模块级单例 ``settings`` 实例化一次。所有相对路径都相对于项目根目录解析，
-    并在需要时按需创建目录。
-    """
+    """应用配置。相对路径均相对于项目根目录。"""
 
     def __init__(self) -> None:
-        # 项目根目录（refmind/config/settings.py -> 上溯三层）
         self.project_root = Path(__file__).resolve().parent.parent.parent
 
         # 凭证 / 接口地址
@@ -101,6 +99,24 @@ class Settings:
         # DashScope 兼容接口单次嵌入请求最多 10 条文本
         self.embedding_batch_size = _get_int("EMBEDDING_BATCH_SIZE", 10)
 
+        # 混合召回 -> 重排 -> 上下文压缩
+        # 召回阶段先取较多候选，交给重排精排后再压缩进 Prompt
+        self.recall_top_k = _get_int("RECALL_TOP_K", 20)
+        self.rerank_enabled = _get_bool("RERANK_ENABLED", True)
+        self.rerank_model = os.getenv("RERANK_MODEL", "gte-rerank-v2")
+        self.rerank_top_n = _get_int("RERANK_TOP_N", 5)
+        self.context_compression_enabled = _get_bool(
+            "CONTEXT_COMPRESSION_ENABLED", True
+        )
+        # 送入 Prompt 的上下文字数上限
+        self.context_max_chars = _get_int("CONTEXT_MAX_CHARS", 4000)
+        # 去重阈值：块间余弦相似度高于此值视为重复，仅保留排名靠前者
+        self.redundancy_threshold = _get_float("REDUNDANCY_THRESHOLD", 0.92)
+        # 句级过滤阈值：句子与问题相似度低于此值则从上下文中剔除
+        self.sentence_relevance_threshold = _get_float(
+            "SENTENCE_RELEVANCE_THRESHOLD", 0.25
+        )
+
     def _resolve(self, value: str) -> Path:
         """将相对路径解析为相对于项目根目录的绝对路径。"""
         path = Path(value)
@@ -146,17 +162,21 @@ class Settings:
         "MEMORY_MAX_TURNS": ("memory_max_turns", int),
         "MEMORY_RELEVANCE_THRESHOLD": ("memory_relevance_threshold", float),
         "EMBEDDING_BATCH_SIZE": ("embedding_batch_size", int),
+        "RECALL_TOP_K": ("recall_top_k", int),
+        "RERANK_ENABLED": ("rerank_enabled", _as_bool),
+        "RERANK_MODEL": ("rerank_model", str),
+        "RERANK_TOP_N": ("rerank_top_n", int),
+        "CONTEXT_COMPRESSION_ENABLED": ("context_compression_enabled", _as_bool),
+        "CONTEXT_MAX_CHARS": ("context_max_chars", int),
+        "REDUNDANCY_THRESHOLD": ("redundancy_threshold", float),
+        "SENTENCE_RELEVANCE_THRESHOLD": ("sentence_relevance_threshold", float),
         "MINERU_BACKEND": ("mineru_backend", str),
         "MINERU_METHOD": ("mineru_method", str),
         "MINERU_MODEL_SOURCE": ("mineru_model_source", str),
     }
 
     def apply_and_persist(self, values: dict[str, object]) -> None:
-        """更新内存配置并写回 .env 持久化。
-
-        ``values`` 的键为环境变量名（见 ``_ENV_ATTR_MAP``）。同时清空模型与检索器缓存，
-        使新配置即时生效。
-        """
+        """更新内存配置并写回 .env，键为环境变量名（见 _ENV_ATTR_MAP）。"""
         from dotenv import set_key
 
         env_path = self.project_root / ".env"

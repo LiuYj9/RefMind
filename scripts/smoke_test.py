@@ -1,7 +1,6 @@
 """端到端冒烟测试：解析 -> 入库 -> 混合检索 -> 问答 -> 翻译 -> 摘要。
 
-运行：
-    .\.venv\Scripts\python.exe scripts\smoke_test.py
+运行：python scripts/smoke_test.py
 """
 
 from __future__ import annotations

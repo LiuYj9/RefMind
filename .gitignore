@@ -7,6 +7,10 @@ chroma_data/
 *.db
 *.sqlite3
 
+# 评测生成物（合成语料由脚本生成，报告为运行产物）
+evaluation/corpus/
+evaluation/reports/
+
 # Python
 __pycache__/
 *.py[cod]

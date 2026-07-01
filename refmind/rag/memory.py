@@ -1,8 +1,7 @@
-"""带相关性过滤的长对话记忆。
+"""按相关性过滤的长对话记忆。
 
-消息持久化在 SQLite（见 :mod:`refmind.storage`）。每次新提问时，加载最近窗口
-（最近 ``MEMORY_MAX_TURNS`` 轮），仅保留与当前问题嵌入相似度足够高的历史消息，
-从而在长对话中聚焦上下文、剔除无关闲聊。
+消息存在 SQLite。每次提问时取最近若干轮，只保留与当前问题嵌入相似度
+足够高的历史，避免长对话里无关内容干扰上下文。
 """
 
 from __future__ import annotations
@@ -16,7 +15,6 @@ from ..llm import get_embedding_model
 
 
 def _to_messages(rows: list[storage.Message]) -> list[BaseMessage]:
-    """将数据库消息行转换为 LangChain 消息对象。"""
     messages: list[BaseMessage] = []
     for row in rows:
         if row.role == "user":
@@ -27,7 +25,6 @@ def _to_messages(rows: list[storage.Message]) -> list[BaseMessage]:
 
 
 def _cosine(a: np.ndarray, b: np.ndarray) -> float:
-    """计算余弦相似度。"""
     denom = np.linalg.norm(a) * np.linalg.norm(b)
     if denom == 0:
         return 0.0
@@ -35,10 +32,7 @@ def _cosine(a: np.ndarray, b: np.ndarray) -> float:
 
 
 class RelevantMemory:
-    """基于语义相关性过滤的滑动窗口对话记忆。
-
-    每个实例绑定单个对话会话。
-    """
+    """滑动窗口 + 相关性过滤的会话记忆，一个实例对应一个会话。"""
 
     def __init__(
         self,
@@ -55,16 +49,11 @@ class RelevantMemory:
         )
 
     def load_window(self) -> list[BaseMessage]:
-        """返回最近的消息（每轮 2 条）。"""
         rows = storage.list_messages(self.session_id, limit=self.max_turns * 2)
         return _to_messages(rows)
 
     def get_relevant_history(self, query: str) -> list[BaseMessage]:
-        """返回最近窗口中与 ``query`` 相关的消息。
-
-        当嵌入不可用（如未配置 API 密钥）时，回退为返回未过滤的窗口，
-        保证应用仍可运行。
-        """
+        """返回窗口内与 query 相关的历史；嵌入不可用时退回完整窗口。"""
         messages = self.load_window()
         if not messages:
             return []
@@ -83,13 +72,10 @@ class RelevantMemory:
             if _cosine(query_vec, vec) >= self.threshold:
                 relevant.append(message)
 
-        # 保持原有顺序，并限制在配置的轮数预算内
         return relevant[-(self.max_turns * 2):]
 
     def add_user_message(self, content: str) -> None:
-        """持久化一条用户消息。"""
         storage.add_message(self.session_id, "user", content)
 
     def add_ai_message(self, content: str) -> None:
-        """持久化一条助手消息。"""
         storage.add_message(self.session_id, "assistant", content)

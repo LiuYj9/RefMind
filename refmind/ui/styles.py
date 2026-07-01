@@ -1,8 +1,4 @@
-"""全局视觉样式：通过注入 CSS 美化 Streamlit 默认界面。
-
-支持白天 / 夜间两种主题；侧边栏与对话主区共用相同背景色，整体参考常见大模型
-对话界面：居中限宽对话流 + 左右区分气泡。
-"""
+"""注入全局 CSS，支持白天/夜间主题。"""
 
 from __future__ import annotations
 
@@ -171,7 +167,7 @@ section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] .s
     justify-content: flex-start;
     text-align: left;
 }}
-/* 当前库行内的删除按钮：默认半透明，悬停高亮（增强交互） */
+/* 当前库行内的删除按钮：默认半透明，悬停高亮 */
 section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]
     [data-testid="stHorizontalBlock"] > div:last-child .stButton > button {{
     opacity: 0.5;
@@ -194,5 +190,4 @@ footer {{ visibility: hidden; }}
 
 
 def inject_global_css(theme: str = "light") -> None:
-    """按主题注入全局 CSS。应在每次脚本运行时调用一次。"""
     st.markdown(_css(theme), unsafe_allow_html=True)

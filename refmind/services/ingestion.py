@@ -1,11 +1,9 @@
-"""上传入库编排：串联解析、处理、存储与检索重建。
-
-Streamlit 前端只调用本模块中的函数。
-"""
+"""上传入库编排：解析、分块入库、摘要、写元数据、重建检索器。"""
 
 from __future__ import annotations
 
 import shutil
+import time
 from pathlib import Path
 from typing import Callable
 
@@ -20,12 +18,11 @@ from ..rag import (
     parsed_to_documents,
 )
 
-# 进度回调签名：(进度比例 0~1, 提示信息)
 ProgressCb = Callable[[float, str], None]
 
 
 def _noop(_p: float, _m: str) -> None:
-    """默认空进度回调。"""
+    pass
 
 
 def ingest_pdf(
@@ -35,15 +32,10 @@ def ingest_pdf(
     progress: ProgressCb = _noop,
     make_summary: bool = True,
 ) -> storage.DocumentRow:
-    """对单个 PDF 执行完整入库流程。
-
-    解析 -> 分块 -> 向量化入库 ->（可选）摘要 -> 写入元数据，
-    最后重建该组的混合检索器。
-    """
+    """处理单个 PDF：解析→分块入库→摘要→写元数据，最后重建检索器。"""
     settings.ensure_dirs()
     source_path = Path(source_path)
 
-    # 保留原始上传文件副本
     stored_pdf = settings.upload_dir / f"{group_id}_{filename}"
     if Path(source_path).resolve() != stored_pdf.resolve():
         shutil.copy(source_path, stored_pdf)
@@ -59,7 +51,10 @@ def ingest_pdf(
     save_parsed(parsed, parsed_path)
 
     progress(0.4, "正在分块与向量化 ...")
-    documents = parsed_to_documents(parsed, group_id, filename)
+    version = time.strftime("%Y%m%d%H%M%S")
+    documents = parsed_to_documents(
+        parsed, group_id, filename, doc_id=doc_id, version=version
+    )
     num_chunks = ingest_documents(group_id, documents)
     storage.update_document(
         doc_id,
@@ -92,7 +87,7 @@ def remove_document(doc_id: int) -> None:
         return
     try:
         delete_document_chunks(doc.group_id, doc.filename)
-    except Exception:  # noqa: BLE001 - 向量清理尽力而为
+    except Exception:  # noqa: BLE001
         pass
     for path in (doc.original_path, doc.parsed_json_path):
         if path:

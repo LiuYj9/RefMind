@@ -1,0 +1,56 @@
+{
+  "description": "RefMind RAG 评测 golden set —— 人工标注的问题 / 标准答案 / 证据页。真实评测请替换 corpus 与 items 为你自己的论文与标注。",
+  "corpus": [
+    "evaluation/corpus/RefMindNet.pdf"
+  ],
+  "page_tolerance": 0,
+  "items": [
+    {
+      "id": "q1",
+      "question": "RefMindNet 在 SciQA 基准上相比纯稠密检索基线，Top-3 检索准确率提升了多少？",
+      "ground_truth": "在 SciQA 基准上，RefMindNet 相比仅使用稠密向量检索的基线，Top-3 检索准确率提升了 12.5%。",
+      "evidence": [
+        {"filename": "RefMindNet.pdf", "page": 1}
+      ]
+    },
+    {
+      "id": "q2",
+      "question": "RefMindNet 的检索方法是如何融合 BM25 与向量检索的？权重是多少？",
+      "ground_truth": "RefMindNet 将 BM25 关键词检索与稠密向量检索通过 ensemble 融合，两者权重相等，均为 0.5；中文文本使用 jieba 分词。",
+      "evidence": [
+        {"filename": "RefMindNet.pdf", "page": 2}
+      ]
+    },
+    {
+      "id": "q3",
+      "question": "实验中使用了多少标注问答对？嵌入维度和检索 top-k 分别是多少？",
+      "ground_truth": "实验使用了 20000 个标注问答对，嵌入维度为 1024，每个检索器在融合前的 top-k 设为 5。",
+      "evidence": [
+        {"filename": "RefMindNet.pdf", "page": 3}
+      ]
+    },
+    {
+      "id": "q4",
+      "question": "引入基于检索上下文的作答后，幻觉率发生了怎样的变化？平均查询延迟是多少？",
+      "ground_truth": "以检索上下文为依据作答后，幻觉率从 38% 降到 21%，平均端到端查询延迟为 3.2 秒。",
+      "evidence": [
+        {"filename": "RefMindNet.pdf", "page": 4}
+      ]
+    },
+    {
+      "id": "q5",
+      "question": "论文提出的未来工作方向是什么？",
+      "ground_truth": "未来工作是在 ensemble 检索器之上增加 cross-encoder 重排序阶段。",
+      "evidence": [
+        {"filename": "RefMindNet.pdf", "page": 5}
+      ]
+    },
+    {
+      "id": "q6",
+      "question": "这篇论文和量子计算机的发展历史有什么关系？",
+      "ground_truth": "无法回答：论文未涉及量子计算机相关内容，属于超出知识库范围的问题，系统应拒答。",
+      "evidence": [],
+      "expect_refusal": true
+    }
+  ]
+}

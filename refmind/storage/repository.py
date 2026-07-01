@@ -8,9 +8,7 @@ from .connection import connect
 from .models import DocumentRow, Group, Message, Session
 
 
-# --------------------------------------------------------------------------- #
 # 用户组
-# --------------------------------------------------------------------------- #
 def create_group(name: str) -> Group:
     """创建用户组。"""
     with connect() as conn:
@@ -43,9 +41,7 @@ def delete_group(group_id: int) -> None:
         conn.execute("DELETE FROM groups WHERE id = ?", (group_id,))
 
 
-# --------------------------------------------------------------------------- #
 # 文档
-# --------------------------------------------------------------------------- #
 def create_document(
     group_id: int,
     filename: str,
@@ -118,9 +114,7 @@ def delete_document(doc_id: int) -> None:
         conn.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
 
 
-# --------------------------------------------------------------------------- #
 # 会话
-# --------------------------------------------------------------------------- #
 def create_session(group_id: int, name: str = "新对话") -> Session:
     """创建对话会话。"""
     with connect() as conn:
@@ -164,9 +158,7 @@ def delete_session(session_id: int) -> None:
         conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
 
 
-# --------------------------------------------------------------------------- #
 # 消息
-# --------------------------------------------------------------------------- #
 def add_message(session_id: int, role: str, content: str) -> int:
     """新增一条消息，返回消息 ID。"""
     with connect() as conn:

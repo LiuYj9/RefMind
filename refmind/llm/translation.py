@@ -1,14 +1,9 @@
-"""文献翻译工具（独立于 RAG 问答流程）。
-
-支持可选的「文献上下文」：传入从历史输入文献中检索到的片段，提示模型在翻译时
-对齐专业术语，从而获得更准确、风格一致的译文。
-"""
+"""文本翻译。可选传入文献片段作为术语参考，让译文风格更贴近领域用语。"""
 
 from __future__ import annotations
 
 from .factory import get_llm
 
-# 翻译系统提示词
 _TRANSLATE_SYSTEM = (
     "你是一个专业的学术文献翻译助手。请准确、流畅地翻译用户提供的文本，"
     "保持专业术语的准确性，不要添加解释或评论，只输出译文。"
@@ -16,7 +11,6 @@ _TRANSLATE_SYSTEM = (
 
 
 def _build_prompt(text: str, target_language: str, context: str = "") -> str:
-    """构造翻译提示词；提供 context 时要求模型对齐其中的术语。"""
     parts = [_TRANSLATE_SYSTEM]
     if context.strip():
         parts.append(
@@ -28,7 +22,6 @@ def _build_prompt(text: str, target_language: str, context: str = "") -> str:
 
 
 def translate(text: str, target_language: str = "中文", context: str = "") -> str:
-    """将 ``text`` 翻译为 ``target_language``，可选传入文献 ``context`` 对齐术语。"""
     if not text.strip():
         return ""
     llm = get_llm(temperature=0.0)
@@ -36,7 +29,6 @@ def translate(text: str, target_language: str = "中文", context: str = "") -> 
 
 
 def stream_translate(text: str, target_language: str = "中文", context: str = ""):
-    """以流式方式逐块返回译文，适配前端流式展示。"""
     if not text.strip():
         return
     llm = get_llm(temperature=0.0)

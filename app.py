@@ -1,11 +1,4 @@
-"""RefMind —— Streamlit 前端。
-
-启动方式::
-
-    streamlit run app.py
-
-（已在 .streamlit/config.toml 中将默认端口设为 8888）
-"""
+"""RefMind Streamlit 前端。启动：streamlit run app.py（默认端口 8888）。"""
 
 from __future__ import annotations
 
@@ -32,9 +25,7 @@ st.set_page_config(
 storage.init_db()
 
 
-# --------------------------------------------------------------------------- #
 # 会话状态
-# --------------------------------------------------------------------------- #
 def _ss_default(key: str, value) -> None:
     if key not in st.session_state:
         st.session_state[key] = value
@@ -65,10 +56,7 @@ def get_memory(session_id: int) -> RelevantMemory:
 
 
 def _open_in_system(path: str | None) -> tuple[bool, str]:
-    """用系统默认程序打开 PDF；失败则打开其所在文件夹。
-
-    仅在本地运行（服务端=用户机器）时有效。
-    """
+    """用系统默认程序打开 PDF，失败则打开所在文件夹（仅本地运行有效）。"""
     if not path:
         return False, "missing"
     p = Path(path)
@@ -88,12 +76,9 @@ def _open_in_system(path: str | None) -> tuple[bool, str]:
     return False, "fail"
 
 
-# --------------------------------------------------------------------------- #
 # 侧边栏
-# --------------------------------------------------------------------------- #
 @st.dialog("删除文献库")
 def _confirm_delete_dialog(group: storage.Group) -> None:
-    """删除文献库的二次确认弹窗。"""
     st.write(f"确认删除文献库「{group.name}」吗？")
     st.caption("将同时删除其下全部文档与向量库，操作不可恢复。")
     c_cancel, c_ok = st.columns(2)
@@ -128,10 +113,9 @@ def render_sidebar() -> None:
         elif state == "half_open":
             st.sidebar.info(f"🟠 正在探测主模型恢复...")
     else:
-        # 未配置备选模型，展示熔断器状态
         state = status["circuit_state"]
         if state == "closed":
-            st.sidebar.success(f"� 主模型：{status['primary_model']}")
+            st.sidebar.success(f"🟢 主模型：{status['primary_model']}")
         elif state == "open":
             st.sidebar.warning(f"🔴 {status['primary_model']} 不可用，请检查 API Key 或网络")
 
@@ -154,7 +138,7 @@ def render_sidebar() -> None:
             st.session_state.current_group_id = group.id
             st.session_state.current_session_id = None
             st.session_state.pending_q = None
-        except Exception:  # noqa: BLE001 - 名称重复等
+        except Exception:  # noqa: BLE001
             st.sidebar.error("创建失败：该名称可能已存在")
         st.session_state.lib_input_nonce += 1
         st.rerun()
@@ -234,7 +218,7 @@ def render_upload(group: storage.Group) -> None:
 
 
 def _run_parse_job(group: storage.Group) -> None:
-    """执行解析任务（在禁用按钮/上传框后的下一轮渲染中运行）。"""
+    """在禁用上传控件后的下一轮渲染里执行解析入库。"""
     queue: list[tuple[str, bytes]] = st.session_state.parse_queue or []
     if not queue:
         st.session_state.is_parsing = False
@@ -295,9 +279,7 @@ def _run_parse_job(group: storage.Group) -> None:
         st.rerun()
 
 
-# --------------------------------------------------------------------------- #
-# 对话标签页
-# --------------------------------------------------------------------------- #
+# 对话
 def render_chat(group: storage.Group) -> None:
     sessions = storage.list_sessions(group.id)
 
@@ -350,13 +332,12 @@ def render_chat(group: storage.Group) -> None:
             unsafe_allow_html=True,
         )
 
-    # 1) 渲染历史消息
     for msg in messages:
         role = "user" if msg.role == "user" else "assistant"
         with st.chat_message(role):
             st.markdown(msg.content)
 
-    # 2) 若有待回答的问题，先渲染问答（确保输入框位于回答下方）
+    # 先渲染这一轮问答，输入框留到最后，保证它始终在回答下方
     if pending_text:
         with st.chat_message("user"):
             st.markdown(pending_text)
@@ -375,23 +356,25 @@ def render_chat(group: storage.Group) -> None:
                     with st.expander(f"📎 参考来源（{len(docs)} 个片段）"):
                         for i, d in enumerate(docs, start=1):
                             meta = d.metadata or {}
-                            st.markdown(
+                            head = (
                                 f"**[{i}] {meta.get('filename', '未知')} · 第 "
                                 f"{meta.get('page', '?')} 页**"
                             )
+                            if meta.get("section"):
+                                head += f" · {meta['section']}"
+                            if meta.get("rerank_score") is not None:
+                                head += f" · 相关度 {meta['rerank_score']}"
+                            st.markdown(head)
                             st.caption(d.page_content[:300] + " ...")
         st.session_state.pending_q = None
 
-    # 3) 输入框始终最后渲染 —— 永远位于回答下方
     prompt = st.chat_input("给 RefMind 发消息 ...")
     if prompt:
         st.session_state.pending_q = {"sid": session_id, "text": prompt}
         st.rerun()
 
 
-# --------------------------------------------------------------------------- #
-# 文档库标签页
-# --------------------------------------------------------------------------- #
+# 文档库
 def render_documents(group: storage.Group) -> None:
     docs = storage.list_documents(group.id)
     if not docs:
@@ -423,9 +406,7 @@ def render_documents(group: storage.Group) -> None:
             st.rerun()
 
 
-# --------------------------------------------------------------------------- #
-# 翻译标签页（可结合历史输入文献对齐术语）
-# --------------------------------------------------------------------------- #
+# 翻译
 def render_translation(group: storage.Group) -> None:
     st.markdown("#### 文本翻译")
     src_text = st.text_area("输入待翻译文本", height=220, placeholder="粘贴任意文本 ...")
@@ -460,9 +441,7 @@ def render_translation(group: storage.Group) -> None:
                 st.error(f"翻译失败：{exc}")
 
 
-# --------------------------------------------------------------------------- #
-# 设置标签页
-# --------------------------------------------------------------------------- #
+# 设置
 def render_settings() -> None:
     st.markdown("#### ⚙️ 模型与参数设置")
     st.caption("保存后立即生效并写入 .env 持久化。")
@@ -529,6 +508,41 @@ def render_settings() -> None:
                 value=float(settings.memory_relevance_threshold), step=0.05,
             )
 
+        st.markdown("**召回 · 重排 · 上下文压缩**")
+        col_j, col_k = st.columns(2)
+        with col_j:
+            recall_top_k = st.number_input(
+                "召回候选数 RECALL_TOP_K", 5, 100,
+                value=int(settings.recall_top_k),
+            )
+            rerank_enabled = st.checkbox(
+                "启用重排 (rerank)", value=bool(settings.rerank_enabled),
+                help="混合召回后用重排模型精排；未装 dashscope 时回退嵌入相似度。",
+            )
+            rerank_model = st.text_input(
+                "重排模型 RERANK_MODEL", value=settings.rerank_model
+            )
+            rerank_top_n = st.number_input(
+                "重排保留数 RERANK_TOP_N", 1, 30, value=int(settings.rerank_top_n)
+            )
+        with col_k:
+            compression_enabled = st.checkbox(
+                "启用上下文压缩", value=bool(settings.context_compression_enabled),
+                help="去重复分块 + 句级过滤 + 字数预算，降低冗余与 token 消耗。",
+            )
+            context_max_chars = st.number_input(
+                "上下文字数上限 CONTEXT_MAX_CHARS", 500, 20000,
+                value=int(settings.context_max_chars), step=500,
+            )
+            redundancy_threshold = st.number_input(
+                "去重相似度阈值", 0.5, 1.0,
+                value=float(settings.redundancy_threshold), step=0.01,
+            )
+            sentence_threshold = st.number_input(
+                "句级相关性阈值", 0.0, 1.0,
+                value=float(settings.sentence_relevance_threshold), step=0.05,
+            )
+
         st.markdown("**PDF 解析 (MinerU)**")
         col_g, col_h, col_i = st.columns(3)
         with col_g:
@@ -557,6 +571,14 @@ def render_settings() -> None:
                 "CHUNK_OVERLAP": chunk_overlap,
                 "MEMORY_MAX_TURNS": mem_turns,
                 "MEMORY_RELEVANCE_THRESHOLD": mem_thr,
+                "RECALL_TOP_K": recall_top_k,
+                "RERANK_ENABLED": rerank_enabled,
+                "RERANK_MODEL": rerank_model,
+                "RERANK_TOP_N": rerank_top_n,
+                "CONTEXT_COMPRESSION_ENABLED": compression_enabled,
+                "CONTEXT_MAX_CHARS": context_max_chars,
+                "REDUNDANCY_THRESHOLD": redundancy_threshold,
+                "SENTENCE_RELEVANCE_THRESHOLD": sentence_threshold,
                 "MINERU_BACKEND": backend,
                 "MINERU_METHOD": method,
                 "MINERU_MODEL_SOURCE": model_source,
@@ -565,14 +587,10 @@ def render_settings() -> None:
         st.success("设置已保存并生效。")
 
 
-# --------------------------------------------------------------------------- #
-# 主入口
-# --------------------------------------------------------------------------- #
 def main() -> None:
     inject_global_css(st.session_state.theme)
     render_sidebar()
 
-    # 待删除确认弹窗
     cd = st.session_state.get("confirm_delete")
     if cd:
         target = storage.get_group(cd)
@@ -581,7 +599,7 @@ def main() -> None:
         else:
             st.session_state.confirm_delete = None
 
-    # 右上角主题滑块（无文字，左=白天 右=夜间，原生动画）
+    # 右上角主题开关
     st.markdown('<div class="theme-switch-row"></div>', unsafe_allow_html=True)
     _, t_col = st.columns([11, 1])
     with t_col:

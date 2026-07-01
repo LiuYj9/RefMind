@@ -14,7 +14,9 @@ from .graph import (
     format_documents,
     get_system_prompt,
 )
+from .compression import compress_context
 from .memory import RelevantMemory
+from .reranker import rerank
 from .retrieval import build_retriever, get_retriever, invalidate_retriever
 
 __all__ = [
@@ -28,6 +30,9 @@ __all__ = [
     "build_retriever",
     "get_retriever",
     "invalidate_retriever",
+    # 重排与上下文压缩
+    "rerank",
+    "compress_context",
     # 记忆
     "RelevantMemory",
     # 对话图

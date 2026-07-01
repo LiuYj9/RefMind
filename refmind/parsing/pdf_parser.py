@@ -1,17 +1,6 @@
-"""PDF 解析。
+"""PDF 解析：优先用 MinerU，未安装或失败时回退 PyMuPDF。
 
-首选方案：调用 MinerU（https://github.com/opendatalab/MinerU）CLI，对文本、
-公式、表格进行高精度解析。若未安装 MinerU（或设置 ``USE_FALLBACK_PARSER=true``），
-则回退到 PyMuPDF 逐页提取文本，保证应用可用。
-
-两种方案都将输出归一化为统一结构::
-
-    {
-        "source": "paper.pdf",
-        "parser": "mineru" | "pymupdf",
-        "markdown": "<完整 markdown / 纯文本>",
-        "pages": [{"page": 1, "text": "..."}, ...]
-    }
+两种方式统一输出 {"source", "parser", "markdown", "pages":[{"page","text"}]}。
 """
 
 from __future__ import annotations
@@ -70,8 +59,7 @@ def parse_pdf(
     if not settings.use_fallback_parser and _mineru_available():
         try:
             return _parse_with_mineru(file_path, output_dir)
-        except Exception as exc:  # noqa: BLE001 - MinerU 任意失败都回退
-            # MinerU 可能因模型下载、GPU、格式等多种原因失败，此处优雅降级
+        except Exception as exc:  # noqa: BLE001
             print(f"[pdf_parser] MinerU 解析失败（{exc}），改用 PyMuPDF 回退。")
 
     return _parse_with_pymupdf(file_path)
