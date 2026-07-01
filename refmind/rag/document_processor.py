@@ -61,7 +61,12 @@ def parsed_to_documents(
     section = "正文"
     chunk_index = 0
 
-    def _make(chunk: str, page_no: int, sec: str) -> Document:
+    def _make(
+        chunk: str,
+        page_no: int,
+        sec: str,
+        extra_meta: dict[str, Any] | None = None,
+    ) -> Document:
         nonlocal chunk_index
         meta = {
             "group_id": group_id,
@@ -77,6 +82,8 @@ def parsed_to_documents(
             "char_count": len(chunk),
             "chunk_id": str(uuid.uuid4()),
         }
+        if extra_meta:
+            meta.update({k: v for k, v in extra_meta.items() if v is not None})
         chunk_index += 1
         return Document(page_content=chunk, metadata=meta)
 
@@ -96,6 +103,34 @@ def parsed_to_documents(
                 continue
             section = _detect_section(chunk, section)
             documents.append(_make(chunk, i, section))
+
+    for table in parsed.get("tables") or []:
+        table_text = table.get("normalized_text") or table.get("raw_text") or ""
+        if not table_text.strip():
+            continue
+        page_start = int(table.get("page_start") or table.get("page") or 1)
+        page_end = int(table.get("page_end") or page_start)
+        caption = str(table.get("caption") or "")
+        table_id = str(table.get("table_id") or "")
+        section_name = caption or "Table"
+        prefix = (
+            f"Table {table_id}\n"
+            f"Pages: {page_start}-{page_end}\n"
+            f"Caption: {caption}"
+        ).strip()
+        meta = {
+            "content_type": "table",
+            "table_id": table_id,
+            "page_start": page_start,
+            "page_end": page_end,
+            "table_caption": caption,
+            "continued_table": bool(table.get("continued")),
+        }
+        for chunk in splitter.split_text(table_text):
+            if not chunk.strip():
+                continue
+            content = chunk if chunk.startswith("Table:") else f"{prefix}\n{chunk}"
+            documents.append(_make(content, page_start, section_name, meta))
 
     return documents
 
