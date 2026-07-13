@@ -117,6 +117,23 @@ class Settings:
             "SENTENCE_RELEVANCE_THRESHOLD", 0.25
         )
 
+        # 受控 multi-agent：规划只负责拆查询，并发只用于检索，答案审校仍受证据约束。
+        self.multi_agent_enabled = _get_bool("MULTI_AGENT_ENABLED", True)
+        self.multi_agent_max_subqueries = min(
+            3, max(1, _get_int("MULTI_AGENT_MAX_SUBQUERIES", 3))
+        )
+        self.multi_agent_max_workers = min(
+            8, max(1, _get_int("MULTI_AGENT_MAX_WORKERS", 3))
+        )
+        self.multi_agent_retrieval_timeout = min(
+            300.0,
+            max(1.0, _get_float("MULTI_AGENT_RETRIEVAL_TIMEOUT", 30.0)),
+        )
+        self.evidence_review_enabled = _get_bool(
+            "MULTI_AGENT_EVIDENCE_REVIEW", False
+        )
+        self.answer_review_enabled = _get_bool("MULTI_AGENT_ANSWER_REVIEW", True)
+
     def _resolve(self, value: str) -> Path:
         """将相对路径解析为相对于项目根目录的绝对路径。"""
         path = Path(value)
@@ -170,6 +187,15 @@ class Settings:
         "CONTEXT_MAX_CHARS": ("context_max_chars", int),
         "REDUNDANCY_THRESHOLD": ("redundancy_threshold", float),
         "SENTENCE_RELEVANCE_THRESHOLD": ("sentence_relevance_threshold", float),
+        "MULTI_AGENT_ENABLED": ("multi_agent_enabled", _as_bool),
+        "MULTI_AGENT_MAX_SUBQUERIES": ("multi_agent_max_subqueries", int),
+        "MULTI_AGENT_MAX_WORKERS": ("multi_agent_max_workers", int),
+        "MULTI_AGENT_RETRIEVAL_TIMEOUT": (
+            "multi_agent_retrieval_timeout",
+            float,
+        ),
+        "MULTI_AGENT_EVIDENCE_REVIEW": ("evidence_review_enabled", _as_bool),
+        "MULTI_AGENT_ANSWER_REVIEW": ("answer_review_enabled", _as_bool),
         "MINERU_BACKEND": ("mineru_backend", str),
         "MINERU_METHOD": ("mineru_method", str),
         "MINERU_MODEL_SOURCE": ("mineru_model_source", str),

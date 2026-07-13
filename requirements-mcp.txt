@@ -1,0 +1,4 @@
+# 可选 MCP 集成；核心 RAG 不依赖此文件。
+# 安装：pip install -r requirements-mcp.txt
+mcp>=1.27,<2
+

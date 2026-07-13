@@ -61,6 +61,7 @@ def create_document(
 def update_document(
     doc_id: int,
     *,
+    original_path: str | None = None,
     parsed_json_path: str | None = None,
     summary: str | None = None,
     num_chunks: int | None = None,
@@ -68,6 +69,9 @@ def update_document(
 ) -> None:
     """更新文档字段（仅更新非 None 的字段）。"""
     fields, values = [], []
+    if original_path is not None:
+        fields.append("original_path = ?")
+        values.append(original_path)
     if parsed_json_path is not None:
         fields.append("parsed_json_path = ?")
         values.append(parsed_json_path)

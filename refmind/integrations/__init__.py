@@ -1,0 +1,45 @@
+"""RefMind 的可选外部服务集成。"""
+
+from .context import ExternalContextBundle, ExternalContextItem, MCPContextProvider
+from .mcp import (
+    DEFAULT_CONFIG_ENV,
+    MCPCallResult,
+    MCPClient,
+    MCPConfigurationResult,
+    MCPContent,
+    MCPDependencyMissing,
+    MCPError,
+    MCPManager,
+    MCPNotConnected,
+    MCPProbe,
+    MCPPromptInfo,
+    MCPResourceInfo,
+    MCPServerConfig,
+    MCPToolInfo,
+    MCPTransport,
+    load_mcp_server_configs,
+    mcp_sdk_available,
+)
+
+__all__ = [
+    "DEFAULT_CONFIG_ENV",
+    "ExternalContextBundle",
+    "ExternalContextItem",
+    "MCPCallResult",
+    "MCPClient",
+    "MCPConfigurationResult",
+    "MCPContent",
+    "MCPContextProvider",
+    "MCPDependencyMissing",
+    "MCPError",
+    "MCPManager",
+    "MCPNotConnected",
+    "MCPProbe",
+    "MCPPromptInfo",
+    "MCPResourceInfo",
+    "MCPServerConfig",
+    "MCPToolInfo",
+    "MCPTransport",
+    "load_mcp_server_configs",
+    "mcp_sdk_available",
+]

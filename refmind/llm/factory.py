@@ -31,6 +31,8 @@ class _CircuitBreaker:
         self.state = _State.CLOSED
         self._failure_count = 0
         self._opened_at = 0.0
+        # HALF_OPEN 只允许一个请求探测主模型，避免并发请求同时冲击故障服务。
+        self._half_open_probe_in_flight = False
 
     @property
     def failure_threshold(self) -> int:
@@ -44,8 +46,10 @@ class _CircuitBreaker:
         self.state = target
         if target == _State.CLOSED:
             self._failure_count = 0
+            self._half_open_probe_in_flight = False
         elif target == _State.OPEN:
             self._opened_at = time.time()
+            self._half_open_probe_in_flight = False
 
     def _increment_failure(self) -> bool:
         self._failure_count += 1
@@ -56,12 +60,17 @@ class _CircuitBreaker:
             if self.state == _State.CLOSED:
                 return True
             if self.state == _State.HALF_OPEN:
+                # 探测未完成时，其他并发请求继续走备选模型。
+                if self._half_open_probe_in_flight:
+                    return False
+                self._half_open_probe_in_flight = True
                 return True
             if self.cooldown_seconds <= 0:
                 self._transition_to(_State.CLOSED)
                 return True
             if (time.time() - self._opened_at) > self.cooldown_seconds:
                 self._transition_to(_State.HALF_OPEN)
+                self._half_open_probe_in_flight = True
                 return True
             return False
 
@@ -160,28 +169,31 @@ class _FallbackLLM(Runnable):
         raise RuntimeError("主模型熔断中且未配置备选模型（请设置 LLM_FALLBACK_MODEL）。")
 
     def stream(self, input, config=None, **kwargs):  # noqa: A002
+        emitted = False
+        last_error: Exception | None = None
         if _circuit_breaker.should_allow_primary():
             try:
                 model = _get_primary_model(self._temperature)
-                stream_iter = model.stream(input, config=config, **kwargs)
-                first = next(stream_iter, None)
-                _circuit_breaker.record_success()
-                if first is not None:
-                    yield first
-                yield from stream_iter
-                return
-            except StopIteration:
+                for chunk in model.stream(input, config=config, **kwargs):
+                    emitted = True
+                    yield chunk
+                # 流完整结束后才算成功；仅收到首块不能证明请求没有中途失败。
                 _circuit_breaker.record_success()
                 return
-            except Exception:
+            except Exception as exc:
                 _circuit_breaker.record_failure()
-                if _circuit_breaker.state != _State.OPEN:
+                last_error = exc
+                # 已向调用方发送过内容时不能再拼接备选模型答案，否则会产生混合响应。
+                if emitted or _circuit_breaker.state != _State.OPEN:
                     raise
 
         fallback = _get_fallback_model(self._temperature)
         if fallback is not None:
             yield from fallback.stream(input, config=config, **kwargs)
             return
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("主模型熔断中且未配置备选模型（请设置 LLM_FALLBACK_MODEL）。")
 
     def __repr__(self) -> str:
         cb = _circuit_breaker.to_dict()

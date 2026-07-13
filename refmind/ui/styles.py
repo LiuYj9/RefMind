@@ -111,9 +111,58 @@ h1 {{ font-weight: 700; letter-spacing: -0.02em; font-size: 1.6rem; }}
 .stTabs [aria-selected="true"] {{ color: var(--primary); }}
 
 /* ===== 聊天气泡 ===== */
-[data-testid="stChatMessage"] {{ background: transparent; padding: 2px 0; gap: 12px; }}
-[data-testid="stChatMessage"] > div:last-child {{ border-radius: 16px; padding: 4px 16px; }}
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) > div:last-child {{
+[data-testid="stChatMessage"] {{
+    background: transparent;
+    padding: 2px 0;
+    gap: 12px;
+    min-width: 0;
+    max-width: 100%;
+}}
+[data-testid="stChatMessage"] > div:last-child,
+[data-testid="stChatMessageContent"] {{
+    border-radius: 16px;
+    padding: 4px 16px;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}}
+/*
+ * 论文文件名常含连续下划线，浏览器会把它视为一个不可分割的长单词。
+ * 在 Markdown 文本边界强制提供断行点，避免正文逃出聊天气泡。
+ */
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {{
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}}
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"]
+    :is(p, li, a, em, strong, blockquote, td, th) {{
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}}
+/* 代码块和宽表格保留横向滚动，不能靠裁剪或逐字符换行破坏可读性。 */
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] pre,
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] table {{
+    display: block;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto;
+}}
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] pre code {{
+    white-space: pre;
+    overflow-wrap: normal;
+    word-break: normal;
+}}
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] img {{
+    max-width: 100%;
+    height: auto;
+}}
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"])
+    > div:last-child,
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"])
+    [data-testid="stChatMessageContent"] {{
     background: var(--assistant);
     border: 1px solid var(--border);
 }}
@@ -121,7 +170,10 @@ h1 {{ font-weight: 700; letter-spacing: -0.02em; font-size: 1.6rem; }}
     color: var(--assistant-text) !important;
 }}
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {{ flex-direction: row-reverse; }}
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) > div:last-child {{
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"])
+    > div:last-child,
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"])
+    [data-testid="stChatMessageContent"] {{
     background: var(--primary);
 }}
 [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) > div:last-child * {{

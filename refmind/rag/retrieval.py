@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import re
+from threading import RLock
 
 import jieba
 from langchain_classic.retrievers import EnsembleRetriever
@@ -17,6 +18,7 @@ from ..config import settings
 from .document_processor import get_vectorstore, load_group_documents
 
 _RETRIEVER_CACHE: dict[int, EnsembleRetriever] = {}
+_RETRIEVER_CACHE_LOCK = RLock()
 
 _TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
 
@@ -64,18 +66,22 @@ def build_retriever(
 
 
 def get_retriever(group_id: int):
-    if group_id not in _RETRIEVER_CACHE:
-        retriever = build_retriever(group_id)
-        if retriever is None:
-            return None
-        _RETRIEVER_CACHE[group_id] = retriever
-    return _RETRIEVER_CACHE[group_id]
+    # 构建和发布处于同一临界区：入库失效若并发到来，会在发布后再删除旧快照。
+    with _RETRIEVER_CACHE_LOCK:
+        if group_id not in _RETRIEVER_CACHE:
+            retriever = build_retriever(group_id)
+            if retriever is None:
+                return None
+            _RETRIEVER_CACHE[group_id] = retriever
+        return _RETRIEVER_CACHE[group_id]
 
 
 def invalidate_retriever(group_id: int) -> None:
     """失效某库缓存，下次使用时重建 BM25。"""
-    _RETRIEVER_CACHE.pop(group_id, None)
+    with _RETRIEVER_CACHE_LOCK:
+        _RETRIEVER_CACHE.pop(group_id, None)
 
 
 def reset_retrievers() -> None:
-    _RETRIEVER_CACHE.clear()
+    with _RETRIEVER_CACHE_LOCK:
+        _RETRIEVER_CACHE.clear()

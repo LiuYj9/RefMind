@@ -12,12 +12,21 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import uuid
 from difflib import SequenceMatcher
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
 from ..config import settings
+
+_MARKDOWN_IMAGE_RE = re.compile(r"!\[[^]]*]\([^)]*\)")
+_HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.S)
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+
+# MinerU 可能需要下载/加载模型，因此给予较宽裕的上限；
+# 无论超时还是命令失败，上层都会继续尝试 PyMuPDF 降级解析。
+_MINERU_TIMEOUT_SECONDS = 15 * 60
 
 _TABLE_NO_RE = re.compile(r"(?:table|tab\.?|表)\s*([a-z]?\d+(?:[.-]\d+)*)", re.I)
 _CONTINUED_RE = re.compile(r"(continued|cont\.|续表|接上表|续)", re.I)
@@ -59,7 +68,7 @@ def parse_pdf(
     在 MinerU 可用且未强制回退时优先使用 MinerU。
     """
     file_path = Path(file_path)
-    if not file_path.exists():
+    if not file_path.is_file():
         raise ParseError(f"未找到 PDF 文件：{file_path}")
 
     if not settings.use_fallback_parser and _mineru_available():
@@ -75,9 +84,19 @@ def _parse_with_mineru(
     file_path: Path, output_dir: str | Path | None
 ) -> dict[str, Any]:
     """调用 MinerU CLI 并归一化其输出。"""
-    out_dir = (
-        Path(output_dir) if output_dir else Path(tempfile.mkdtemp(prefix="mineru_"))
-    )
+    if output_dir is None:
+        # 内部临时目录必须在成功和异常路径上都回收，
+        # 避免长期运行时积累 MinerU 的图片与中间 JSON。
+        with tempfile.TemporaryDirectory(prefix="mineru_") as tmp_dir:
+            return _parse_with_mineru_in_dir(file_path, Path(tmp_dir))
+
+    # 显式目录下仍为本次任务创建唯一子目录，避免误读其中其他论文的旧产物。
+    run_dir = Path(output_dir) / f"{file_path.stem}_{uuid.uuid4().hex}"
+    return _parse_with_mineru_in_dir(file_path, run_dir)
+
+
+def _parse_with_mineru_in_dir(file_path: Path, out_dir: Path) -> dict[str, Any]:
+    """在指定目录运行 MinerU；目录生命周期由上层决定。"""
     out_dir.mkdir(parents=True, exist_ok=True)
 
     binary = _resolve_mineru_binary() or settings.mineru_binary
@@ -99,7 +118,23 @@ def _parse_with_mineru(
     if settings.mineru_model_source:
         env["MINERU_MODEL_SOURCE"] = settings.mineru_model_source
 
-    proc = subprocess.run(cmd, capture_output=True, text=True, env=env)
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=env,
+            timeout=_MINERU_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise ParseError(
+            f"MinerU 解析超过 {_MINERU_TIMEOUT_SECONDS} 秒，已终止。"
+        ) from exc
+    except OSError as exc:
+        raise ParseError(f"无法启动 MinerU：{exc}") from exc
+
     if proc.returncode != 0:
         raise ParseError(
             f"MinerU 退出码 {proc.returncode}："
@@ -107,8 +142,18 @@ def _parse_with_mineru(
         )
 
     markdown, pages, tables = _collect_mineru_output(out_dir, file_path.stem)
-    if not markdown.strip():
-        raise ParseError("MinerU 未提取到任何文本。")
+    extracted_text = "\n".join(
+        [markdown]
+        + [str(page.get("text", "")) for page in pages]
+        + [
+            str(table.get("normalized_text") or table.get("raw_text") or "")
+            for table in tables
+        ]
+    )
+    if not _has_meaningful_text(extracted_text):
+        raise ParseError(
+            "MinerU 未提取到可用文本（可能是 OCR 未识别的扫描件）。"
+        )
 
     return {
         "source": file_path.name,
@@ -123,36 +168,43 @@ def _collect_mineru_output(
     out_dir: Path, stem: str
 ) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]]]:
     """定位 MinerU 输出的 markdown / content_list，兼容不同版本目录结构。"""
-    # 优先使用带页码信息的结构化内容列表
-    content_lists = list(out_dir.rglob("*_content_list.json"))
     pages: list[dict[str, Any]] = []
     tables: list[dict[str, Any]] = []
-    if content_lists:
-        try:
-            items = json.loads(content_lists[0].read_text(encoding="utf-8"))
-            page_map: dict[int, list[str]] = {}
-            for item in items:
-                text = item.get("text") or item.get("table_caption") or ""
-                if isinstance(text, list):
-                    text = "\n".join(str(t) for t in text)
-                page_idx = int(item.get("page_idx", 0)) + 1
-                if text.strip():
-                    page_map.setdefault(page_idx, []).append(text.strip())
-            pages = [
-                {"page": p, "text": "\n".join(chunks)}
-                for p, chunks in sorted(page_map.items())
-            ]
-            tables = _merge_continued_tables(_extract_tables(items))
-        except (json.JSONDecodeError, ValueError, TypeError):
-            pages = []
-            tables = []
 
-    md_files = list(out_dir.rglob("*.md"))
+    # 同一输出目录可能保留过其他 PDF 的历史产物。按输入文件名
+    # 打分而不是盲目取第一个/最大文件，防止将旧论文入库。
+    content_items: list[dict[str, Any]] | None = None
+    content_lists = _rank_mineru_outputs(
+        out_dir.rglob("*_content_list.json"), stem, "_content_list.json"
+    )
+    for content_path in content_lists:
+        try:
+            content_items = _read_content_list(content_path)
+            break
+        except (OSError, json.JSONDecodeError, ValueError, TypeError):
+            # 某个候选文件损坏时继续尝试次优候选。
+            continue
+
+    if content_items is not None:
+        page_map: dict[int, list[str]] = {}
+        for item in content_items:
+            text = _as_text(item.get("text") or item.get("table_caption"))
+            if text:
+                page_map.setdefault(_content_page_number(item), []).append(text)
+        pages = [
+            {"page": page, "text": "\n".join(chunks)}
+            for page, chunks in sorted(page_map.items())
+        ]
+        tables = _merge_continued_tables(_extract_tables(content_items))
+
+    md_files = _rank_mineru_outputs(out_dir.rglob("*.md"), stem, ".md")
     markdown = ""
-    if md_files:
-        # 通常体积最大的 markdown 文件即为正文
-        md_path = max(md_files, key=lambda p: p.stat().st_size)
-        markdown = md_path.read_text(encoding="utf-8", errors="ignore")
+    for md_path in md_files:
+        try:
+            markdown = md_path.read_text(encoding="utf-8", errors="replace")
+            break
+        except OSError:
+            continue
 
     if not pages and markdown:
         pages = [{"page": 1, "text": markdown}]
@@ -160,6 +212,79 @@ def _collect_mineru_output(
         markdown = "\n\n".join(p["text"] for p in pages)
 
     return markdown, pages, tables
+
+
+def _output_stem(path: Path, suffix: str) -> str:
+    """去除 MinerU 约定后缀，得到候选产物对应的 PDF 名。"""
+    name = path.name
+    if name.casefold().endswith(suffix.casefold()):
+        return name[: -len(suffix)]
+    return path.stem
+
+
+def _rank_mineru_outputs(paths: Any, stem: str, suffix: str) -> list[Path]:
+    """按与输入 PDF 的匹配度排序 MinerU 产物。"""
+    wanted = stem.casefold()
+    ranked: list[tuple[int, int, int, str, Path]] = []
+    for path in paths:
+        candidate = _output_stem(path, suffix).casefold()
+        parts = [part.casefold() for part in path.parent.parts]
+        score = 0
+        if candidate == wanted:
+            score += 100
+        elif wanted and wanted in candidate:
+            score += 30
+        if wanted in parts:
+            score += 50
+        try:
+            stat = path.stat()
+        except OSError:
+            continue
+        ranked.append((score, stat.st_mtime_ns, stat.st_size, str(path), path))
+
+    # 只要有与 stem 匹配的文件，就排除不匹配的历史产物；
+    # 旧版 MinerU 产物不带原文件名时，才允许回退到最新候选。
+    if any(item[0] > 0 for item in ranked):
+        ranked = [item for item in ranked if item[0] > 0]
+    ranked.sort(key=lambda item: item[:4], reverse=True)
+    return [item[-1] for item in ranked]
+
+
+def _read_content_list(path: Path) -> list[dict[str, Any]]:
+    """读取 MinerU 内容列表，兼容列表与带 items/content 外壳的版本。"""
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(raw, dict):
+        for key in ("items", "content_list", "content", "blocks"):
+            if isinstance(raw.get(key), list):
+                raw = raw[key]
+                break
+    if not isinstance(raw, list):
+        raise ValueError("MinerU content_list 不是列表")
+    return [item for item in raw if isinstance(item, dict)]
+
+
+def _content_page_number(item: dict[str, Any]) -> int:
+    """兼容 page_idx（0 起始）与 page_no/page_number（1 起始）。"""
+    if "page_idx" in item:
+        try:
+            return max(1, int(item["page_idx"]) + 1)
+        except (TypeError, ValueError):
+            return 1
+    for key in ("page_no", "page_number"):
+        try:
+            return max(1, int(item[key]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return 1
+
+
+def _has_meaningful_text(text: str) -> bool:
+    """过滤纯图片引用/注释，避免将 OCR 失败的扫描件误判为成功。"""
+    visible = _MARKDOWN_IMAGE_RE.sub("", text or "")
+    visible = _HTML_COMMENT_RE.sub("", visible)
+    visible = _HTML_TAG_RE.sub("", visible)
+    # 单个页码/水印字符不算正文；四个中英文数字字符仍兼容极短摘要页。
+    return sum(char.isalnum() for char in visible) >= 4
 
 
 def _as_text(value: Any) -> str:
@@ -344,7 +469,7 @@ def _extract_tables(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         if not text and not caption:
             continue
         rows = _rows_from_text(text)
-        page_no = int(item.get("page_idx", 0)) + 1
+        page_no = _content_page_number(item)
         tables.append(
             {
                 "table_id": f"table_{len(tables) + 1:03d}",
@@ -498,16 +623,19 @@ def _parse_with_pymupdf(file_path: Path) -> dict[str, Any]:
         ) from exc
 
     pages: list[dict[str, Any]] = []
-    with fitz.open(file_path) as doc:
-        for i, page in enumerate(doc, start=1):
-            text = page.get_text("text").strip()
-            if text:
-                pages.append({"page": i, "text": text})
+    try:
+        with fitz.open(file_path) as doc:
+            for i, page in enumerate(doc, start=1):
+                text = page.get_text("text").strip()
+                if _has_meaningful_text(text):
+                    pages.append({"page": i, "text": text})
+    except Exception as exc:  # noqa: BLE001
+        raise ParseError(f"PyMuPDF 无法读取 {file_path.name}：{exc}") from exc
 
     if not pages:
         raise ParseError(
-            f"{file_path.name} 中没有可提取的文本（可能是扫描件）。"
-            "对纯图片文档请使用带 OCR 的 MinerU。"
+            f"{file_path.name} 中没有可提取的文本（可能是扫描件或空 PDF）。"
+            "请将 MinerU 方法设为 ocr 后重试。"
         )
 
     markdown = "\n\n".join(f"<!-- page {p['page']} -->\n{p['text']}" for p in pages)
@@ -524,9 +652,29 @@ def save_parsed(parsed: dict[str, Any], dest: str | Path) -> Path:
     """将归一化解析结果以 JSON 持久化，返回写入路径。"""
     dest = Path(dest)
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(
-        json.dumps(parsed, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    temp_path: Path | None = None
+    try:
+        # 先在同一目录完整写入再原子替换，避免崩溃后留下半个 JSON。
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=dest.parent,
+            prefix=f".{dest.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            temp_path = Path(handle.name)
+            json.dump(parsed, handle, ensure_ascii=False, indent=2)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp_path, dest)
+        temp_path = None
+    finally:
+        if temp_path is not None:
+            try:
+                temp_path.unlink(missing_ok=True)
+            except OSError:
+                pass
     return dest
 
 

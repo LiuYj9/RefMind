@@ -9,6 +9,8 @@ from .document_processor import (
 )
 from .graph import (
     NO_CONTEXT_REPLY,
+    RETRIEVAL_ERROR_REPLY,
+    SERVICE_ERROR_REPLY,
     answer_question,
     build_graph,
     format_documents,
@@ -16,7 +18,7 @@ from .graph import (
 )
 from .compression import compress_context
 from .memory import RelevantMemory
-from .reranker import rerank
+from .reranker import dashscope_sdk_available, rerank
 from .retrieval import build_retriever, get_retriever, invalidate_retriever
 
 __all__ = [
@@ -32,6 +34,7 @@ __all__ = [
     "invalidate_retriever",
     # 重排与上下文压缩
     "rerank",
+    "dashscope_sdk_available",
     "compress_context",
     # 记忆
     "RelevantMemory",
@@ -41,4 +44,6 @@ __all__ = [
     "get_system_prompt",
     "format_documents",
     "NO_CONTEXT_REPLY",
+    "RETRIEVAL_ERROR_REPLY",
+    "SERVICE_ERROR_REPLY",
 ]
