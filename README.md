@@ -15,7 +15,7 @@ RefMind 是一个面向科研文献阅读的 RAG 问答系统，基于 LangChain
 - 重排精排：召回候选交给 rerank 模型（DashScope gte-rerank，缺失时回退嵌入相似度）
 - 上下文压缩：去除重复分块、剔除离题句子、按字数预算截断，压缩进 Prompt 的内容
 - 分块 metadata：来源、文档 id、页码、章节、版本、权限（按库隔离）、分块序号、字数
-- PDF 解析：优先 MinerU（公式、表格、排版），未安装或失败时回退 PyMuPDF
+- PDF 解析与论文切分：优先 MinerU 保留标题、段落、公式、图表、页码、阅读顺序和 bbox；按章节边界合并语义块，未安装或失败时回退 PyMuPDF
 - 多文献库隔离：每个库独立的 Chroma 集合与持久化目录，互不干扰
 - 长对话记忆：按语义相似度筛选相关历史，而不是无脑保留最近若干轮
 - 翻译与摘要：流式输出，翻译可结合当前文献库做术语对齐，入库时自动生成摘要
@@ -126,7 +126,8 @@ copy .env.example .env            # 填入 DASHSCOPE_API_KEY
 | `LLM_CIRCUIT_FAILURE_THRESHOLD` | 连续失败多少次熔断 | `3` |
 | `LLM_HEALTH_CHECK_INTERVAL` | 熔断冷却秒数 | `60` |
 | `EMBEDDING_MODEL` | 嵌入模型 | `text-embedding-v4` |
-| `CHUNK_SIZE` / `CHUNK_OVERLAP` | 分块大小 / 重叠 | `1000` / `200` |
+| `CHUNK_SIZE` / `CHUNK_OVERLAP` | 普通段落目标大小 / 超长块内部重叠 | `1000` / `200` |
+| `LAYOUT_CHUNK_MAX_CHARS` | 表格、公式等原子版面块的二次切分上限 | `1800` |
 | `RETRIEVAL_TOP_K` | 检索返回片段数 | `5` |
 | `RECALL_TOP_K` | 重排前的召回候选数 | `20` |
 | `RERANK_ENABLED` | 是否启用重排 | `true` |

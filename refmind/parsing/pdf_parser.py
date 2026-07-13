@@ -142,6 +142,7 @@ def _parse_with_mineru_in_dir(file_path: Path, out_dir: Path) -> dict[str, Any]:
         )
 
     markdown, pages, tables = _collect_mineru_output(out_dir, file_path.stem)
+    blocks = _collect_mineru_layout_blocks(out_dir, file_path.stem)
     extracted_text = "\n".join(
         [markdown]
         + [str(page.get("text", "")) for page in pages]
@@ -161,6 +162,9 @@ def _parse_with_mineru_in_dir(file_path: Path, out_dir: Path) -> dict[str, Any]:
         "markdown": markdown,
         "pages": pages,
         "tables": tables,
+        "blocks": blocks,
+        "schema_version": 2,
+        "layout_confidence": "high",
     }
 
 
@@ -276,6 +280,82 @@ def _content_page_number(item: dict[str, Any]) -> int:
         except (KeyError, TypeError, ValueError):
             continue
     return 1
+
+
+def _layout_type(item: dict[str, Any]) -> str:
+    """兼容不同 MinerU 版本的块类型字段，并归一化为稳定类型。"""
+    raw = _as_text(
+        item.get("type") or item.get("category") or item.get("block_type")
+    ).lower()
+    if "table" in raw:
+        return "table_caption" if "caption" in raw else "table"
+    if any(token in raw for token in ("image", "figure")):
+        return "figure_caption" if "caption" in raw else "figure"
+    if any(token in raw for token in ("equation", "formula", "interline_equation")):
+        return "equation"
+    if any(token in raw for token in ("title", "heading")):
+        return "heading"
+    if "list" in raw:
+        return "list_item"
+    return "paragraph"
+
+
+def _layout_text(item: dict[str, Any], kind: str) -> str:
+    if kind == "table":
+        return _table_text(item)
+    if kind in {"table_caption", "figure_caption"}:
+        return _as_text(item.get("caption") or item.get("table_caption") or item.get("text"))
+    return _as_text(
+        item.get("text")
+        or item.get("content")
+        or item.get("equation")
+        or item.get("latex")
+    )
+
+
+def _collect_mineru_layout_blocks(out_dir: Path, stem: str) -> list[dict[str, Any]]:
+    """读取 MinerU content_list，保留论文版面块而不是再次压平成整页文本。"""
+    for content_path in _rank_mineru_outputs(
+        out_dir.rglob("*_content_list.json"), stem, "_content_list.json"
+    ):
+        try:
+            items = _read_content_list(content_path)
+        except (OSError, json.JSONDecodeError, ValueError, TypeError):
+            continue
+        blocks: list[dict[str, Any]] = []
+        for order, item in enumerate(items):
+            kind = _layout_type(item)
+            text = _layout_text(item, kind)
+            # 表格由标准化 tables 路径生成，避免原始 page 文本与结构化表格重复索引。
+            if kind == "table" or not text:
+                continue
+            blocks.append(
+                {
+                    "block_id": f"block_{order + 1:05d}",
+                    "type": kind,
+                    "text": text,
+                    "page": _content_page_number(item),
+                    "page_end": _content_page_number(item),
+                    "reading_order": order,
+                    "bbox": _bbox(item),
+                }
+            )
+        # 使用已经合并、标准化的表格作为独立原子块。
+        for table in _merge_continued_tables(_extract_tables(items)):
+            blocks.append(
+                {
+                    "block_id": table["table_id"],
+                    "type": "table",
+                    "text": table["normalized_text"],
+                    "page": table["page_start"],
+                    "page_end": table["page_end"],
+                    # 表格沿用其在 content_list 中的位置；跨页合并后仍以首段为准。
+                    "reading_order": table.get("reading_order", len(items)),
+                    "bbox": table.get("bbox") or [],
+                }
+            )
+        return blocks
+    return []
 
 
 def _has_meaningful_text(text: str) -> bool:
@@ -461,7 +541,7 @@ def _bbox(item: dict[str, Any]) -> list[float]:
 
 def _extract_tables(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     tables: list[dict[str, Any]] = []
-    for item in items:
+    for reading_order, item in enumerate(items):
         if not isinstance(item, dict) or not _looks_like_table(item):
             continue
         text = _table_text(item)
@@ -482,6 +562,7 @@ def _extract_tables(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "col_count": _col_count(rows),
                 "bbox": _bbox(item),
                 "page_height": _page_height(item),
+                "reading_order": reading_order,
             }
         )
     return tables
@@ -623,12 +704,26 @@ def _parse_with_pymupdf(file_path: Path) -> dict[str, Any]:
         ) from exc
 
     pages: list[dict[str, Any]] = []
+    blocks: list[dict[str, Any]] = []
     try:
         with fitz.open(file_path) as doc:
             for i, page in enumerate(doc, start=1):
                 text = page.get_text("text").strip()
                 if _has_meaningful_text(text):
                     pages.append({"page": i, "text": text})
+                    # PyMuPDF 回退不承诺标题/双栏识别，但仍提供逐页版面块，
+                    # 让下游复用同一 metadata 契约并明确标记为低置信度。
+                    blocks.append(
+                        {
+                            "block_id": f"page_{i:04d}",
+                            "type": "paragraph",
+                            "text": text,
+                            "page": i,
+                            "page_end": i,
+                            "reading_order": i - 1,
+                            "bbox": [],
+                        }
+                    )
     except Exception as exc:  # noqa: BLE001
         raise ParseError(f"PyMuPDF 无法读取 {file_path.name}：{exc}") from exc
 
@@ -645,6 +740,9 @@ def _parse_with_pymupdf(file_path: Path) -> dict[str, Any]:
         "markdown": markdown,
         "pages": pages,
         "tables": [],
+        "blocks": blocks,
+        "schema_version": 2,
+        "layout_confidence": "low",
     }
 
 

@@ -15,6 +15,21 @@ from refmind.parsing import pdf_parser
 
 
 class MinerUParsingTests(unittest.TestCase):
+    def test_content_list_is_normalized_to_layout_blocks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            payload = [
+                {"type": "title", "text": "1 Introduction", "page_idx": 0, "bbox": [1, 2, 3, 4]},
+                {"type": "text", "text": "Body", "page_idx": 0},
+                {"type": "interline_equation", "text": "E=mc^2", "page_idx": 1},
+            ]
+            (root / "paper_content_list.json").write_text(json.dumps(payload), encoding="utf-8")
+            blocks = pdf_parser._collect_mineru_layout_blocks(root, "paper")
+
+        self.assertEqual([b["type"] for b in blocks], ["heading", "paragraph", "equation"])
+        self.assertEqual(blocks[0]["bbox"], [1.0, 2.0, 3.0, 4.0])
+        self.assertEqual(blocks[2]["page"], 2)
+
     def test_collect_output_prefers_current_pdf_over_larger_stale_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

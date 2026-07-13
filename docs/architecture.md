@@ -14,7 +14,8 @@ RefMind 的核心约束是“答案必须能回到用户上传的文献证据”
   → before_parse 插件 hook
   → MinerU（失败则 PyMuPDF）
   → after_parse 插件 hook
-  → 按页分块并补全溯源 metadata
+  → 归一化 layout blocks（标题/段落/公式/图表、页码、阅读顺序、bbox）
+  → 按章节边界做 layout-aware 切分并补全溯源 metadata
   → before_ingest 插件 hook
   → Chroma 向量化
   → 可选摘要
@@ -31,6 +32,18 @@ PDF、解析 JSON、Chroma 与 SQLite 无法共享单一事务，因此入库服
 `ready` 记录并按 `doc_id` 继续清理。向量清理失败则保留 `cleanup_failed` 记录与文件，
 避免丢掉后续重试所需的索引线索。删除同样使用 `deleting → cleanup_failed/删除记录` 的
 可重试状态，而不是吞掉错误后宣称成功。
+
+### 2.1 Layout-aware 论文切分
+
+解析结果保留旧版 `markdown/pages/tables`，并新增 `schema_version=2` 与 `blocks`。MinerU
+提供的阅读顺序优先于 bbox 推断；标题会开启新的章节，连续正文块只在同一章节内合并，
+表格、公式和图注保持原子语义单元，超过 `LAYOUT_CHUNK_MAX_CHARS` 才进行二次递归切分。
+下游 metadata 包含 `content_type`、`page_start/page_end`、`section_path`、`block_ids`、
+`bbox` 和布局置信度。列表字段会序列化为 JSON 字符串，以满足 Chroma 仅接受标量 metadata
+的限制。没有 `blocks` 的历史解析文件继续使用逐页切分，不要求迁移已有数据。
+
+PyMuPDF 回退只能提供低置信度的逐页版面块，不能可靠恢复双栏阅读顺序与标题层级；需要高质量
+论文解析时应安装 MinerU。结构化路径不会再同时索引 `pages` 和 `tables`，从源头避免表格重复召回。
 
 ## 3. 问答流程
 

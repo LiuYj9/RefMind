@@ -15,6 +15,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from ..config import settings
 from ..llm import get_embedding_model
+from .layout_chunker import layout_chunks, scalar_metadata
 
 # markdown 标题，或 "1"、"2.3" 这类编号标题
 _MD_HEADING = re.compile(r"^#{1,6}\s+(.+)$")
@@ -86,6 +87,30 @@ def parsed_to_documents(
             meta.update({k: v for k, v in extra_meta.items() if v is not None})
         chunk_index += 1
         return Document(page_content=chunk, metadata=meta)
+
+    # MinerU 等版面解析器提供 blocks 时，优先按论文结构切分；pages 仅作为旧数据回退，
+    # 避免正文/表格在两条路径中被重复向量化。
+    blocks = parsed.get("blocks") or []
+    if blocks:
+        max_chars = max(settings.chunk_size, settings.layout_chunk_max_chars)
+        for item in layout_chunks(
+            blocks,
+            target_chars=settings.chunk_size,
+            max_chars=max_chars,
+            overlap=settings.chunk_overlap,
+        ):
+            extra = {
+                "content_type": item.content_type,
+                "page_start": item.page_start,
+                "page_end": item.page_end,
+                "section_path": item.section,
+                "block_ids": scalar_metadata(item.block_ids),
+                "bbox": scalar_metadata(item.bbox),
+                "layout_parser": parser,
+                "layout_confidence": parsed.get("layout_confidence", "high"),
+            }
+            documents.append(_make(item.text, item.page_start, item.section, extra))
+        return documents
 
     pages = parsed.get("pages") or []
     if pages:

@@ -96,6 +96,11 @@ class Settings:
         )
         self.chunk_size = _get_int("CHUNK_SIZE", 1000)
         self.chunk_overlap = _get_int("CHUNK_OVERLAP", 200)
+        # 单个版面语义块的硬上限；普通段落会在 CHUNK_SIZE 附近合并，
+        # 公式/图表等原子块只在超过该值时才二次切分。
+        self.layout_chunk_max_chars = max(
+            self.chunk_size, _get_int("LAYOUT_CHUNK_MAX_CHARS", 1800)
+        )
         # DashScope 兼容接口单次嵌入请求最多 10 条文本
         self.embedding_batch_size = _get_int("EMBEDDING_BATCH_SIZE", 10)
 
@@ -175,6 +180,7 @@ class Settings:
         "LLM_TEMPERATURE": ("llm_temperature", float),
         "CHUNK_SIZE": ("chunk_size", int),
         "CHUNK_OVERLAP": ("chunk_overlap", int),
+        "LAYOUT_CHUNK_MAX_CHARS": ("layout_chunk_max_chars", int),
         "RETRIEVAL_TOP_K": ("retrieval_top_k", int),
         "MEMORY_MAX_TURNS": ("memory_max_turns", int),
         "MEMORY_RELEVANCE_THRESHOLD": ("memory_relevance_threshold", float),
