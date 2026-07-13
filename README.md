@@ -16,6 +16,7 @@ RefMind 是一个面向科研文献阅读的 RAG 问答系统，基于 LangChain
 - 上下文压缩：去除重复分块、剔除离题句子、按字数预算截断，压缩进 Prompt 的内容
 - 分块 metadata：来源、文档 id、页码、章节、版本、权限（按库隔离）、分块序号、字数
 - PDF 解析与论文切分：优先 MinerU 保留标题、段落、公式、图表、页码、阅读顺序和 bbox；按章节边界合并语义块，未安装或失败时回退 PyMuPDF
+- 图片检索与问答：入库时将原图保存到本地 docstore，并用 `qwen3.5-omni-plus-2026-03-15` 生成结构化摘要写入文本索引；命中图片摘要后才读取原图、Base64 编码并交给全模态模型回答
 - 多文献库隔离：每个库独立的 Chroma 集合与持久化目录，互不干扰
 - 长对话记忆：按语义相似度筛选相关历史，而不是无脑保留最近若干轮
 - 翻译与摘要：流式输出，翻译可结合当前文献库做术语对齐，入库时自动生成摘要
@@ -122,12 +123,17 @@ copy .env.example .env            # 填入 DASHSCOPE_API_KEY
 |------|------|--------|
 | `DASHSCOPE_API_KEY` | DashScope API Key | 必填 |
 | `LLM_MODEL` | 对话模型 | `qwen3.7-plus` |
+| `MULTIMODAL_LLM_MODEL` | 图片摘要及携图回答模型 | `qwen3.5-omni-plus-2026-03-15` |
 | `LLM_FALLBACK_MODEL` | 备选模型（留空则不降级） | 空 |
 | `LLM_CIRCUIT_FAILURE_THRESHOLD` | 连续失败多少次熔断 | `3` |
 | `LLM_HEALTH_CHECK_INTERVAL` | 熔断冷却秒数 | `60` |
 | `EMBEDDING_MODEL` | 嵌入模型 | `text-embedding-v4` |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` | 普通段落目标大小 / 超长块内部重叠 | `1000` / `200` |
 | `LAYOUT_CHUNK_MAX_CHARS` | 表格、公式等原子版面块的二次切分上限 | `1800` |
+| `DOCSTORE_DIR` | 原图本地存储目录（不进入向量库） | `./data/docstore` |
+| `IMAGE_SUMMARY_ENABLED` | 入库时是否调用全模态模型生成图片摘要 | `true` |
+| `IMAGE_MAX_PER_ANSWER` | 单次回答最多携带的已命中图片数 | `3` |
+| `IMAGE_MAX_BYTES` | 单张允许 Base64 发送的最大原图字节数 | `4194304` |
 | `RETRIEVAL_TOP_K` | 检索返回片段数 | `5` |
 | `RECALL_TOP_K` | 重排前的召回候选数 | `20` |
 | `RERANK_ENABLED` | 是否启用重排 | `true` |
@@ -153,6 +159,7 @@ copy .env.example .env            # 填入 DASHSCOPE_API_KEY
 - 对话与嵌入都依赖有效的 `DASHSCOPE_API_KEY`。
 - BM25 是内存索引，文档增删后会自动重建。
 - 数据默认放在 `./data/`（已在 `.gitignore` 忽略）。
+- 图片不会写入 Chroma：Chroma 仅保存结构化摘要、页码和 docstore 路径；生成阶段会再次校验路径位于 `DOCSTORE_DIR`，并且只加载被当前检索命中的图片。
 
 ## 测试与探测
 

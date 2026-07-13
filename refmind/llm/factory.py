@@ -125,6 +125,16 @@ def _build_chat(model: str, base_url: str, temperature: float) -> ChatOpenAI:
     )
 
 
+@lru_cache(maxsize=2)
+def get_multimodal_llm(temperature: float = 0.0) -> ChatOpenAI:
+    """返回阿里云 OpenAI 兼容接口的视觉模型。
+
+    该模型只用于图片摘要和已命中图片的最终回答，不接入文本模型的熔断降级，
+    以免降级模型不支持 ``image_url`` 消息格式。
+    """
+    return _build_chat(settings.multimodal_llm_model, settings.api_base, temperature)
+
+
 @lru_cache(maxsize=4)
 def _get_primary_model(temperature: float) -> ChatOpenAI:
     return _build_chat(settings.llm_model, settings.api_base, temperature)
@@ -230,4 +240,5 @@ def reset_model_cache() -> None:
     get_embedding_model.cache_clear()
     _get_primary_model.cache_clear()
     _get_fallback_model.cache_clear()
+    get_multimodal_llm.cache_clear()
     _circuit_breaker.force_reset()

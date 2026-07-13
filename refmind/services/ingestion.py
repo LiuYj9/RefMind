@@ -16,6 +16,8 @@ from langchain_core.documents import Document
 from .. import storage
 from ..config import settings
 from ..llm import generate_summary
+from ..llm.image_understanding import summarize_image
+from ..parsing.image_store import extract_pdf_figures
 from ..parsing import parse_pdf, save_parsed
 from ..plugins import CoreHook, get_plugin_manager
 from ..rag import (
@@ -102,6 +104,87 @@ def _safe_unlink(path: Path | None) -> None:
         path.unlink(missing_ok=True)
     except OSError:
         pass
+
+
+def _docstore_document_dir(doc_id: int) -> Path:
+    """返回单篇文档的资产目录；目录名只来自数据库整数，避免路径穿越。"""
+    root = getattr(settings, "docstore_dir", settings.parsed_dir.parent / "docstore")
+    return Path(root) / f"doc_{doc_id}"
+
+
+def _safe_remove_docstore(doc_id: int) -> None:
+    """仅删除当前文档自己的图片资产，清理失败不覆盖原始业务异常。"""
+    target = _docstore_document_dir(doc_id)
+    try:
+        root = Path(getattr(settings, "docstore_dir", settings.parsed_dir.parent / "docstore"))
+        target.resolve().relative_to(root.resolve())
+        shutil.rmtree(target, ignore_errors=True)
+    except (OSError, ValueError):
+        pass
+
+
+def _enrich_figure_blocks(
+    parsed: dict,
+    stored_pdf: Path,
+    *,
+    doc_id: int,
+) -> int:
+    """提取原图、生成摘要，并把二者关联回 MinerU 的 figure layout block。"""
+    blocks = parsed.setdefault("blocks", [])
+    if not isinstance(blocks, list):
+        return 0
+    figures = [block for block in blocks if isinstance(block, dict) and block.get("type") == "figure"]
+    assets = extract_pdf_figures(
+        stored_pdf,
+        docstore_dir=Path(getattr(settings, "docstore_dir", settings.parsed_dir.parent / "docstore")),
+        doc_id=doc_id,
+        figure_blocks=figures,
+    )
+    if not assets:
+        return 0
+    by_block = {str(asset["block_id"]): asset for asset in assets}
+    existing_ids = {str(block.get("block_id")) for block in figures}
+
+    for block in figures:
+        asset = by_block.get(str(block.get("block_id")))
+        if asset is None:
+            continue
+        block.update(asset)
+        caption = str(block.get("text") or "").strip()
+        summary = ""
+        if getattr(settings, "image_summary_enabled", True) and getattr(settings, "has_api_key", False):
+            try:
+                summary = summarize_image(asset["image_path"], caption=caption)
+            except Exception:
+                # MLLM 失败不影响文献文本入库；图注仍可参与检索。
+                summary = ""
+        block["text"] = _figure_index_text(summary, caption)
+
+    # PyMuPDF 回退没有 figure block 时，提取器创建的 synthetic 记录在这里成为可索引块。
+    for asset in assets:
+        if str(asset["block_id"]) in existing_ids:
+            continue
+        summary = ""
+        if getattr(settings, "image_summary_enabled", True) and getattr(settings, "has_api_key", False):
+            try:
+                summary = summarize_image(asset["image_path"])
+            except Exception:
+                summary = ""
+        blocks.append({"type": "figure", "reading_order": 10_000 + len(blocks), **asset,
+                       "text": _figure_index_text(summary, "")})
+    return len(assets)
+
+
+def _figure_index_text(summary: str, caption: str) -> str:
+    """向量化的仅是摘要/图注，绝不把 base64 或图片二进制混入文本索引。"""
+    parts = ["Figure"]
+    if caption:
+        parts.append(f"Caption: {caption}")
+    if summary:
+        parts.append(f"Visual summary: {summary}")
+    if len(parts) == 1:
+        parts.append("Visual summary unavailable; original figure is stored for multimodal answering.")
+    return "\n".join(parts)
 
 
 def _run_parse_hooks(
@@ -199,6 +282,7 @@ def _rollback_ingestion(
             return
 
     _safe_unlink(parsed_path)
+    _safe_remove_docstore(doc_id)
 
     if copied_source:
         _safe_unlink(stored_pdf)
@@ -255,6 +339,9 @@ def ingest_pdf(
             doc_id=doc_id,
             filename=filename,
         )
+
+        progress(0.28, "正在提取图片并生成可检索摘要 ...")
+        _enrich_figure_blocks(parsed, stored_pdf, doc_id=doc_id)
 
         # 将 doc_id 纳入文件名，避免同名重传覆盖其他记录的解析结果。
         parsed_path = (
@@ -359,6 +446,7 @@ def remove_document(doc_id: int) -> None:
         for path in (doc.original_path, doc.parsed_json_path):
             if path:
                 Path(path).unlink(missing_ok=True)
+        _safe_remove_docstore(doc_id)
         storage.delete_document(doc_id)
     except Exception as exc:  # noqa: BLE001
         # 删除是可重试状态机；保留 doc_id 让下次启动/人工操作继续收敛。

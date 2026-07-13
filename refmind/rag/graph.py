@@ -10,13 +10,14 @@ from __future__ import annotations
 from typing import Any, TypedDict
 
 from langchain_core.documents import Document
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import END, StateGraph
 
 from ..agents import AnswerDraft, MultiAgentConfig, MultiAgentOrchestrator
 from ..config import settings
-from ..llm import get_llm
+from ..llm import get_llm, get_multimodal_llm
+from ..llm.image_understanding import build_visual_content
 from ..plugins import CoreHook, get_plugin_manager
 from ..rag.compression import compress_context
 from ..rag.memory import RelevantMemory
@@ -180,21 +181,36 @@ def _generate_answer(
     if not documents:
         return NO_CONTEXT_REPLY
 
-    prompt = ChatPromptTemplate.from_messages(
+    formatted_documents = format_documents(documents)
+    visual_content = build_visual_content(documents)
+    if visual_content:
+        # 只有摘要已命中的图片才会从 docstore 读取并发送，避免全库图片进入上下文。
+        message_content = [
+            {
+                "type": "text",
+                "text": f"问题：{question}\n\n参考文档：\n{formatted_documents}",
+            },
+            *visual_content,
+        ]
+        response = get_multimodal_llm(temperature=settings.llm_temperature).invoke(
+            [SystemMessage(content=get_system_prompt()), *(history or []), HumanMessage(content=message_content)]
+        )
+    else:
+        prompt = ChatPromptTemplate.from_messages(
         [
             ("system", get_system_prompt()),
             ("placeholder", "{history}"),
             ("human", "问题：{question}\n\n参考文档：\n{documents}"),
         ]
-    )
-    chain = prompt | get_llm()
-    response = chain.invoke(
-        {
-            "history": history or [],
-            "question": question,
-            "documents": format_documents(documents),
-        }
-    )
+        )
+        chain = prompt | get_llm()
+        response = chain.invoke(
+            {
+                "history": history or [],
+                "question": question,
+                "documents": formatted_documents,
+            }
+        )
     answer = response.content
     if not run_after_hook:
         return answer

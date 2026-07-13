@@ -573,6 +573,11 @@ def render_settings() -> None:
             embedding_model = st.text_input(
                 "嵌入模型 EMBEDDING_MODEL", value=settings.embedding_model
             )
+        multimodal_model = st.text_input(
+            "图片摘要 / 携图回答模型 MULTIMODAL_LLM_MODEL",
+            value=settings.multimodal_llm_model,
+            help="仅在入库图片摘要和检索命中图片后的回答中调用。",
+        )
         col_c, col_d = st.columns(2)
         with col_c:
             temperature = st.number_input(
@@ -695,6 +700,7 @@ def render_settings() -> None:
                 "DASHSCOPE_API_KEY": api_key,
                 "API_BASE": api_base,
                 "LLM_MODEL": llm_model,
+                "MULTIMODAL_LLM_MODEL": multimodal_model,
                 "EMBEDDING_MODEL": embedding_model,
                 "LLM_TEMPERATURE": temperature,
                 "EMBEDDING_BATCH_SIZE": embedding_batch,

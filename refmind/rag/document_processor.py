@@ -108,6 +108,10 @@ def parsed_to_documents(
                 "bbox": scalar_metadata(item.bbox),
                 "layout_parser": parser,
                 "layout_confidence": parsed.get("layout_confidence", "high"),
+                # 路径只指向本地 docstore；生成阶段会再次校验其必须位于该目录。
+                "image_id": item.image_id or None,
+                "image_path": item.image_path or None,
+                "image_mime_type": item.image_mime_type or None,
             }
             documents.append(_make(item.text, item.page_start, item.section, extra))
         return documents

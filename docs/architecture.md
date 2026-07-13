@@ -35,6 +35,12 @@ PDF、解析 JSON、Chroma 与 SQLite 无法共享单一事务，因此入库服
 
 ### 2.1 Layout-aware 论文切分
 
+### 2.2 图片摘要索引与多模态回答
+
+`ingestion` 在 MinerU/PyMuPDF 完成版面解析后，依据 figure 的 `bbox` 裁剪页面（没有 bbox 时提取嵌入位图），将原图写入 `DOCSTORE_DIR/doc_<doc_id>/images/`。图片文件不进入 Chroma；入库时由 `qwen3.5-omni-plus-2026-03-15` 生成克制的结构化视觉摘要，摘要、图注、页码及受控的 `image_path` 一起作为 `figure` 文本块写入索引。
+
+检索流程先按摘要召回和重排。仅当最终证据块含有 `image_path` 时，回答层才校验路径仍位于 docstore、检查尺寸上限、Base64 编码原图，并将不超过 `IMAGE_MAX_PER_ANSWER` 张图片附到全模态模型消息中。图片摘要服务不可用不会中断文本入库；此时会保留图注或明确的降级标记。删除或入库回滚会同步清理该 `doc_id` 的 docstore 目录。
+
 解析结果保留旧版 `markdown/pages/tables`，并新增 `schema_version=2` 与 `blocks`。MinerU
 提供的阅读顺序优先于 bbox 推断；标题会开启新的章节，连续正文块只在同一章节内合并，
 表格、公式和图注保持原子语义单元，超过 `LAYOUT_CHUNK_MAX_CHARS` 才进行二次递归切分。

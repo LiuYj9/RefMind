@@ -28,6 +28,9 @@ class LayoutChunk:
     content_type: str
     block_ids: list[str] = field(default_factory=list)
     bbox: list[float] = field(default_factory=list)
+    image_id: str = ""
+    image_path: str = ""
+    image_mime_type: str = ""
 
 
 def _integer(value: Any, default: int = 1) -> int:
@@ -96,7 +99,16 @@ def layout_chunks(
         ids = [str(item.get("block_id")) for item in items if item.get("block_id")]
         bbox = items[0].get("bbox") if len(items) == 1 else []
         for part in _split_long(text, max_chars, overlap):
-            chunks.append(LayoutChunk(part, min(pages), max(page_ends), section, content_type, ids, bbox or []))
+            # 图片资产只属于单一 figure 原子块，普通段落不得继承其路径。
+            source = items[0] if len(items) == 1 else {}
+            chunks.append(
+                LayoutChunk(
+                    part, min(pages), max(page_ends), section, content_type, ids,
+                    bbox or [], str(source.get("image_id") or ""),
+                    str(source.get("image_path") or ""),
+                    str(source.get("image_mime_type") or ""),
+                )
+            )
 
     def flush() -> None:
         nonlocal pending

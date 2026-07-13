@@ -56,6 +56,10 @@ class Settings:
 
         # 模型
         self.llm_model = os.getenv("LLM_MODEL", "qwen3.7-plus")
+        # 图片摘要与携图问答使用独立的全模态模型，避免普通文本模型收到 data URL。
+        self.multimodal_llm_model = os.getenv(
+            "MULTIMODAL_LLM_MODEL", "qwen3.5-omni-plus-2026-03-15"
+        )
         # 多模态嵌入模型不支持 OpenAI 兼容接口，默认使用文本嵌入模型
         self.embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-v4")
         self.llm_temperature = _get_float("LLM_TEMPERATURE", 0.1)
@@ -87,6 +91,11 @@ class Settings:
         )
         self.upload_dir = self._resolve(os.getenv("UPLOAD_DIR", "./data/uploads"))
         self.parsed_dir = self._resolve(os.getenv("PARSED_DIR", "./data/parsed"))
+        # docstore 只保存原图等二进制资产；Chroma 中仅保存可检索的文字摘要和路径元数据。
+        self.docstore_dir = self._resolve(os.getenv("DOCSTORE_DIR", "./data/docstore"))
+        self.image_summary_enabled = _get_bool("IMAGE_SUMMARY_ENABLED", True)
+        self.image_max_per_answer = min(8, max(1, _get_int("IMAGE_MAX_PER_ANSWER", 3)))
+        self.image_max_bytes = max(64 * 1024, _get_int("IMAGE_MAX_BYTES", 4 * 1024 * 1024))
 
         # 检索 / 记忆相关参数
         self.retrieval_top_k = _get_int("RETRIEVAL_TOP_K", 5)
@@ -152,6 +161,7 @@ class Settings:
             self.chroma_persist_dir,
             self.upload_dir,
             self.parsed_dir,
+            self.docstore_dir,
             self.database_path.parent,
         ):
             path.mkdir(parents=True, exist_ok=True)
@@ -172,11 +182,14 @@ class Settings:
         "DASHSCOPE_API_KEY": ("dashscope_api_key", str),
         "API_BASE": ("api_base", str),
         "LLM_MODEL": ("llm_model", str),
+        "MULTIMODAL_LLM_MODEL": ("multimodal_llm_model", str),
         "LLM_FALLBACK_MODEL": ("fallback_llm_model", str),
         "LLM_FALLBACK_API_BASE": ("fallback_api_base", str),
         "LLM_HEALTH_CHECK_INTERVAL": ("llm_health_check_interval", int),
         "LLM_CIRCUIT_FAILURE_THRESHOLD": ("llm_circuit_failure_threshold", int),
         "EMBEDDING_MODEL": ("embedding_model", str),
+        "IMAGE_SUMMARY_ENABLED": ("image_summary_enabled", _as_bool),
+        "IMAGE_MAX_PER_ANSWER": ("image_max_per_answer", int),
         "LLM_TEMPERATURE": ("llm_temperature", float),
         "CHUNK_SIZE": ("chunk_size", int),
         "CHUNK_OVERLAP": ("chunk_overlap", int),

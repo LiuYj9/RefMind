@@ -327,7 +327,9 @@ def _collect_mineru_layout_blocks(out_dir: Path, stem: str) -> list[dict[str, An
             kind = _layout_type(item)
             text = _layout_text(item, kind)
             # 表格由标准化 tables 路径生成，避免原始 page 文本与结构化表格重复索引。
-            if kind == "table" or not text:
+            # figure 即便没有图注也必须保留：入库编排会从 PDF 提取原图并由 MLLM
+            # 生成摘要；其他无文本块仍不进入索引。
+            if kind == "table" or (not text and kind != "figure"):
                 continue
             blocks.append(
                 {
