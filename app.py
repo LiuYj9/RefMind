@@ -70,10 +70,10 @@ def current_group() -> storage.Group | None:
     return storage.get_group(gid) if gid else None
 
 
-def get_memory(session_id: int) -> RelevantMemory:
+def get_memory(session_id: int, group_id: int | None = None) -> RelevantMemory:
     key = f"memory_{session_id}"
     if key not in st.session_state:
-        st.session_state[key] = RelevantMemory(session_id)
+        st.session_state[key] = RelevantMemory(session_id, group_id=group_id)
     return st.session_state[key]
 
 
@@ -397,7 +397,7 @@ def render_chat(group: storage.Group) -> None:
             st.markdown(pending_text)
         with st.chat_message("assistant"):
             with st.spinner("检索并生成回答中 ..."):
-                memory = get_memory(session_id)
+                memory = get_memory(session_id, group.id)
                 try:
                     result = answer_question(pending_text, group.id, memory=memory)
                 except Exception as exc:  # noqa: BLE001
@@ -613,6 +613,40 @@ def render_settings() -> None:
                 value=float(settings.memory_relevance_threshold), step=0.05,
             )
 
+        st.markdown("**跨会话用户长期记忆（SQLite）**")
+        col_ltm_a, col_ltm_b = st.columns(2)
+        with col_ltm_a:
+            long_term_memory_enabled = st.checkbox(
+                "启用语义记忆与情景记忆",
+                value=bool(settings.long_term_memory_enabled),
+                help="仅保存用户偏好、研究背景和任务事件；论文事实仍只进入文献索引。",
+            )
+            long_term_memory_top_k = st.number_input(
+                "长期记忆召回数", 1, 20,
+                value=int(settings.long_term_memory_top_k),
+            )
+            long_term_memory_relevance = st.number_input(
+                "长期记忆相关性阈值", 0.0, 1.0,
+                value=float(settings.long_term_memory_relevance_threshold),
+                step=0.05,
+            )
+        with col_ltm_b:
+            long_term_memory_importance = st.number_input(
+                "最低重要度", 0.0, 1.0,
+                value=float(settings.long_term_memory_min_importance),
+                step=0.05,
+            )
+            long_term_memory_confidence = st.number_input(
+                "最低置信度", 0.0, 1.0,
+                value=float(settings.long_term_memory_min_confidence),
+                step=0.05,
+            )
+            long_term_memory_duplicate = st.number_input(
+                "重复合并阈值", 0.5, 1.0,
+                value=float(settings.long_term_memory_duplicate_threshold),
+                step=0.01,
+            )
+
         st.markdown("**召回 · 重排 · 上下文压缩**")
         col_j, col_k = st.columns(2)
         with col_j:
@@ -709,6 +743,12 @@ def render_settings() -> None:
                 "CHUNK_OVERLAP": chunk_overlap,
                 "MEMORY_MAX_TURNS": mem_turns,
                 "MEMORY_RELEVANCE_THRESHOLD": mem_thr,
+                "LONG_TERM_MEMORY_ENABLED": long_term_memory_enabled,
+                "LONG_TERM_MEMORY_TOP_K": long_term_memory_top_k,
+                "LONG_TERM_MEMORY_RELEVANCE_THRESHOLD": long_term_memory_relevance,
+                "LONG_TERM_MEMORY_MIN_IMPORTANCE": long_term_memory_importance,
+                "LONG_TERM_MEMORY_MIN_CONFIDENCE": long_term_memory_confidence,
+                "LONG_TERM_MEMORY_DUPLICATE_THRESHOLD": long_term_memory_duplicate,
                 "RECALL_TOP_K": recall_top_k,
                 "RERANK_ENABLED": rerank_enabled,
                 "RERANK_MODEL": rerank_model,

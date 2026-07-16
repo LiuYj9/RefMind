@@ -17,7 +17,14 @@ from .graph import (
     get_system_prompt,
 )
 from .compression import compress_context
-from .memory import RelevantMemory
+from .memory import (
+    LongTermMemoryService,
+    MemoryCandidate,
+    MemoryUpdateResult,
+    RelevantMemory,
+    RetrievedMemory,
+    format_long_term_memories,
+)
 from .reranker import dashscope_sdk_available, rerank
 from .retrieval import build_retriever, get_retriever, invalidate_retriever
 
@@ -38,6 +45,11 @@ __all__ = [
     "compress_context",
     # 记忆
     "RelevantMemory",
+    "LongTermMemoryService",
+    "MemoryCandidate",
+    "RetrievedMemory",
+    "MemoryUpdateResult",
+    "format_long_term_memories",
     # 对话图
     "answer_question",
     "build_graph",

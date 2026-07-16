@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Optional
 
 from .connection import connect
-from .models import DocumentRow, Group, Message, Session
+from .models import DocumentRow, Group, LongTermMemory, Message, Session
 
 
 # 用户组
@@ -196,3 +196,143 @@ def clear_messages(session_id: int) -> None:
     """清空某会话的全部消息。"""
     with connect() as conn:
         conn.execute("DELETE FROM messages WHERE session_id = ?", (session_id,))
+
+
+# 用户长期记忆
+def create_long_term_memory(
+    *,
+    user_id: str,
+    group_id: int,
+    session_id: int | None,
+    content: str,
+    memory_type: str,
+    subtype: str,
+    memory_key: str | None,
+    content_hash: str,
+    importance: float,
+    confidence: float,
+    embedding: str | None,
+    source: str = "conversation",
+    expires_at: str | None = None,
+) -> LongTermMemory:
+    """新增一条已通过价值判断的长期记忆。"""
+    with connect() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO long_term_memories (
+                user_id, group_id, session_id, content, memory_type, subtype,
+                memory_key, content_hash, importance, confidence, embedding,
+                source, expires_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                group_id,
+                session_id,
+                content,
+                memory_type,
+                subtype,
+                memory_key,
+                content_hash,
+                importance,
+                confidence,
+                embedding,
+                source,
+                expires_at,
+            ),
+        )
+        memory_id = int(cur.lastrowid)
+    memory = get_long_term_memory(memory_id)
+    if memory is None:  # pragma: no cover - SQLite INSERT 后的防御边界
+        raise RuntimeError("长期记忆写入后无法读取")
+    return memory
+
+
+def get_long_term_memory(memory_id: int) -> LongTermMemory | None:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM long_term_memories WHERE id = ?", (memory_id,)
+        ).fetchone()
+    return LongTermMemory(**row) if row else None
+
+
+def list_long_term_memories(
+    user_id: str,
+    group_id: int,
+    *,
+    active_only: bool = True,
+    limit: int | None = None,
+) -> list[LongTermMemory]:
+    """按用户与文献库边界列出长期记忆。"""
+    clauses = ["user_id = ?", "group_id = ?"]
+    params: list[object] = [user_id, group_id]
+    if active_only:
+        clauses.append("is_active = 1")
+    query = (
+        "SELECT * FROM long_term_memories WHERE "
+        + " AND ".join(clauses)
+        + " ORDER BY updated_at DESC, id DESC"
+    )
+    if limit is not None:
+        query += " LIMIT ?"
+        params.append(limit)
+    with connect() as conn:
+        rows = conn.execute(query, params).fetchall()
+    return [LongTermMemory(**row) for row in rows]
+
+
+def update_long_term_memory(memory_id: int, **changes: object) -> None:
+    """更新允许变更的记忆字段，并刷新 ``updated_at``。"""
+    allowed = {
+        "session_id",
+        "content",
+        "memory_type",
+        "subtype",
+        "memory_key",
+        "content_hash",
+        "importance",
+        "confidence",
+        "embedding",
+        "source",
+        "is_active",
+        "expires_at",
+        "superseded_by",
+    }
+    items = [(key, value) for key, value in changes.items() if key in allowed]
+    if not items:
+        return
+    assignments = [f"{key} = ?" for key, _ in items]
+    values = [value for _, value in items]
+    values.append(memory_id)
+    with connect() as conn:
+        conn.execute(
+            f"UPDATE long_term_memories SET {', '.join(assignments)}, "
+            "updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            values,
+        )
+
+
+def touch_long_term_memories(memory_ids: list[int]) -> None:
+    """记录记忆被实际召回，供衰减策略判断是否仍有价值。"""
+    if not memory_ids:
+        return
+    placeholders = ",".join("?" for _ in memory_ids)
+    with connect() as conn:
+        conn.execute(
+            f"""
+            UPDATE long_term_memories
+            SET access_count = access_count + 1,
+                last_accessed_at = CURRENT_TIMESTAMP
+            WHERE id IN ({placeholders}) AND is_active = 1
+            """,
+            memory_ids,
+        )
+
+
+def deactivate_long_term_memory(
+    memory_id: int, *, superseded_by: int | None = None
+) -> None:
+    """软失效记忆，保留来源审计与冲突演进记录。"""
+    update_long_term_memory(
+        memory_id, is_active=0, superseded_by=superseded_by
+    )

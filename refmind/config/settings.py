@@ -53,6 +53,8 @@ class Settings:
         self.api_base = os.getenv(
             "API_BASE", "https://dashscope.aliyuncs.com/compatible-mode/v1"
         )
+        # 当前版本是本地单用户应用；显式 ID 为未来认证/多用户部署保留隔离边界。
+        self.user_id = os.getenv("REFMIND_USER_ID", "local_user").strip() or "local_user"
 
         # 模型
         self.llm_model = os.getenv("LLM_MODEL", "qwen3.7-plus")
@@ -102,6 +104,43 @@ class Settings:
         self.memory_max_turns = _get_int("MEMORY_MAX_TURNS", 30)
         self.memory_relevance_threshold = _get_float(
             "MEMORY_RELEVANCE_THRESHOLD", 0.3
+        )
+        # 跨会话用户长期记忆。与论文 Chroma/BM25 索引完全分离。
+        self.long_term_memory_enabled = _get_bool("LONG_TERM_MEMORY_ENABLED", True)
+        self.long_term_memory_top_k = max(1, _get_int("LONG_TERM_MEMORY_TOP_K", 6))
+        self.long_term_memory_scan_limit = max(
+            self.long_term_memory_top_k,
+            _get_int("LONG_TERM_MEMORY_SCAN_LIMIT", 500),
+        )
+        self.long_term_memory_max_candidates = min(
+            8, max(1, _get_int("LONG_TERM_MEMORY_MAX_CANDIDATES", 4))
+        )
+        self.long_term_memory_min_importance = _get_float(
+            "LONG_TERM_MEMORY_MIN_IMPORTANCE", 0.45
+        )
+        self.long_term_memory_min_confidence = _get_float(
+            "LONG_TERM_MEMORY_MIN_CONFIDENCE", 0.70
+        )
+        self.long_term_memory_relevance_threshold = _get_float(
+            "LONG_TERM_MEMORY_RELEVANCE_THRESHOLD", 0.30
+        )
+        self.long_term_memory_duplicate_threshold = _get_float(
+            "LONG_TERM_MEMORY_DUPLICATE_THRESHOLD", 0.92
+        )
+        self.long_term_memory_archive_threshold = _get_float(
+            "LONG_TERM_MEMORY_ARCHIVE_THRESHOLD", 0.15
+        )
+        self.semantic_memory_half_life_days = max(
+            1, _get_int("SEMANTIC_MEMORY_HALF_LIFE_DAYS", 180)
+        )
+        self.episodic_memory_half_life_days = max(
+            1, _get_int("EPISODIC_MEMORY_HALF_LIFE_DAYS", 45)
+        )
+        self.semantic_memory_max_inactive_days = max(
+            1, _get_int("SEMANTIC_MEMORY_MAX_INACTIVE_DAYS", 730)
+        )
+        self.episodic_memory_max_inactive_days = max(
+            1, _get_int("EPISODIC_MEMORY_MAX_INACTIVE_DAYS", 180)
         )
         self.chunk_size = _get_int("CHUNK_SIZE", 1000)
         self.chunk_overlap = _get_int("CHUNK_OVERLAP", 200)
@@ -181,6 +220,7 @@ class Settings:
     _ENV_ATTR_MAP = {
         "DASHSCOPE_API_KEY": ("dashscope_api_key", str),
         "API_BASE": ("api_base", str),
+        "REFMIND_USER_ID": ("user_id", str),
         "LLM_MODEL": ("llm_model", str),
         "MULTIMODAL_LLM_MODEL": ("multimodal_llm_model", str),
         "LLM_FALLBACK_MODEL": ("fallback_llm_model", str),
@@ -197,6 +237,43 @@ class Settings:
         "RETRIEVAL_TOP_K": ("retrieval_top_k", int),
         "MEMORY_MAX_TURNS": ("memory_max_turns", int),
         "MEMORY_RELEVANCE_THRESHOLD": ("memory_relevance_threshold", float),
+        "LONG_TERM_MEMORY_ENABLED": ("long_term_memory_enabled", _as_bool),
+        "LONG_TERM_MEMORY_TOP_K": ("long_term_memory_top_k", int),
+        "LONG_TERM_MEMORY_SCAN_LIMIT": ("long_term_memory_scan_limit", int),
+        "LONG_TERM_MEMORY_MAX_CANDIDATES": (
+            "long_term_memory_max_candidates",
+            int,
+        ),
+        "LONG_TERM_MEMORY_MIN_IMPORTANCE": (
+            "long_term_memory_min_importance",
+            float,
+        ),
+        "LONG_TERM_MEMORY_MIN_CONFIDENCE": (
+            "long_term_memory_min_confidence",
+            float,
+        ),
+        "LONG_TERM_MEMORY_RELEVANCE_THRESHOLD": (
+            "long_term_memory_relevance_threshold",
+            float,
+        ),
+        "LONG_TERM_MEMORY_DUPLICATE_THRESHOLD": (
+            "long_term_memory_duplicate_threshold",
+            float,
+        ),
+        "LONG_TERM_MEMORY_ARCHIVE_THRESHOLD": (
+            "long_term_memory_archive_threshold",
+            float,
+        ),
+        "SEMANTIC_MEMORY_HALF_LIFE_DAYS": ("semantic_memory_half_life_days", int),
+        "EPISODIC_MEMORY_HALF_LIFE_DAYS": ("episodic_memory_half_life_days", int),
+        "SEMANTIC_MEMORY_MAX_INACTIVE_DAYS": (
+            "semantic_memory_max_inactive_days",
+            int,
+        ),
+        "EPISODIC_MEMORY_MAX_INACTIVE_DAYS": (
+            "episodic_memory_max_inactive_days",
+            int,
+        ),
         "EMBEDDING_BATCH_SIZE": ("embedding_batch_size", int),
         "RECALL_TOP_K": ("recall_top_k", int),
         "RERANK_ENABLED": ("rerank_enabled", _as_bool),

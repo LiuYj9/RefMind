@@ -42,6 +42,41 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(session_id) REFERENCES sessions(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS long_term_memories (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id         TEXT NOT NULL,
+    group_id        INTEGER NOT NULL,
+    session_id      INTEGER,
+    content         TEXT NOT NULL,
+    memory_type     TEXT NOT NULL CHECK(memory_type IN ('semantic', 'episodic')),
+    subtype         TEXT DEFAULT 'other',
+    memory_key      TEXT,
+    content_hash    TEXT NOT NULL,
+    importance      REAL NOT NULL DEFAULT 0.5,
+    confidence      REAL NOT NULL DEFAULT 0.5,
+    embedding       TEXT,
+    source          TEXT NOT NULL DEFAULT 'conversation',
+    is_active       INTEGER NOT NULL DEFAULT 1,
+    access_count    INTEGER NOT NULL DEFAULT 0,
+    last_accessed_at TIMESTAMP,
+    expires_at      TIMESTAMP,
+    superseded_by   INTEGER,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE,
+    FOREIGN KEY(session_id) REFERENCES sessions(id) ON DELETE SET NULL,
+    FOREIGN KEY(superseded_by) REFERENCES long_term_memories(id) ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_long_term_memory_scope
+ON long_term_memories(user_id, group_id, is_active);
+
+CREATE INDEX IF NOT EXISTS idx_long_term_memory_key
+ON long_term_memories(user_id, group_id, memory_key, is_active);
+
+CREATE INDEX IF NOT EXISTS idx_long_term_memory_hash
+ON long_term_memories(user_id, group_id, content_hash, is_active);
 """
 
 
@@ -88,3 +123,29 @@ class Message:
     role: str
     content: str
     created_at: str
+
+
+@dataclass
+class LongTermMemory:
+    """跨会话的用户长期记忆；论文事实不进入此表。"""
+
+    id: int
+    user_id: str
+    group_id: int
+    session_id: Optional[int]
+    content: str
+    memory_type: str
+    subtype: str
+    memory_key: Optional[str]
+    content_hash: str
+    importance: float
+    confidence: float
+    embedding: Optional[str]
+    source: str
+    is_active: int
+    access_count: int
+    last_accessed_at: Optional[str]
+    expires_at: Optional[str]
+    superseded_by: Optional[int]
+    created_at: str
+    updated_at: str

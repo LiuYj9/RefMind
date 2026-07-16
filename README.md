@@ -18,7 +18,7 @@ RefMind 是一个面向科研文献阅读的 RAG 问答系统，基于 LangChain
 - PDF 解析与论文切分：优先 MinerU 保留标题、段落、公式、图表、页码、阅读顺序和 bbox；按章节边界合并语义块，未安装或失败时回退 PyMuPDF
 - 图片检索与问答：入库时将原图保存到本地 docstore，并用 `qwen3.5-omni-plus-2026-03-15` 生成结构化摘要写入文本索引；命中图片摘要后才读取原图、Base64 编码并交给全模态模型回答
 - 多文献库隔离：每个库独立的 Chroma 集合与持久化目录，互不干扰
-- 长对话记忆：按语义相似度筛选相关历史，而不是无脑保留最近若干轮
+- 三层记忆：SQLite 会话历史、SQLite 用户长期语义/情景记忆、Chroma + BM25 论文知识严格隔离
 - 翻译与摘要：流式输出，翻译可结合当前文献库做术语对齐，入库时自动生成摘要
 - 熔断降级：主对话模型连续失败后临时切到备选模型，冷却后再探测切回
 - 受控 multi-agent：规划、并行检索、可选证据审查与答案审校职责分离，失败自动回退基线
@@ -99,8 +99,9 @@ copy .env.example .env            # 填入 DASHSCOPE_API_KEY
   rerank 模型，未安装或失败时回退到嵌入余弦相似度，只保留最相关的前若干条。
 - 上下文压缩：精排后再去掉近似重复分块、按句子粒度剔除离题内容、按字数预算截断，
   在保留关键证据的同时降低冗余与 token 消耗；嵌入不可用时退化为仅按字数截断。
-- 记忆过滤：用余弦相似度筛掉与当前问题无关的历史消息，控制 token 成本。
-- 无检索即拒答：LangGraph 的 retrieve→generate 流程里，检索为空时直接返回“未找到相关内容”，减少幻觉。
+- 记忆治理：会话历史按相关性过滤；跨会话用户记忆经原子提取、价值阈值、重复合并、
+  同主题冲突失效和按类型时间衰减后再召回。论文事实从不写入用户记忆表。
+- 无检索即拒答：LangGraph 的论文 `retrieve→generate` 核心段中，检索为空时直接返回“未找到相关内容”，减少幻觉。
 - 解析容错：MinerU 失败自动回退 PyMuPDF，保证基本可用。
 - 可恢复写入/删除：源 PDF 使用 `doc_id` 唯一路径，解析 JSON 原子替换；异常时按
   `doc_id` 补偿，进程强杀留下的非 `ready` 记录会在下次启动继续清理。
@@ -122,6 +123,7 @@ copy .env.example .env            # 填入 DASHSCOPE_API_KEY
 | 变量 | 说明 | 默认值 |
 |------|------|--------|
 | `DASHSCOPE_API_KEY` | DashScope API Key | 必填 |
+| `REFMIND_USER_ID` | 本地长期记忆的用户隔离 ID | `local_user` |
 | `LLM_MODEL` | 对话模型 | `qwen3.7-plus` |
 | `MULTIMODAL_LLM_MODEL` | 图片摘要及携图回答模型 | `qwen3.5-omni-plus-2026-03-15` |
 | `LLM_FALLBACK_MODEL` | 备选模型（留空则不降级） | 空 |
@@ -143,6 +145,13 @@ copy .env.example .env            # 填入 DASHSCOPE_API_KEY
 | `CONTEXT_MAX_CHARS` | 送入 Prompt 的上下文字数上限 | `4000` |
 | `MEMORY_MAX_TURNS` | 记忆保留轮数 | `30` |
 | `MEMORY_RELEVANCE_THRESHOLD` | 记忆相关性阈值 | `0.3` |
+| `LONG_TERM_MEMORY_ENABLED` | 启用跨会话语义/情景记忆 | `true` |
+| `LONG_TERM_MEMORY_TOP_K` | 单轮最多召回长期记忆数 | `6` |
+| `LONG_TERM_MEMORY_MIN_IMPORTANCE` | 候选写入最低重要度 | `0.45` |
+| `LONG_TERM_MEMORY_MIN_CONFIDENCE` | 候选写入最低置信度 | `0.70` |
+| `LONG_TERM_MEMORY_DUPLICATE_THRESHOLD` | 重复记忆合并阈值 | `0.92` |
+| `SEMANTIC_MEMORY_HALF_LIFE_DAYS` | 语义记忆权重半衰期（天） | `180` |
+| `EPISODIC_MEMORY_HALF_LIFE_DAYS` | 情景记忆权重半衰期（天） | `45` |
 | `MULTI_AGENT_ENABLED` | 启用受控 multi-agent | `true` |
 | `MULTI_AGENT_MAX_SUBQUERIES` | 最大检索子查询数（1~3） | `3` |
 | `MULTI_AGENT_MAX_WORKERS` | 并行检索线程数 | `3` |

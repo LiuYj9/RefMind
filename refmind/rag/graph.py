@@ -1,6 +1,6 @@
 """RAG 对话流程：基础 LangGraph + 可降级的 multi-agent 增强。
 
-基础图保留 ``retrieve -> generate``，便于评测和故障降级。启用 multi-agent 时，
+基础图在 ``retrieve -> generate`` 两侧加入独立的长期记忆节点。启用 multi-agent 时，
 规划角色生成少量互补子查询，检索角色并发召回，合并后只做一次重排与压缩，
 最后由生成/审校角色输出答案。所有增强步骤都可回退到原单查询链路。
 """
@@ -20,7 +20,14 @@ from ..llm import get_llm, get_multimodal_llm
 from ..llm.image_understanding import build_visual_content
 from ..plugins import CoreHook, get_plugin_manager
 from ..rag.compression import compress_context
-from ..rag.memory import RelevantMemory
+from ..rag.memory import (
+    LongTermMemoryService,
+    MemoryCandidate,
+    MemoryUpdateResult,
+    RelevantMemory,
+    RetrievedMemory,
+    format_long_term_memories,
+)
 from ..rag.reranker import rerank
 from ..rag.retrieval import get_retriever
 
@@ -36,7 +43,9 @@ def get_system_prompt() -> str:
 3. 回答中的引用统一使用参考文档标签（如 [片段1]），不要在正文重复完整长文件名；
    详细文档名与页码会由界面的“参考来源”区域展示。
 4. 回答使用中文，但若涉及专业术语可保留英文。
-5. 保持礼貌、专业，不要与用户进行无关的闲聊。"""
+5. “用户长期记忆”只用于理解用户偏好、研究背景和组织答案，不能作为论文事实或学术结论的依据；
+   所有论文结论、数值与引用仍必须由“参考文档”支撑，不得引用用户记忆作为证据。
+6. 保持礼貌、专业，不要与用户进行无关的闲聊。"""
 
 
 def format_documents(documents: list[Document]) -> str:
@@ -57,8 +66,14 @@ def format_documents(documents: list[Document]) -> str:
 
 class GraphState(TypedDict, total=False):
     question: str
+    retrieval_question: str
     group_id: int
+    user_id: str
+    session_id: int | None
     history: list[BaseMessage]
+    long_term_memories: list[RetrievedMemory]
+    memory_candidates: list[MemoryCandidate]
+    memory_update: MemoryUpdateResult
     documents: list[Document]
     answer: str
 
@@ -95,8 +110,81 @@ def _run_document_hook(
 
 def _retrieve_node(state: GraphState) -> GraphState:
     return {
-        "documents": _retrieve_documents(state["question"], state["group_id"])
+        "documents": _retrieve_documents(
+            state.get("retrieval_question", state["question"]), state["group_id"]
+        )
     }
+
+
+_LONG_TERM_MEMORY_SERVICE: LongTermMemoryService | None = None
+
+
+def _get_long_term_memory_service() -> LongTermMemoryService:
+    global _LONG_TERM_MEMORY_SERVICE
+    if _LONG_TERM_MEMORY_SERVICE is None:
+        _LONG_TERM_MEMORY_SERVICE = LongTermMemoryService()
+    return _LONG_TERM_MEMORY_SERVICE
+
+
+def _memory_augmented_query(
+    question: str, memories: list[RetrievedMemory]
+) -> str:
+    """仅为论文召回补充用户研究语境，不改变最终回答问题。"""
+    retrieval_context = [
+        item.memory.content
+        for item in memories
+        if item.memory.subtype in {"research", "task", "terminology", "background"}
+        or (
+            item.memory.subtype == "preference"
+            and any(
+                token in item.memory.content
+                for token in ("论文", "文献", "实验", "推荐", "检索")
+            )
+        )
+    ]
+    if not retrieval_context:
+        return question
+    context = "；".join(retrieval_context)
+    return f"{question}\n用户研究与偏好上下文：{context}"
+
+
+def _memory_retrieve_node(state: GraphState) -> GraphState:
+    try:
+        memories = _get_long_term_memory_service().search(
+            state["question"],
+            user_id=state.get("user_id", settings.user_id),
+            group_id=state["group_id"],
+        )
+    except Exception:  # noqa: BLE001 - 记忆增强不得阻断论文问答
+        memories = []
+    return {
+        "long_term_memories": memories,
+        "retrieval_question": _memory_augmented_query(state["question"], memories),
+    }
+
+
+def _memory_extract_node(state: GraphState) -> GraphState:
+    try:
+        candidates = _get_long_term_memory_service().extract(
+            state["question"],
+            recalled_memories=state.get("long_term_memories") or [],
+        )
+    except Exception:  # noqa: BLE001 - 提取失败只跳过本轮记忆
+        candidates = []
+    return {"memory_candidates": candidates}
+
+
+def _memory_update_node(state: GraphState) -> GraphState:
+    try:
+        result = _get_long_term_memory_service().update(
+            state.get("memory_candidates") or [],
+            user_id=state.get("user_id", settings.user_id),
+            group_id=state["group_id"],
+            session_id=state.get("session_id"),
+        )
+    except Exception:  # noqa: BLE001 - 写入失败不影响主答案
+        result = MemoryUpdateResult(skipped=len(state.get("memory_candidates") or []))
+    return {"memory_update": result}
 
 
 def _retrieve_documents(question: str, group_id: int) -> list[Document]:
@@ -151,6 +239,7 @@ def _generate_node(state: GraphState) -> GraphState:
             state["question"],
             documents,
             state.get("history", []),
+            state.get("long_term_memories", []),
         ),
         # hook 可能替换证据，必须把同一份文档返回给 UI，避免答案与引用不一致。
         "documents": documents,
@@ -174,6 +263,7 @@ def _generate_answer(
     question: str,
     documents: list[Document],
     history: list[BaseMessage] | None = None,
+    long_term_memories: list[RetrievedMemory] | None = None,
     *,
     run_after_hook: bool = True,
 ) -> str:
@@ -182,13 +272,17 @@ def _generate_answer(
         return NO_CONTEXT_REPLY
 
     formatted_documents = format_documents(documents)
+    formatted_memories = format_long_term_memories(long_term_memories or [])
     visual_content = build_visual_content(documents)
     if visual_content:
         # 只有摘要已命中的图片才会从 docstore 读取并发送，避免全库图片进入上下文。
         message_content = [
             {
                 "type": "text",
-                "text": f"问题：{question}\n\n参考文档：\n{formatted_documents}",
+                "text": (
+                    f"问题：{question}\n\n【用户长期记忆】\n{formatted_memories}"
+                    f"\n\n【论文检索证据】\n{formatted_documents}"
+                ),
             },
             *visual_content,
         ]
@@ -200,7 +294,11 @@ def _generate_answer(
         [
             ("system", get_system_prompt()),
             ("placeholder", "{history}"),
-            ("human", "问题：{question}\n\n参考文档：\n{documents}"),
+            (
+                "human",
+                "问题：{question}\n\n【用户长期记忆】\n{user_memories}"
+                "\n\n【论文检索证据】\n{documents}",
+            ),
         ]
         )
         chain = prompt | get_llm()
@@ -208,6 +306,7 @@ def _generate_answer(
             {
                 "history": history or [],
                 "question": question,
+                "user_memories": formatted_memories,
                 "documents": formatted_documents,
             }
         )
@@ -223,11 +322,17 @@ def _generate_answer(
 
 def build_graph():
     workflow = StateGraph(GraphState)
+    workflow.add_node("memory_retrieve", _memory_retrieve_node)
     workflow.add_node("retrieve", _retrieve_node)
     workflow.add_node("generate", _generate_node)
-    workflow.set_entry_point("retrieve")
+    workflow.add_node("memory_extract", _memory_extract_node)
+    workflow.add_node("memory_update", _memory_update_node)
+    workflow.set_entry_point("memory_retrieve")
+    workflow.add_edge("memory_retrieve", "retrieve")
     workflow.add_edge("retrieve", "generate")
-    workflow.add_edge("generate", END)
+    workflow.add_edge("generate", "memory_extract")
+    workflow.add_edge("memory_extract", "memory_update")
+    workflow.add_edge("memory_update", END)
     return workflow.compile()
 
 
@@ -245,6 +350,7 @@ def _answer_with_agents(
     question: str,
     group_id: int,
     history: list[BaseMessage],
+    long_term_memories: list[RetrievedMemory] | None = None,
 ) -> dict[str, Any]:
     """运行受控 multi-agent；返回值额外携带可观测的降级信息。"""
     # 先取得一次缓存检索器，再把其 invoke 注入 worker，避免线程内并发改写全局缓存。
@@ -284,9 +390,13 @@ def _answer_with_agents(
             original_question=question,
         )
 
-    def _answer(query: str, documents: list[Document]) -> str:
+    def _answer(_query: str, documents: list[Document]) -> str:
         return _generate_answer(
-            query, documents, history, run_after_hook=False
+            question,
+            documents,
+            history,
+            long_term_memories,
+            run_after_hook=False,
         )
 
     def _prepare(query: str, documents: list[Document]) -> list[Document]:
@@ -301,13 +411,20 @@ def _answer_with_agents(
         )
         return AnswerDraft(
             _generate_answer(
-                query, documents, history, run_after_hook=False
+                question,
+                documents,
+                history,
+                long_term_memories,
+                run_after_hook=False,
             ),
             documents,
         )
 
+    retrieval_question = _memory_augmented_query(
+        question, long_term_memories or []
+    )
     result = orchestrator.run(
-        question,
+        retrieval_question,
         retrieve=_retrieve,
         postprocess=_postprocess_documents,
         prepare=_prepare,
@@ -348,13 +465,34 @@ def answer_question(
     if memory is not None:
         history = memory.get_relevant_history(question)
 
+    user_id = memory.user_id if memory is not None else settings.user_id
+    session_id = memory.session_id if memory is not None else None
+    memory_state: GraphState = {
+        "question": question,
+        "group_id": group_id,
+        "user_id": user_id,
+        "session_id": session_id,
+    }
+
     try:
         if settings.multi_agent_enabled:
-            result = _answer_with_agents(question, group_id, history)
+            memory_state.update(_memory_retrieve_node(memory_state))
+            result = _answer_with_agents(
+                question,
+                group_id,
+                history,
+                memory_state.get("long_term_memories") or [],
+            )
+            memory_state["answer"] = result.get("answer", NO_CONTEXT_REPLY)
+            memory_state.update(_memory_extract_node(memory_state))
+            memory_state.update(_memory_update_node(memory_state))
         else:
             graph = _get_graph()
             result = graph.invoke(
-                {"question": question, "group_id": group_id, "history": history}
+                {
+                    **memory_state,
+                    "history": history,
+                }
             )
     except Exception as exc:  # noqa: BLE001
         # 最终边界统一收敛环境/API 异常，UI 仍能展示原始类型用于排障。
@@ -383,4 +521,10 @@ def answer_question(
         "retrieval_failed": result.get("retrieval_failed", False),
         "service_failed": result.get("service_failed", False),
         "warnings": result.get("warnings", ()),
+        "long_term_memories": result.get(
+            "long_term_memories", memory_state.get("long_term_memories", [])
+        ),
+        "memory_update": result.get(
+            "memory_update", memory_state.get("memory_update")
+        ),
     }
