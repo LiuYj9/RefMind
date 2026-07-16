@@ -16,6 +16,8 @@ RefMind 是一个面向科研文献阅读的 RAG 问答系统，基于 LangChain
 - 上下文压缩：去除重复分块、剔除离题句子、按字数预算截断，压缩进 Prompt 的内容
 - 分块 metadata：来源、文档 id、页码、章节、版本、权限（按库隔离）、分块序号、字数
 - PDF 解析与论文切分：优先 MinerU 保留标题、段落、公式、图表、页码、阅读顺序和 bbox；按章节边界合并语义块，未安装或失败时回退 PyMuPDF
+- PDF 分阶段并行：解析、图片摘要、Embedding 批次和文档中文摘要使用独立全局上限；
+  摘要与向量化重叠执行，设置页可调整并发并查看逐阶段耗时
 - 图片检索与问答：入库时将原图保存到本地 docstore，并用 `qwen3.5-omni-plus-2026-03-15` 生成结构化摘要写入文本索引；命中图片摘要后才读取原图、Base64 编码并交给全模态模型回答
 - 多文献库隔离：每个库独立的 Chroma 集合与持久化目录，互不干扰
 - 三层记忆：SQLite 会话历史、SQLite 用户长期语义/情景记忆、Chroma + BM25 论文知识严格隔离
@@ -105,6 +107,8 @@ copy .env.example .env            # 填入 DASHSCOPE_API_KEY
 - 解析容错：MinerU 失败自动回退 PyMuPDF，保证基本可用。
 - 可恢复写入/删除：源 PDF 使用 `doc_id` 唯一路径，解析 JSON 原子替换；异常时按
   `doc_id` 补偿，进程强杀留下的非 `ready` 记录会在下次启动继续清理。
+- 并行入库安全：每篇 PDF 使用独立事务与临时文件；单篇失败不取消其他任务，同一文献库的
+  Chroma 变更细粒度串行提交，SQLite 使用 WAL 与 busy timeout 缓解短写锁竞争。
 - 受控 multi-agent：规划最多三个子查询，并发召回后统一重排/压缩；规划、单路检索、审校
   任一失败都保留上一阶段有效结果或回退单查询，不让增强能力成为单点故障。
 - 插件隔离：hook 按注册顺序变换数据，插件注册和运行异常会被记录并隔离；核心阶段还会校验
@@ -132,8 +136,12 @@ copy .env.example .env            # 填入 DASHSCOPE_API_KEY
 | `EMBEDDING_MODEL` | 嵌入模型 | `text-embedding-v4` |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` | 普通段落目标大小 / 超长块内部重叠 | `1000` / `200` |
 | `LAYOUT_CHUNK_MAX_CHARS` | 表格、公式等原子版面块的二次切分上限 | `1800` |
+| `PDF_MAX_PARALLEL_DOCUMENTS` | 同批上传最大并行解析文档数（1~8） | `2` |
 | `DOCSTORE_DIR` | 原图本地存储目录（不进入向量库） | `./data/docstore` |
 | `IMAGE_SUMMARY_ENABLED` | 入库时是否调用全模态模型生成图片摘要 | `true` |
+| `IMAGE_SUMMARY_MAX_WORKERS` | 全局图片摘要并发请求数（1~8） | `4` |
+| `EMBEDDING_MAX_PARALLEL_BATCHES` | 全局 Embedding 并发批数（1~8） | `4` |
+| `DOCUMENT_SUMMARY_MAX_WORKERS` | 全局文档中文摘要并发请求数（1~8） | `4` |
 | `IMAGE_MAX_PER_ANSWER` | 单次回答最多携带的已命中图片数 | `3` |
 | `IMAGE_MAX_BYTES` | 单张允许 Base64 发送的最大原图字节数 | `4194304` |
 | `RETRIEVAL_TOP_K` | 检索返回片段数 | `5` |
@@ -169,6 +177,7 @@ copy .env.example .env            # 填入 DASHSCOPE_API_KEY
 - BM25 是内存索引，文档增删后会自动重建。
 - 数据默认放在 `./data/`（已在 `.gitignore` 忽略）。
 - 图片不会写入 Chroma：Chroma 仅保存结构化摘要、页码和 docstore 路径；生成阶段会再次校验路径位于 `DOCSTORE_DIR`，并且只加载被当前检索命中的图片。
+- 单 GPU 本地运行 MinerU 时，解析并发建议先设为 `2` 或 `3`；更高数值可能因模型重复加载与显存争用反而变慢。
 
 ## 测试与探测
 

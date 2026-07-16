@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import os
 import tempfile
+import time
 from dataclasses import asdict
 from pathlib import Path
 
@@ -22,7 +23,8 @@ from refmind.rag import (
     get_retriever,
 )
 from refmind.services import (
-    ingest_pdf,
+    PdfIngestionTask,
+    ingest_pdfs_parallel,
     recover_incomplete_ingestions,
     remove_document,
     remove_group,
@@ -63,6 +65,7 @@ _ss_default("confirm_delete", None)
 _ss_default("is_parsing", False)
 _ss_default("parse_queue", None)
 _ss_default("parse_group_id", None)
+_ss_default("last_ingestion_report", None)
 
 
 def current_group() -> storage.Group | None:
@@ -220,6 +223,42 @@ def render_sidebar() -> None:
 
 def render_upload(group: storage.Group) -> None:
     st.sidebar.markdown("### 上传文献 (PDF)")
+    report = st.session_state.last_ingestion_report
+    if report and report.get("group_id") == group.id:
+        documents = report.get("documents", [])
+        has_failure = bool(report.get("batch_error")) or any(
+            not item.get("succeeded") for item in documents
+        )
+
+        def _seconds(timings: dict, key: str) -> str:
+            value = timings.get(key)
+            return "—" if value is None else f"{float(value):.1f}s"
+
+        with st.sidebar.expander("⏱️ 上次批量入库报告", expanded=has_failure):
+            st.caption(f"批次墙钟：{report.get('wall_seconds', 0):.1f}s")
+            if report.get("batch_error"):
+                st.error(str(report["batch_error"]))
+            for item in documents:
+                timings = item.get("timings", {})
+                icon = "✅" if item.get("succeeded") else "❌"
+                st.markdown(
+                    f"{icon} **{item.get('filename', '未知')}** · "
+                    f"总计 {_seconds(timings, 'total')}"
+                )
+                st.caption(
+                    f"解析 {_seconds(timings, 'parse')} "
+                    f"(排队 {_seconds(timings, 'parse_wait')}) · "
+                    f"图片提取/摘要 {_seconds(timings, 'image_enrichment')} · "
+                    f"切分 {_seconds(timings, 'chunking')} · "
+                    f"Embedding {_seconds(timings, 'embedding')} · "
+                    f"Chroma {_seconds(timings, 'vector_commit')} "
+                    f"(等锁 {_seconds(timings, 'vector_commit_wait')}) · "
+                    f"文档摘要 {_seconds(timings, 'document_summary')}"
+                )
+                detail = item.get("error") or item.get("cleanup_warning")
+                if detail:
+                    st.warning(str(detail))
+            st.caption("各文档、Embedding 与文档摘要会重叠执行，阶段耗时不可直接相加。")
     parsing_here = (
         st.session_state.is_parsing and st.session_state.parse_group_id == group.id
     )
@@ -251,14 +290,19 @@ def render_upload(group: storage.Group) -> None:
         return
 
     if uploaded and st.sidebar.button("🚀 开始解析并入库", use_container_width=True):
+        names = [file.name for file in uploaded]
+        if len(set(names)) != len(names):
+            st.sidebar.error("同一批次不能包含重名 PDF，请重命名后重试。")
+            return
         st.session_state.parse_queue = [(f.name, f.getvalue()) for f in uploaded]
         st.session_state.is_parsing = True
         st.session_state.parse_group_id = group.id
+        st.session_state.last_ingestion_report = None
         st.rerun()
 
 
 def _run_parse_job(group: storage.Group) -> None:
-    """在禁用上传控件后的下一轮渲染里执行解析入库。"""
+    """在禁用上传控件后的下一轮渲染里有界并行解析入库。"""
     queue: list[tuple[str, bytes]] = st.session_state.parse_queue or []
     if not queue:
         st.session_state.is_parsing = False
@@ -270,45 +314,71 @@ def _run_parse_job(group: storage.Group) -> None:
     status = st.sidebar.empty()
     progress_bar = st.sidebar.progress(0.0, text="准备中 ...")
     results: list[tuple[str, bool, str]] = []
+    temp_paths: list[Path] = []
+    task_progress = [0.0] * total
+    batch_started = time.perf_counter()
+    batch_results = []
+    batch_error = ""
 
     try:
-        for idx, (filename, data) in enumerate(queue):
+        tasks: list[PdfIngestionTask] = []
+        for filename, data in queue:
             previous = existing.get(filename)
-            if previous is not None:
-                status.warning(
-                    f"♻️ 「{filename}」已存在，正在安全构建新版本 ..."
-                )
-            else:
-                status.info(f"📄 正在处理：{filename}")
-
             # 每个上传任务使用独立临时文件，避免不同浏览器会话的同名 PDF 相互覆盖。
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as handle:
                 handle.write(data)
                 tmp = Path(handle.name)
-
-            def _cb(p: float, msg: str, _idx=idx, _n=total, _name=filename):
-                progress_bar.progress(
-                    (_idx + p) / _n, text=f"[{_idx + 1}/{_n}] {_name} · {msg}"
+            temp_paths.append(tmp)
+            tasks.append(
+                PdfIngestionTask(
+                    source_path=tmp,
+                    filename=filename,
+                    previous_document_id=previous.id if previous is not None else None,
                 )
+            )
 
-            try:
-                new_document = ingest_pdf(
-                    group.id, tmp, filename, progress=_cb
-                )
-                # 新版本 ready 后才删除旧记录；新入库失败时旧文档保持可用。
-                cleanup_warning = ""
-                if previous is not None:
-                    try:
-                        remove_document(previous.id)
-                    except Exception as exc:  # noqa: BLE001
-                        cleanup_warning = f"旧版本待重试清理：{exc}"
-                existing[filename] = new_document
-                results.append((filename, True, cleanup_warning))
-            except Exception as exc:  # noqa: BLE001
-                results.append((filename, False, str(exc)[:200]))
-            finally:
-                tmp.unlink(missing_ok=True)
+        def _batch_progress(index: int, count: int, value: float, message: str) -> None:
+            task_progress[index] = value
+            filename = tasks[index].filename
+            progress_bar.progress(
+                sum(task_progress) / count,
+                text=(
+                    f"阶段流水线（MinerU≤{settings.pdf_max_parallel_documents}） · "
+                    f"[{index + 1}/{count}] {filename} · {message}"
+                ),
+            )
+            status.info(f"📄 {filename} · {int(value * 100)}%")
+
+        batch_results = ingest_pdfs_parallel(
+            group.id,
+            tasks,
+            max_workers=settings.pdf_max_parallel_documents,
+            progress=_batch_progress,
+        )
+        for result in batch_results:
+            error = result.error or result.cleanup_warning
+            results.append((result.filename, result.succeeded, error))
+    except Exception as exc:  # noqa: BLE001 - 批次框架异常也要恢复 UI 状态
+        batch_error = f"批量入库未完成：{type(exc).__name__}: {exc}"[:500]
+        results.append(("批量任务", False, batch_error))
     finally:
+        st.session_state.last_ingestion_report = {
+            "group_id": group.id,
+            "wall_seconds": round(time.perf_counter() - batch_started, 3),
+            "batch_error": batch_error,
+            "documents": [
+                {
+                    "filename": result.filename,
+                    "succeeded": result.succeeded,
+                    "error": result.error,
+                    "cleanup_warning": result.cleanup_warning,
+                    "timings": dict(result.stage_seconds),
+                }
+                for result in batch_results
+            ],
+        }
+        for tmp in temp_paths:
+            tmp.unlink(missing_ok=True)
         progress_bar.empty()
         status.empty()
         st.session_state.is_parsing = False
@@ -330,7 +400,7 @@ def _run_parse_job(group: storage.Group) -> None:
             st.session_state.current_session_id = sid
         storage.add_message(sid, "assistant", "当前文档解析已完成，你有什么问题呢？")
         st.session_state.uploader_nonce += 1
-        st.rerun()
+    st.rerun()
 
 
 # 对话
@@ -715,7 +785,7 @@ def render_settings() -> None:
             )
 
         st.markdown("**PDF 解析 (MinerU)**")
-        col_g, col_h, col_i = st.columns(3)
+        col_g, col_h, col_i, col_parallel = st.columns(4)
         with col_g:
             backend = st.selectbox("后端", backends, index=_idx(backends, settings.mineru_backend))
         with col_h:
@@ -724,6 +794,42 @@ def render_settings() -> None:
             model_source = st.selectbox(
                 "模型源", sources, index=_idx(sources, settings.mineru_model_source)
             )
+        with col_parallel:
+            pdf_max_parallel_documents = st.number_input(
+                "MinerU 并行文档数",
+                1,
+                8,
+                value=int(settings.pdf_max_parallel_documents),
+                help="只限制 PDF 解析阶段；图片、Embedding、文档摘要有各自的并发上限。",
+            )
+
+        col_image_workers, col_embedding_workers, col_summary_workers = st.columns(3)
+        with col_image_workers:
+            image_summary_max_workers = st.number_input(
+                "图片摘要并发数",
+                1,
+                8,
+                value=int(settings.image_summary_max_workers),
+                help="进程级全局上限，所有文档与浏览器会话共享。",
+            )
+        with col_embedding_workers:
+            embedding_max_parallel_batches = st.number_input(
+                "Embedding 并发批数",
+                1,
+                8,
+                value=int(settings.embedding_max_parallel_batches),
+                help="远程 Embedding 批请求的进程级全局上限。",
+            )
+        with col_summary_workers:
+            document_summary_max_workers = st.number_input(
+                "文档摘要并发数",
+                1,
+                8,
+                value=int(settings.document_summary_max_workers),
+                help="文档中文摘要请求的进程级全局上限。",
+            )
+        if pdf_max_parallel_documents > 3:
+            st.caption("⚠️ 单 GPU 运行多个 MinerU 进程可能因模型重复加载而变慢，建议先使用 2～3。")
 
         st.caption("⚠️ 修改嵌入模型后，建议重新上传文献以重建向量索引（避免维度不一致）。")
         submitted = st.form_submit_button("💾 保存设置", type="primary")
@@ -766,6 +872,10 @@ def render_settings() -> None:
                 "MINERU_BACKEND": backend,
                 "MINERU_METHOD": method,
                 "MINERU_MODEL_SOURCE": model_source,
+                "PDF_MAX_PARALLEL_DOCUMENTS": pdf_max_parallel_documents,
+                "IMAGE_SUMMARY_MAX_WORKERS": image_summary_max_workers,
+                "EMBEDDING_MAX_PARALLEL_BATCHES": embedding_max_parallel_batches,
+                "DOCUMENT_SUMMARY_MAX_WORKERS": document_summary_max_workers,
             }
         )
         st.success("设置已保存并生效。")

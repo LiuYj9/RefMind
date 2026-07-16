@@ -21,6 +21,7 @@ def _load_ingestion_without_optional_dependencies():
     rag_stub.ingest_documents = Mock()
     rag_stub.invalidate_retriever = Mock()
     rag_stub.parsed_to_documents = Mock()
+    rag_stub.prepare_ingestion_batch = Mock()
 
     module_name = "refmind.services._ingestion_atomicity_test"
     path = Path(__file__).parents[1] / "refmind" / "services" / "ingestion.py"
@@ -42,6 +43,8 @@ class _Settings:
     def __init__(self, root: Path) -> None:
         self.upload_dir = root / "uploads"
         self.parsed_dir = root / "parsed"
+        self.pdf_max_parallel_documents = 2
+        self.document_summary_max_workers = 2
 
     def ensure_dirs(self) -> None:
         self.upload_dir.mkdir(parents=True, exist_ok=True)

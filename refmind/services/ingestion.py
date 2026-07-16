@@ -8,8 +8,13 @@ import tempfile
 import time
 import uuid
 from collections.abc import Mapping
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable
+from queue import Empty, SimpleQueue
+from threading import Condition, RLock, Semaphore
+from typing import Callable, Iterator, Sequence
 
 from langchain_core.documents import Document
 
@@ -25,12 +30,162 @@ from ..rag import (
     ingest_documents,
     invalidate_retriever,
     parsed_to_documents,
+    prepare_ingestion_batch,
 )
 
 ProgressCb = Callable[[float, str], None]
+BatchProgressCb = Callable[[int, int, float, str], None]
+
+
+@dataclass(frozen=True)
+class PdfIngestionTask:
+    """一篇待入库 PDF；旧版本只会在新版本成功后清理。"""
+
+    source_path: Path
+    filename: str
+    previous_document_id: int | None = None
+
+
+@dataclass
+class PdfIngestionResult:
+    """批量入库的单文档结果，结果顺序与输入任务一致。"""
+
+    filename: str
+    document: storage.DocumentRow | None = None
+    error: str = ""
+    cleanup_warning: str = ""
+    stage_seconds: dict[str, float] = field(default_factory=dict)
+
+    @property
+    def succeeded(self) -> bool:
+        return self.document is not None and not self.error
+
+
+_VECTOR_MUTATION_LOCKS: dict[int, RLock] = {}
+_VECTOR_MUTATION_LOCKS_GUARD = RLock()
+_PDF_TASK_CONDITION = Condition(RLock())
+_ACTIVE_PDF_TASKS = 0
+_IMAGE_SUMMARY_CONDITION = Condition(RLock())
+_ACTIVE_IMAGE_SUMMARIES = 0
+_DOCUMENT_SUMMARY_CONDITION = Condition(RLock())
+_ACTIVE_DOCUMENT_SUMMARIES = 0
+_IMAGE_SUMMARY_EXECUTOR = ThreadPoolExecutor(
+    max_workers=8,
+    thread_name_prefix="refmind-image",
+)
+_DOCUMENT_SUMMARY_EXECUTOR = ThreadPoolExecutor(
+    max_workers=8,
+    thread_name_prefix="refmind-document-summary",
+)
+_GROUP_LIFECYCLE_CONDITION = Condition(RLock())
+_ACTIVE_GROUP_OPERATIONS: dict[int, int] = {}
+_DELETING_GROUPS: set[int] = set()
+
+
+def _vector_mutation_lock(group_id: int) -> RLock:
+    """同一文献库的 Chroma 变更串行化，不阻塞不同文献库。"""
+    with _VECTOR_MUTATION_LOCKS_GUARD:
+        return _VECTOR_MUTATION_LOCKS.setdefault(group_id, RLock())
+
+
+@contextmanager
+def _pdf_task_slot() -> Iterator[None]:
+    """进程级解析闸门，确保多个 Streamlit 会话共享 MinerU 并发上限。"""
+    global _ACTIVE_PDF_TASKS
+    with _PDF_TASK_CONDITION:
+        while _ACTIVE_PDF_TASKS >= min(
+            8, max(1, int(settings.pdf_max_parallel_documents))
+        ):
+            _PDF_TASK_CONDITION.wait()
+        _ACTIVE_PDF_TASKS += 1
+    try:
+        yield
+    finally:
+        with _PDF_TASK_CONDITION:
+            _ACTIVE_PDF_TASKS -= 1
+            _PDF_TASK_CONDITION.notify_all()
+
+
+@contextmanager
+def _image_summary_slot() -> Iterator[None]:
+    """跨文档/会话限制多模态图片摘要并发请求。"""
+    global _ACTIVE_IMAGE_SUMMARIES
+    with _IMAGE_SUMMARY_CONDITION:
+        while _ACTIVE_IMAGE_SUMMARIES >= min(
+            8, max(1, int(settings.image_summary_max_workers))
+        ):
+            _IMAGE_SUMMARY_CONDITION.wait()
+        _ACTIVE_IMAGE_SUMMARIES += 1
+    try:
+        yield
+    finally:
+        with _IMAGE_SUMMARY_CONDITION:
+            _ACTIVE_IMAGE_SUMMARIES -= 1
+            _IMAGE_SUMMARY_CONDITION.notify_all()
+
+
+@contextmanager
+def _document_summary_slot() -> Iterator[None]:
+    """限制跨文档文本摘要并发，同时允许它与 Embedding 重叠。"""
+    global _ACTIVE_DOCUMENT_SUMMARIES
+    with _DOCUMENT_SUMMARY_CONDITION:
+        while _ACTIVE_DOCUMENT_SUMMARIES >= min(
+            8, max(1, int(settings.document_summary_max_workers))
+        ):
+            _DOCUMENT_SUMMARY_CONDITION.wait()
+        _ACTIVE_DOCUMENT_SUMMARIES += 1
+    try:
+        yield
+    finally:
+        with _DOCUMENT_SUMMARY_CONDITION:
+            _ACTIVE_DOCUMENT_SUMMARIES -= 1
+            _DOCUMENT_SUMMARY_CONDITION.notify_all()
+
+
+@contextmanager
+def _group_operation_slot(group_id: int) -> Iterator[None]:
+    """登记同库活跃操作，防止向量目录在任务运行时被并发删除。"""
+    with _GROUP_LIFECYCLE_CONDITION:
+        if group_id in _DELETING_GROUPS:
+            raise RuntimeError("文献库正在删除，无法开始新的文档操作。")
+        _ACTIVE_GROUP_OPERATIONS[group_id] = (
+            _ACTIVE_GROUP_OPERATIONS.get(group_id, 0) + 1
+        )
+    try:
+        yield
+    finally:
+        with _GROUP_LIFECYCLE_CONDITION:
+            remaining = _ACTIVE_GROUP_OPERATIONS.get(group_id, 1) - 1
+            if remaining > 0:
+                _ACTIVE_GROUP_OPERATIONS[group_id] = remaining
+            else:
+                _ACTIVE_GROUP_OPERATIONS.pop(group_id, None)
+            _GROUP_LIFECYCLE_CONDITION.notify_all()
+
+
+@contextmanager
+def _group_delete_slot(group_id: int) -> Iterator[None]:
+    """等待同库入库收敛，并阻止删除期间再启动新任务。"""
+    with _GROUP_LIFECYCLE_CONDITION:
+        while (
+            group_id in _DELETING_GROUPS
+            or _ACTIVE_GROUP_OPERATIONS.get(group_id, 0) > 0
+        ):
+            _GROUP_LIFECYCLE_CONDITION.wait()
+        _DELETING_GROUPS.add(group_id)
+    try:
+        yield
+    finally:
+        with _GROUP_LIFECYCLE_CONDITION:
+            _DELETING_GROUPS.discard(group_id)
+            _GROUP_LIFECYCLE_CONDITION.notify_all()
 
 
 def _noop(_p: float, _m: str) -> None:
+    pass
+
+
+def _batch_noop(_index: int, _total: int, _p: float, _m: str) -> None:
     pass
 
 
@@ -93,7 +248,8 @@ def _install_source_pdf(source: Path, destination: Path) -> tuple[bool, Path | N
 
 def _delete_chunks_by_doc_id(group_id: int, doc_id: int) -> None:
     """仅删除本次入库的块，不会误删同名文档的旧向量。"""
-    get_vectorstore(group_id).delete(where={"doc_id": doc_id})
+    with _vector_mutation_lock(group_id):
+        get_vectorstore(group_id).delete(where={"doc_id": doc_id})
 
 
 def _safe_unlink(path: Path | None) -> None:
@@ -142,36 +298,59 @@ def _enrich_figure_blocks(
     )
     if not assets:
         return 0
-    by_block = {str(asset["block_id"]): asset for asset in assets}
-    existing_ids = {str(block.get("block_id")) for block in figures}
-
-    for block in figures:
-        asset = by_block.get(str(block.get("block_id")))
-        if asset is None:
-            continue
-        block.update(asset)
-        caption = str(block.get("text") or "").strip()
-        summary = ""
-        if getattr(settings, "image_summary_enabled", True) and getattr(settings, "has_api_key", False):
-            try:
-                summary = summarize_image(asset["image_path"], caption=caption)
-            except Exception:
-                # MLLM 失败不影响文献文本入库；图注仍可参与检索。
-                summary = ""
-        block["text"] = _figure_index_text(summary, caption)
-
-    # PyMuPDF 回退没有 figure block 时，提取器创建的 synthetic 记录在这里成为可索引块。
+    blocks_by_id = {str(block.get("block_id")): block for block in figures}
+    jobs: list[tuple[dict, dict | None, str]] = []
     for asset in assets:
-        if str(asset["block_id"]) in existing_ids:
+        block = blocks_by_id.get(str(asset.get("block_id")))
+        caption = str(block.get("text") or "").strip() if block is not None else ""
+        jobs.append((asset, block, caption))
+
+    def _summarize(job: tuple[dict, dict | None, str]) -> str:
+        asset, _block, caption = job
+        try:
+            with _image_summary_slot():
+                return summarize_image(asset["image_path"], caption=caption)
+        except Exception:
+            # 单张图失败不影响其他图片，也不撤销正文入库。
+            return ""
+
+    # 同一提取图片可能被多个 figure block 引用；视觉内容只分析一次，各块图注仍分别保留。
+    unique_jobs: dict[str, tuple[dict, dict | None, str]] = {}
+    for job in jobs:
+        unique_jobs.setdefault(str(job[0].get("image_path", "")), job)
+    summary_jobs = list(unique_jobs.values())
+    summary_by_path: dict[str, str] = {}
+    summary_enabled = bool(
+        getattr(settings, "image_summary_enabled", True)
+        and getattr(settings, "has_api_key", False)
+    )
+    if summary_enabled and summary_jobs:
+        futures = [
+            _IMAGE_SUMMARY_EXECUTOR.submit(_summarize, job)
+            for job in summary_jobs
+        ]
+        # 按提交顺序取结果；worker 不修改 parsed，避免完成顺序造成错配。
+        summary_values = [future.result() for future in futures]
+        summary_by_path = {
+            str(job[0].get("image_path", "")): summary
+            for job, summary in zip(summary_jobs, summary_values)
+        }
+
+    for asset, block, caption in jobs:
+        summary = summary_by_path.get(str(asset.get("image_path", "")), "")
+        if block is not None:
+            block.update(asset)
+            block["text"] = _figure_index_text(summary, caption)
             continue
-        summary = ""
-        if getattr(settings, "image_summary_enabled", True) and getattr(settings, "has_api_key", False):
-            try:
-                summary = summarize_image(asset["image_path"])
-            except Exception:
-                summary = ""
-        blocks.append({"type": "figure", "reading_order": 10_000 + len(blocks), **asset,
-                       "text": _figure_index_text(summary, "")})
+        # PyMuPDF 回退没有 figure block 时，把 synthetic 资产追加为可索引块。
+        blocks.append(
+            {
+                "type": "figure",
+                "reading_order": 10_000 + len(blocks),
+                **asset,
+                "text": _figure_index_text(summary, ""),
+            }
+        )
     return len(assets)
 
 
@@ -312,8 +491,37 @@ def ingest_pdf(
     filename: str,
     progress: ProgressCb = _noop,
     make_summary: bool = True,
+    stage_timings: dict[str, float] | None = None,
+    _parse_semaphore: Semaphore | None = None,
 ) -> storage.DocumentRow:
-    """处理单个 PDF：解析→分块入库→摘要→写元数据，最后重建检索器。"""
+    """处理单个 PDF；同一文献库删除会等待该任务完整收敛。"""
+    started = time.perf_counter()
+    try:
+        with _group_operation_slot(group_id):
+            return _ingest_pdf_impl(
+                group_id,
+                source_path,
+                filename,
+                progress=progress,
+                make_summary=make_summary,
+                stage_timings=stage_timings,
+                _parse_semaphore=_parse_semaphore,
+            )
+    finally:
+        if stage_timings is not None:
+            stage_timings["total"] = round(time.perf_counter() - started, 3)
+
+
+def _ingest_pdf_impl(
+    group_id: int,
+    source_path: str | Path,
+    filename: str,
+    progress: ProgressCb = _noop,
+    make_summary: bool = True,
+    stage_timings: dict[str, float] | None = None,
+    _parse_semaphore: Semaphore | None = None,
+) -> storage.DocumentRow:
+    """处理单个 PDF，并让独立的远程增强阶段尽可能重叠执行。"""
     settings.ensure_dirs()
     source_path = Path(source_path)
     filename = _validate_filename(filename)
@@ -328,46 +536,126 @@ def ingest_pdf(
     source_backup: Path | None = None
     parsed_path: Path | None = None
     indexing_attempted = False
+    total_started = time.perf_counter()
+    timings: dict[str, float] = {}
+    timings_lock = RLock()
+
+    def _timed(stage: str, callback):
+        started = time.perf_counter()
+        try:
+            return callback()
+        finally:
+            with timings_lock:
+                timings[stage] = round(time.perf_counter() - started, 3)
+
     try:
-        storage.update_document(doc_id, original_path=str(stored_pdf))
-        copied_source, source_backup = _install_source_pdf(source_path, stored_pdf)
+        def _prepare_source():
+            storage.update_document(doc_id, original_path=str(stored_pdf))
+            return _install_source_pdf(source_path, stored_pdf)
+
+        copied_source, source_backup = _timed("prepare", _prepare_source)
 
         progress(0.1, f"正在解析 {filename} ...")
-        parsed = _run_parse_hooks(
-            stored_pdf,
-            group_id=group_id,
-            doc_id=doc_id,
-            filename=filename,
-        )
+        # 解析名额只覆盖 MinerU/PyMuPDF，不再被图片、Embedding、摘要长期占用。
+        parse_wait_started = time.perf_counter()
+        local_parse_slot = _parse_semaphore or Semaphore(1)
+        with local_parse_slot:
+            with _pdf_task_slot():
+                with timings_lock:
+                    timings["parse_wait"] = round(
+                        time.perf_counter() - parse_wait_started, 3
+                    )
+                parsed = _timed(
+                    "parse",
+                    lambda: _run_parse_hooks(
+                        stored_pdf,
+                        group_id=group_id,
+                        doc_id=doc_id,
+                        filename=filename,
+                    ),
+                )
 
-        progress(0.28, "正在提取图片并生成可检索摘要 ...")
-        _enrich_figure_blocks(parsed, stored_pdf, doc_id=doc_id)
+        progress(0.28, "正在提取图片并并行生成可检索摘要 ...")
+        image_count = _timed(
+            "image_enrichment",
+            lambda: _enrich_figure_blocks(parsed, stored_pdf, doc_id=doc_id),
+        )
 
         # 将 doc_id 纳入文件名，避免同名重传覆盖其他记录的解析结果。
         parsed_path = (
             settings.parsed_dir / f"{group_id}_{doc_id}_{Path(filename).stem}.json"
         )
-        save_parsed(parsed, parsed_path)
+        _timed("save_parsed", lambda: save_parsed(parsed, parsed_path))
 
-        progress(0.4, "正在分块与向量化 ...")
+        progress(0.4, "正在切分文档 ...")
         version = time.strftime("%Y%m%d%H%M%S")
-        documents = parsed_to_documents(
-            parsed, group_id, filename, doc_id=doc_id, version=version
-        )
-        documents = _run_before_ingest_hook(
-            documents,
-            group_id=group_id,
-            doc_id=doc_id,
-            filename=filename,
-            version=version,
-        )
+
+        def _chunk_documents() -> list[Document]:
+            chunked = parsed_to_documents(
+                parsed, group_id, filename, doc_id=doc_id, version=version
+            )
+            return _run_before_ingest_hook(
+                chunked,
+                group_id=group_id,
+                doc_id=doc_id,
+                filename=filename,
+                version=version,
+            )
+
+        documents = _timed("chunking", _chunk_documents)
         if not documents:
             raise ValueError("解析结果未生成任何可入库分块。")
 
-        # add_documents 在批次中途失败时仍可能已写入部分块，
-        # 因此必须在调用前记录状态，异常时按 doc_id 精确回滚。
+        progress(0.5, "正在并行执行 Embedding 与文档摘要 ...")
+
+        def _prepare_vectors():
+            return _timed(
+                "embedding", lambda: prepare_ingestion_batch(documents)
+            )
+
+        def _generate_document_summary() -> str:
+            try:
+                wait_started = time.perf_counter()
+                with _document_summary_slot():
+                    with timings_lock:
+                        timings["document_summary_wait"] = round(
+                            time.perf_counter() - wait_started, 3
+                        )
+                    return _timed(
+                        "document_summary", lambda: generate_summary(documents)
+                    )
+            except Exception as exc:  # noqa: BLE001
+                return f"(摘要生成失败: {exc})"
+
+        summary = ""
+        if make_summary:
+            summary_future = _DOCUMENT_SUMMARY_EXECUTOR.submit(
+                _generate_document_summary
+            )
+            try:
+                prepared = _prepare_vectors()
+            except Exception:
+                summary_future.cancel()
+                raise
+            summary = summary_future.result()
+        else:
+            prepared = _prepare_vectors()
+
+        progress(0.85, "Embedding 完成，正在提交 Chroma ...")
+        # 网络 Embedding 已在锁外完成；仅最终 upsert/失败补偿需要同 group 锁。
         indexing_attempted = True
-        num_chunks = ingest_documents(group_id, documents)
+        commit_wait_started = time.perf_counter()
+        with _vector_mutation_lock(group_id):
+            with timings_lock:
+                timings["vector_commit_wait"] = round(
+                    time.perf_counter() - commit_wait_started, 3
+                )
+            num_chunks = _timed(
+                "vector_commit",
+                lambda: ingest_documents(
+                    group_id, documents, prepared=prepared
+                ),
+            )
         if num_chunks <= 0:
             raise RuntimeError("向量库未写入任何分块。")
         storage.update_document(
@@ -377,16 +665,7 @@ def ingest_pdf(
             status="indexing",
         )
 
-        summary = ""
-        if make_summary:
-            progress(0.75, "正在生成摘要 ...")
-            try:
-                summary = generate_summary(documents)
-            except Exception as exc:  # noqa: BLE001
-                # 摘要是可选增强，失败不应撤销已验证的正文索引。
-                summary = f"(摘要生成失败: {exc})"
-
-        progress(0.95, "正在重建混合检索索引 ...")
+        progress(0.95, "正在提交元数据并刷新检索缓存 ...")
         invalidate_retriever(group_id)
         # ready 是最后的提交点：在此之前的任何异常都会触发补偿回滚。
         storage.update_document(doc_id, summary=summary, status="ready")
@@ -398,7 +677,16 @@ def ingest_pdf(
         # 成功提交后旧文件备份已无需保留。
         _safe_unlink(source_backup)
         try:
-            progress(1.0, f"{filename} 处理完成。")
+            progress(
+                1.0,
+                (
+                    f"{filename} 完成：解析 {timings.get('parse', 0):.1f}s · "
+                    f"图片 {timings.get('image_enrichment', 0):.1f}s · "
+                    f"Embedding {timings.get('embedding', 0):.1f}s · "
+                    f"摘要 {timings.get('document_summary', 0):.1f}s · "
+                    f"{image_count} 图/{num_chunks} 块"
+                ),
+            )
         except Exception:  # noqa: BLE001
             # 进度 UI 失效不能撤销已完成提交的文档。
             pass
@@ -427,10 +715,168 @@ def ingest_pdf(
             indexing_attempted=indexing_attempted,
         )
         raise
+    finally:
+        timings["total"] = round(time.perf_counter() - total_started, 3)
+        if stage_timings is not None:
+            stage_timings.clear()
+            stage_timings.update(timings)
+
+
+def ingest_pdfs_parallel(
+    group_id: int,
+    tasks: Sequence[PdfIngestionTask],
+    *,
+    max_workers: int | None = None,
+    progress: BatchProgressCb = _batch_noop,
+    make_summary: bool = True,
+) -> list[PdfIngestionResult]:
+    """在同库生命周期租约内执行完整批次，防止排队任务期间文献库被删除。"""
+    if not tasks:
+        return []
+    with _group_operation_slot(group_id):
+        return _ingest_pdfs_parallel_impl(
+            group_id,
+            tasks,
+            max_workers=max_workers,
+            progress=progress,
+            make_summary=make_summary,
+        )
+
+
+def _ingest_pdfs_parallel_impl(
+    group_id: int,
+    tasks: Sequence[PdfIngestionTask],
+    *,
+    max_workers: int | None = None,
+    progress: BatchProgressCb = _batch_noop,
+    make_summary: bool = True,
+) -> list[PdfIngestionResult]:
+    """以有界线程池并行处理多篇 PDF，并隔离单文档失败。
+
+    每个 worker 只发送进度事件；``progress`` 始终由调用线程执行，因此可安全更新
+    Streamlit。旧版本清理在所有新版本任务结束后按输入顺序执行，避免删除与并行写入交叉。
+    """
+    normalized = tuple(tasks)
+    if not normalized:
+        return []
+    filenames = [task.filename for task in normalized]
+    if len(set(filenames)) != len(filenames):
+        raise ValueError("同一批次不能包含重名 PDF，请重命名后重试。")
+
+    configured = min(
+        8,
+        max(
+            1,
+            int(
+                settings.pdf_max_parallel_documents
+                if max_workers is None
+                else max_workers
+            ),
+        ),
+    )
+    # 外层 worker 只负责推进文档状态机；重资源阶段由共享 executor/闸门限流。
+    # 让最多 32 篇文档同时在流水线中，可避免前几篇等待图片/API 时饿死解析槽。
+    worker_count = min(len(normalized), 32)
+    local_parse_semaphore = Semaphore(configured)
+    updates: SimpleQueue[tuple[int, float, str]] = SimpleQueue()
+    results: list[PdfIngestionResult | None] = [None] * len(normalized)
+
+    def _report(index: int, value: float, message: str) -> None:
+        updates.put((index, min(1.0, max(0.0, float(value))), str(message)))
+
+    def _run(index: int, task: PdfIngestionTask) -> PdfIngestionResult:
+        timings: dict[str, float] = {}
+        try:
+            document = ingest_pdf(
+                group_id,
+                task.source_path,
+                task.filename,
+                progress=lambda value, message: _report(index, value, message),
+                make_summary=make_summary,
+                stage_timings=timings,
+                _parse_semaphore=local_parse_semaphore,
+            )
+            return PdfIngestionResult(
+                task.filename,
+                document=document,
+                stage_seconds=timings,
+            )
+        except Exception as exc:  # noqa: BLE001 - 单篇失败不能取消整个批次
+            return PdfIngestionResult(
+                task.filename,
+                error=f"{type(exc).__name__}: {exc}"[:500],
+                stage_seconds=timings,
+            )
+
+    def _drain_progress() -> None:
+        while True:
+            try:
+                index, value, message = updates.get_nowait()
+            except Empty:
+                return
+            try:
+                progress(index, len(normalized), value, message)
+            except Exception:  # noqa: BLE001 - UI 消失不应中断后台入库
+                continue
+
+    with ThreadPoolExecutor(
+        max_workers=worker_count,
+        thread_name_prefix=f"refmind-pdf-g{group_id}",
+    ) as executor:
+        future_indexes = {
+            executor.submit(_run, index, task): index
+            for index, task in enumerate(normalized)
+        }
+        pending = set(future_indexes)
+        while pending:
+            done, pending = wait(
+                pending, timeout=0.1, return_when=FIRST_COMPLETED
+            )
+            _drain_progress()
+            for future in done:
+                index = future_indexes[future]
+                # _run 已隔离普通异常；此处仍为线程框架级异常保留防御结果。
+                try:
+                    results[index] = future.result()
+                except Exception as exc:  # pragma: no cover - 防御边界
+                    results[index] = PdfIngestionResult(
+                        normalized[index].filename,
+                        error=f"{type(exc).__name__}: {exc}"[:500],
+                    )
+                try:
+                    progress(index, len(normalized), 1.0, "处理结束")
+                except Exception:  # noqa: BLE001
+                    pass
+        _drain_progress()
+
+    final_results = [
+        result
+        if result is not None
+        else PdfIngestionResult(normalized[index].filename, error="任务未返回结果")
+        for index, result in enumerate(results)
+    ]
+    # 新版本 ready 后才清理旧版本；清理失败只产生告警，不撤销已经提交的新版本。
+    for task, result in zip(normalized, final_results):
+        if not result.succeeded or task.previous_document_id is None:
+            continue
+        try:
+            remove_document(task.previous_document_id)
+        except Exception as exc:  # noqa: BLE001
+            result.cleanup_warning = f"旧版本待重试清理：{exc}"
+    return final_results
 
 
 def remove_document(doc_id: int) -> None:
     """删除文档的分块、文件与元数据，并重建检索器。"""
+    doc = storage.get_document(doc_id)
+    if doc is None:
+        return
+    with _group_operation_slot(doc.group_id):
+        _remove_document_impl(doc_id)
+
+
+def _remove_document_impl(doc_id: int) -> None:
+    """已持有 group 生命周期租约时执行可恢复的单文档删除。"""
     doc = storage.get_document(doc_id)
     if doc is None:
         return
@@ -474,16 +920,17 @@ def recover_incomplete_ingestions() -> dict[str, list[int]]:
 
 def remove_group(group_id: int) -> None:
     """删除用户组及其文档、会话与向量库目录。"""
-    # 逐文档走可恢复删除状态机；任何失败都会保留组和剩余记录。
-    for doc in storage.list_documents(group_id):
-        remove_document(doc.id)
+    with _group_delete_slot(group_id):
+        # 逐文档走可恢复删除状态机；任何失败都会保留组和剩余记录。
+        for doc in storage.list_documents(group_id):
+            _remove_document_impl(doc.id)
 
-    invalidate_retriever(group_id)
-    chroma_dir = settings.chroma_persist_dir / f"group_{group_id}"
-    if chroma_dir.exists():
-        try:
-            shutil.rmtree(chroma_dir)
-        except OSError as exc:
-            raise RuntimeError("向量库目录删除失败，文献库记录已保留。") from exc
+        invalidate_retriever(group_id)
+        chroma_dir = settings.chroma_persist_dir / f"group_{group_id}"
+        if chroma_dir.exists():
+            try:
+                shutil.rmtree(chroma_dir)
+            except OSError as exc:
+                raise RuntimeError("向量库目录删除失败，文献库记录已保留。") from exc
 
-    storage.delete_group(group_id)
+        storage.delete_group(group_id)

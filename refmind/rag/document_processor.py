@@ -8,6 +8,10 @@ from __future__ import annotations
 
 import re
 import uuid
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
+from dataclasses import dataclass
+from threading import Condition, RLock
 from typing import Any
 
 from langchain_core.documents import Document
@@ -20,6 +24,40 @@ from .layout_chunker import layout_chunks, scalar_metadata
 # markdown 标题，或 "1"、"2.3" 这类编号标题
 _MD_HEADING = re.compile(r"^#{1,6}\s+(.+)$")
 _NUM_HEADING = re.compile(r"^\d+(?:\.\d+){0,3}\.?\s+\S.{0,60}$")
+
+_EMBEDDING_CONDITION = Condition(RLock())
+_ACTIVE_EMBEDDING_BATCHES = 0
+_EMBEDDING_EXECUTOR = ThreadPoolExecutor(
+    max_workers=8,
+    thread_name_prefix="refmind-embedding",
+)
+
+
+@dataclass(frozen=True)
+class PreparedVectorBatch:
+    """已完成远程 Embedding、等待写入 Chroma 的预计算批次。"""
+
+    ids: list[str]
+    texts: list[str]
+    metadatas: list[dict[str, Any]]
+    embeddings: list[list[float]]
+
+
+@contextmanager
+def _embedding_batch_slot():
+    """跨文档限制远程 Embedding 批次并发，避免突发请求击穿供应商限流。"""
+    global _ACTIVE_EMBEDDING_BATCHES
+    limit = min(8, max(1, int(settings.embedding_max_parallel_batches)))
+    with _EMBEDDING_CONDITION:
+        while _ACTIVE_EMBEDDING_BATCHES >= limit:
+            _EMBEDDING_CONDITION.wait()
+        _ACTIVE_EMBEDDING_BATCHES += 1
+    try:
+        yield
+    finally:
+        with _EMBEDDING_CONDITION:
+            _ACTIVE_EMBEDDING_BATCHES -= 1
+            _EMBEDDING_CONDITION.notify_all()
 
 
 def _build_splitter() -> RecursiveCharacterTextSplitter:
@@ -174,13 +212,117 @@ def get_vectorstore(group_id: int):
     )
 
 
-def ingest_documents(group_id: int, documents: list[Document]) -> int:
-    """向量化并写入该库的 Chroma 集合，返回写入分块数。"""
+def prepare_ingestion_batch(documents: list[Document]) -> PreparedVectorBatch:
+    """并行生成 Embedding；此阶段不接触 Chroma，可跨文档安全并发。"""
+    if not documents:
+        return PreparedVectorBatch([], [], [], [])
+
+    texts = [document.page_content for document in documents]
+    metadatas = [dict(document.metadata or {}) for document in documents]
+    # 保持 Chroma.add_documents 的旧语义：record id 独立生成。chunk_id 由插件或
+    # 上游 metadata 提供，可能被复制，不能用作 upsert 主键。
+    ids = [str(uuid.uuid4()) for _ in metadatas]
+    batch_size = max(1, int(settings.embedding_batch_size))
+    batches = [
+        texts[index : index + batch_size]
+        for index in range(0, len(texts), batch_size)
+    ]
+    embedding_model = get_embedding_model()
+
+    def _embed(batch: list[str]) -> list[list[float]]:
+        with _embedding_batch_slot():
+            vectors = [
+                [float(value) for value in vector]
+                for vector in embedding_model.embed_documents(batch)
+            ]
+        if len(vectors) != len(batch):
+            raise RuntimeError(
+                f"Embedding 批次返回数量异常：期望 {len(batch)}，实际 {len(vectors)}"
+            )
+        return vectors
+
+    worker_count = min(
+        len(batches),
+        8,
+        max(1, int(settings.embedding_max_parallel_batches)),
+    )
+    if worker_count == 1:
+        embedded_batches = [_embed(batch) for batch in batches]
+    else:
+        futures = [
+            _EMBEDDING_EXECUTOR.submit(_embed, batch)
+            for batch in batches
+        ]
+        try:
+            # 按提交顺序取结果，保证向量与原始 Document 的位置严格一致。
+            embedded_batches = [future.result() for future in futures]
+        except Exception:
+            for future in futures:
+                future.cancel()
+            raise
+    embeddings = [vector for batch in embedded_batches for vector in batch]
+    if len(embeddings) != len(texts):
+        raise RuntimeError(
+            f"Embedding 返回数量异常：期望 {len(texts)}，实际 {len(embeddings)}"
+        )
+    return PreparedVectorBatch(ids, texts, metadatas, embeddings)
+
+
+def ingest_documents(
+    group_id: int,
+    documents: list[Document],
+    *,
+    prepared: PreparedVectorBatch | None = None,
+) -> int:
+    """写入 Chroma；可传入锁外预计算的 Embedding，避免在写锁中等待网络。"""
     if not documents:
         return 0
-    vectorstore = get_vectorstore(group_id)
-    vectorstore.add_documents(documents)
-    return len(documents)
+    batch = prepared or prepare_ingestion_batch(documents)
+    expected = len(documents)
+    batch_lengths = {
+        len(batch.ids),
+        len(batch.texts),
+        len(batch.metadatas),
+        len(batch.embeddings),
+    }
+    if batch_lengths != {expected}:
+        raise ValueError("预计算向量批次与文档数量不一致。")
+    if len(set(batch.ids)) != expected:
+        raise ValueError("预计算向量批次包含重复的 Chroma record id。")
+    if any(
+        text != document.page_content
+        or metadata != dict(document.metadata or {})
+        for document, text, metadata in zip(
+            documents, batch.texts, batch.metadatas
+        )
+    ):
+        raise ValueError("预计算向量批次与原始文档内容或 metadata 不一致。")
+    dimensions = {len(vector) for vector in batch.embeddings}
+    if len(dimensions) != 1 or 0 in dimensions:
+        raise ValueError("预计算向量维度为空或不一致。")
+    # langchain-chroma 没有公开的 add_embeddings；直接通过 chromadb 的公开
+    # PersistentClient/Collection API 提交预计算向量，避免依赖 LangChain 私有属性。
+    import chromadb
+
+    client = chromadb.PersistentClient(path=str(settings.group_chroma_dir(group_id)))
+    collection = client.get_or_create_collection(
+        name=f"group_{group_id}", embedding_function=None
+    )
+    # Chroma 对单次提交数量有上限；超大文档按客户端公开上限分批提交，整个提交过程
+    # 仍由 ingestion 层的同 group 互斥锁保护。
+    get_limit = getattr(client, "get_max_batch_size", None)
+    max_batch_size = (
+        max(1, int(get_limit())) if callable(get_limit) else expected
+    )
+    for start in range(0, expected, max_batch_size):
+        end = min(expected, start + max_batch_size)
+        collection.upsert(
+            ids=batch.ids[start:end],
+            documents=batch.texts[start:end],
+            metadatas=batch.metadatas[start:end],
+            embeddings=batch.embeddings[start:end],
+        )
+    return len(batch.texts)
 
 
 def load_group_documents(group_id: int) -> list[Document]:

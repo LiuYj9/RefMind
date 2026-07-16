@@ -42,6 +42,11 @@ def _get_float(name: str, default: float) -> float:
         return default
 
 
+def _as_stage_parallelism(value: object) -> int:
+    """把设置页输入约束到各入库阶段统一支持的并发范围。"""
+    return min(8, max(1, int(value)))
+
+
 class Settings:
     """应用配置。相对路径均相对于项目根目录。"""
 
@@ -83,6 +88,10 @@ class Settings:
         self.mineru_method = os.getenv("MINERU_METHOD", "auto")
         # 模型下载源：huggingface / modelscope / local（留空则用 MinerU 默认）
         self.mineru_model_source = os.getenv("MINERU_MODEL_SOURCE", "")
+        # 仅限制 MinerU/PyMuPDF 解析阶段。默认 2，避免单 GPU 多进程争抢模型资源。
+        self.pdf_max_parallel_documents = min(
+            8, max(1, _get_int("PDF_MAX_PARALLEL_DOCUMENTS", 2))
+        )
 
         # 存储路径
         self.chroma_persist_dir = self._resolve(
@@ -96,6 +105,9 @@ class Settings:
         # docstore 只保存原图等二进制资产；Chroma 中仅保存可检索的文字摘要和路径元数据。
         self.docstore_dir = self._resolve(os.getenv("DOCSTORE_DIR", "./data/docstore"))
         self.image_summary_enabled = _get_bool("IMAGE_SUMMARY_ENABLED", True)
+        self.image_summary_max_workers = min(
+            8, max(1, _get_int("IMAGE_SUMMARY_MAX_WORKERS", 4))
+        )
         self.image_max_per_answer = min(8, max(1, _get_int("IMAGE_MAX_PER_ANSWER", 3)))
         self.image_max_bytes = max(64 * 1024, _get_int("IMAGE_MAX_BYTES", 4 * 1024 * 1024))
 
@@ -151,6 +163,12 @@ class Settings:
         )
         # DashScope 兼容接口单次嵌入请求最多 10 条文本
         self.embedding_batch_size = _get_int("EMBEDDING_BATCH_SIZE", 10)
+        self.embedding_max_parallel_batches = min(
+            8, max(1, _get_int("EMBEDDING_MAX_PARALLEL_BATCHES", 4))
+        )
+        self.document_summary_max_workers = min(
+            8, max(1, _get_int("DOCUMENT_SUMMARY_MAX_WORKERS", 4))
+        )
 
         # 混合召回 -> 重排 -> 上下文压缩
         # 召回阶段先取较多候选，交给重排精排后再压缩进 Prompt
@@ -229,6 +247,10 @@ class Settings:
         "LLM_CIRCUIT_FAILURE_THRESHOLD": ("llm_circuit_failure_threshold", int),
         "EMBEDDING_MODEL": ("embedding_model", str),
         "IMAGE_SUMMARY_ENABLED": ("image_summary_enabled", _as_bool),
+        "IMAGE_SUMMARY_MAX_WORKERS": (
+            "image_summary_max_workers",
+            _as_stage_parallelism,
+        ),
         "IMAGE_MAX_PER_ANSWER": ("image_max_per_answer", int),
         "LLM_TEMPERATURE": ("llm_temperature", float),
         "CHUNK_SIZE": ("chunk_size", int),
@@ -275,6 +297,14 @@ class Settings:
             int,
         ),
         "EMBEDDING_BATCH_SIZE": ("embedding_batch_size", int),
+        "EMBEDDING_MAX_PARALLEL_BATCHES": (
+            "embedding_max_parallel_batches",
+            _as_stage_parallelism,
+        ),
+        "DOCUMENT_SUMMARY_MAX_WORKERS": (
+            "document_summary_max_workers",
+            _as_stage_parallelism,
+        ),
         "RECALL_TOP_K": ("recall_top_k", int),
         "RERANK_ENABLED": ("rerank_enabled", _as_bool),
         "RERANK_MODEL": ("rerank_model", str),
@@ -295,6 +325,10 @@ class Settings:
         "MINERU_BACKEND": ("mineru_backend", str),
         "MINERU_METHOD": ("mineru_method", str),
         "MINERU_MODEL_SOURCE": ("mineru_model_source", str),
+        "PDF_MAX_PARALLEL_DOCUMENTS": (
+            "pdf_max_parallel_documents",
+            _as_stage_parallelism,
+        ),
     }
 
     def apply_and_persist(self, values: dict[str, object]) -> None:

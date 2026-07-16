@@ -1,11 +1,13 @@
 """RAG 子包：文档处理、混合检索、长对话记忆与 LangGraph 对话流水线。"""
 
 from .document_processor import (
+    PreparedVectorBatch,
     delete_document_chunks,
     get_vectorstore,
     ingest_documents,
     load_group_documents,
     parsed_to_documents,
+    prepare_ingestion_batch,
 )
 from .graph import (
     NO_CONTEXT_REPLY,
@@ -31,6 +33,8 @@ from .retrieval import build_retriever, get_retriever, invalidate_retriever
 __all__ = [
     # 文档处理
     "parsed_to_documents",
+    "PreparedVectorBatch",
+    "prepare_ingestion_batch",
     "get_vectorstore",
     "ingest_documents",
     "load_group_documents",
