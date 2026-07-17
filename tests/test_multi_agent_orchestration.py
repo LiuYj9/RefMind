@@ -12,9 +12,12 @@ from langchain_core.documents import Document
 
 from refmind.agents import (
     AnswerDraft,
+    canonicalize_retrieval_query,
+    INSUFFICIENT_EVIDENCE_REPLY,
     MultiAgentConfig,
     MultiAgentOrchestrator,
 )
+from refmind.agents.orchestration import PlanningAgent
 
 
 class FakeLLM:
@@ -42,6 +45,53 @@ def _doc(chunk_id: str, text: str) -> Document:
 
 
 class MultiAgentOrchestrationTests(unittest.TestCase):
+    def test_planner_reuses_result_for_canonical_equivalent_question(self) -> None:
+        llm = FakeLLM('{"subqueries": ["稳定改写"]}')
+        planner = PlanningAgent(llm, MultiAgentConfig())
+
+        first = planner.plan("同一个问题？")
+        second = planner.plan("同一个问题?")
+
+        self.assertEqual(first.queries, ["稳定改写"])
+        self.assertEqual(second.queries, first.queries)
+        self.assertEqual(len(llm.prompts), 1)
+
+    def test_canonical_anchor_is_always_searched_before_planner_expansions(self) -> None:
+        planner = FakeLLM('{"subqueries": ["相关但不精确的改写"]}')
+        orchestrator = MultiAgentOrchestrator(
+            MultiAgentConfig(max_subqueries=3), planner_llm=planner
+        )
+        calls: list[str] = []
+
+        def retrieve(query: str) -> list[Document]:
+            calls.append(query)
+            return (
+                [_doc("proof", "直接证据")]
+                if query == "降低线圈交流损耗的方法有哪些"
+                else [_doc("noise", "相邻主题")]
+            )
+
+        result = orchestrator.run(
+            "降低线圈交流损耗的方法有哪些？",
+            retrieve=retrieve,
+            answer=lambda _question, documents: documents[0].page_content,
+            review_question="降低线圈交流损耗的方法有哪些？",
+            retrieval_anchor="降低线圈交流损耗的方法有哪些？",
+            retrieval_expansions=["用户背景扩展"],
+        )
+
+        self.assertEqual(calls[0], "降低线圈交流损耗的方法有哪些")
+        self.assertEqual(result.documents[0].metadata["chunk_id"], "proof")
+        self.assertEqual(
+            result.queries,
+            ["降低线圈交流损耗的方法有哪些", "相关但不精确的改写", "用户背景扩展"],
+        )
+        for suffix in ("", "?", "？", "。", " ？  "):
+            self.assertEqual(
+                canonicalize_retrieval_query("降低线圈交流损耗的方法有哪些" + suffix),
+                "降低线圈交流损耗的方法有哪些",
+            )
+
     def test_plans_parallel_queries_and_deduplicates_in_query_order(self) -> None:
         planner = FakeLLM(
             json.dumps({"subqueries": ["定义", "方法", "结果"]}, ensure_ascii=False)
@@ -181,7 +231,10 @@ class MultiAgentOrchestrationTests(unittest.TestCase):
 
     def test_optional_reviewers_have_real_roles_and_safe_fallback(self) -> None:
         planner = FakeLLM('{"subqueries": ["原问题"]}')
-        evidence_reviewer = FakeLLM('{"keep": [2]}')
+        evidence_reviewer = FakeLLM(
+            '{"coverage": "direct", "answerable": true, "keep": [2], '
+            '"reason": "直接证据"}'
+        )
         answer_reviewer = FakeLLM(RuntimeError("reviewer down"))
         orchestrator = MultiAgentOrchestrator(
             MultiAgentConfig(
@@ -205,6 +258,173 @@ class MultiAgentOrchestrationTests(unittest.TestCase):
         self.assertEqual(result.answer, "草稿：证据")
         self.assertTrue(result.degraded)
         self.assertTrue(any("保留原答案" in warning for warning in result.warnings))
+        review_prompt = evidence_reviewer.prompts[0]
+        self.assertIn("问题类型（定义、存在性、方法、原因/机理、数值、比较/排序", review_prompt)
+        self.assertIn("direct 表示直接且范围相符", review_prompt)
+        self.assertNotIn("HTS", review_prompt)
+        self.assertNotIn("铜盘", review_prompt)
+
+    def test_adjacent_eddy_loss_evidence_cannot_answer_quench_question(self) -> None:
+        question = "如何解决 HTS 电机所使用的超导带材容易失超的问题？"
+        planner = FakeLLM(
+            json.dumps({"subqueries": [question]}, ensure_ascii=False)
+        )
+        rejection = json.dumps(
+            {
+                "coverage": "insufficient",
+                "answerable": False,
+                "keep": [],
+                "reason": "证据只讨论涡流损耗，未建立与失超的联系",
+            },
+            ensure_ascii=False,
+        )
+        evidence_reviewer = FakeLLM(rejection, rejection)
+        orchestrator = MultiAgentOrchestrator(
+            MultiAgentConfig(enable_evidence_review=True),
+            planner_llm=planner,
+            evidence_reviewer_llm=evidence_reviewer,
+        )
+        answer_document_counts: list[int] = []
+
+        def answer(_question: str, documents: list[Document]) -> str:
+            answer_document_counts.append(len(documents))
+            return INSUFFICIENT_EVIDENCE_REPLY if not documents else "错误答案"
+
+        result = orchestrator.run(
+            "检索增强：用户研究高温超导电机\n本轮问题：" + question,
+            review_question=question,
+            retrieve=lambda _query: [
+                _doc(
+                    "shielding",
+                    "铜盘电磁屏蔽可降低纹波磁场在 NI HTS 绕组中引起的涡流和损耗。",
+                )
+            ],
+            answer=answer,
+        )
+
+        self.assertEqual(result.answer, INSUFFICIENT_EVIDENCE_REPLY)
+        self.assertEqual(result.documents, [])
+        self.assertEqual(answer_document_counts, [0])
+        self.assertEqual(result.rejection_stage, "evidence_review")
+        self.assertIn(question, evidence_reviewer.prompts[0])
+        self.assertIn(
+            "未经证据建立的因果链也不能补齐",
+            evidence_reviewer.prompts[0],
+        )
+
+    def test_eddy_loss_method_can_answer_ac_loss_existential_question(self) -> None:
+        question = "现有论文中，是否有降低 HTS 线圈交流损耗的方法？"
+        planner = FakeLLM(
+            json.dumps({"subqueries": [question]}, ensure_ascii=False)
+        )
+        evidence_reviewer = FakeLLM(
+            json.dumps(
+                {
+                    "coverage": "scoped",
+                    "answerable": True,
+                    "keep": [1],
+                    "reason": "证据给出了特定绕组和工况下的降损方法",
+                },
+                ensure_ascii=False,
+            )
+        )
+        orchestrator = MultiAgentOrchestrator(
+            MultiAgentConfig(enable_evidence_review=True),
+            planner_llm=planner,
+            evidence_reviewer_llm=evidence_reviewer,
+        )
+
+        result = orchestrator.run(
+            question,
+            retrieve=lambda _query: [
+                _doc(
+                    "shielding",
+                    "铜盘电磁屏蔽可降低纹波磁场在 NI HTS 转子绕组中引起的涡流和损耗。",
+                )
+            ],
+            answer=lambda _question, documents: (
+                "有。针对 NI HTS 转子绕组，可采用铜盘电磁屏蔽降低纹波场引起的涡流和损耗。"
+                if documents
+                else INSUFFICIENT_EVIDENCE_REPLY
+            ),
+        )
+
+        self.assertNotEqual(result.answer, INSUFFICIENT_EVIDENCE_REPLY)
+        self.assertEqual(
+            [document.metadata["chunk_id"] for document in result.documents],
+            ["shielding"],
+        )
+        self.assertIn(
+            "存在性/举例：一个 direct 或 scoped 实例即可支持",
+            evidence_reviewer.prompts[0],
+        )
+        self.assertIn("答案必须保留更窄的对象、条件、指标和适用范围", evidence_reviewer.prompts[0])
+
+    def test_answer_review_refusal_clears_irrelevant_references(self) -> None:
+        planner = FakeLLM('{"subqueries": ["失超"]}')
+        rejection = json.dumps(
+            {
+                "coverage": "insufficient",
+                "answerable": False,
+                "answer": INSUFFICIENT_EVIDENCE_REPLY,
+                "reason": "草稿回答的是涡流损耗而非失超",
+            },
+            ensure_ascii=False,
+        )
+        answer_reviewer = FakeLLM(rejection, rejection)
+        orchestrator = MultiAgentOrchestrator(
+            MultiAgentConfig(enable_answer_review=True),
+            planner_llm=planner,
+            answer_reviewer_llm=answer_reviewer,
+        )
+
+        result = orchestrator.run(
+            "如何解决超导带材失超？",
+            retrieve=lambda _query: [_doc("adjacent", "铜盘降低涡流损耗")],
+            answer=lambda _question, _documents: "采用铜盘屏蔽可解决失超",
+        )
+
+        self.assertEqual(result.answer, INSUFFICIENT_EVIDENCE_REPLY)
+        self.assertEqual(result.documents, [])
+        self.assertFalse(result.degraded)
+        self.assertEqual(result.rejection_stage, "answer_review")
+
+    def test_single_evidence_rejection_requires_confirmation(self) -> None:
+        rejected = json.dumps(
+            {
+                "coverage": "insufficient",
+                "answerable": False,
+                "keep": [],
+                "reason": "首次判断不足",
+            },
+            ensure_ascii=False,
+        )
+        accepted = json.dumps(
+            {
+                "coverage": "direct",
+                "answerable": True,
+                "keep": [1],
+                "reason": "复核后确认直接支持",
+            },
+            ensure_ascii=False,
+        )
+        reviewer = FakeLLM(rejected, accepted)
+        orchestrator = MultiAgentOrchestrator(
+            MultiAgentConfig(enable_evidence_review=True),
+            planner_llm=FakeLLM('{"subqueries": ["问题"]}'),
+            evidence_reviewer_llm=reviewer,
+        )
+
+        result = orchestrator.run(
+            "问题",
+            retrieve=lambda _query: [_doc("proof", "直接证据")],
+            answer=lambda _question, documents: documents[0].page_content,
+        )
+
+        self.assertEqual(result.answer, "直接证据")
+        self.assertEqual(len(reviewer.prompts), 2)
+        self.assertTrue(result.degraded)
+        self.assertTrue(any("二次复核" in item for item in result.warnings))
 
     def test_existing_rerank_compression_pipeline_can_run_after_merge(self) -> None:
         planner = FakeLLM('{"subqueries": ["子问题一", "子问题二"]}')

@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS documents (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     group_id          INTEGER NOT NULL,
     filename          TEXT NOT NULL,
+    paper_title       TEXT,
+    library_index     INTEGER NOT NULL DEFAULT 0,
     original_path     TEXT,
     parsed_json_path  TEXT,
     summary           TEXT,
@@ -96,6 +98,8 @@ class DocumentRow:
     id: int
     group_id: int
     filename: str
+    paper_title: Optional[str]
+    library_index: int
     original_path: Optional[str]
     parsed_json_path: Optional[str]
     summary: Optional[str]

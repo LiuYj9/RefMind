@@ -6,27 +6,40 @@ import asyncio
 import os
 import tempfile
 import time
+import webbrowser
 from dataclasses import asdict
 from pathlib import Path
 
 import streamlit as st
+from langchain_core.documents import Document
 
 from refmind import storage
+from refmind.citations import (
+    CitationTarget,
+    build_citation_label,
+    decode_citation_target,
+    encode_citation_target,
+    finalize_stored_answer_citations,
+)
 from refmind.config import settings
 from refmind.integrations import MCPManager, mcp_sdk_available
 from refmind.llm import get_llm_status, stream_translate
+from refmind.pdf_locator import render_pdf_location
 from refmind.plugins import get_plugin_manager
 from refmind.rag import (
     RelevantMemory,
     answer_question,
     dashscope_sdk_available,
     get_retriever,
+    load_group_documents,
 )
 from refmind.services import (
+    backfill_document_titles,
     PdfIngestionTask,
     ingest_pdfs_parallel,
+    provider_label,
     recover_incomplete_ingestions,
-    remove_document,
+    remove_documents,
     remove_group,
 )
 from refmind.ui import inject_global_css
@@ -43,7 +56,11 @@ st.set_page_config(
 def _initialize_runtime() -> dict[str, list[int]]:
     """每个进程只执行一次建库/恢复，避免不同 Streamlit 会话互相清理。"""
     storage.init_db()
-    return recover_incomplete_ingestions()
+    report = recover_incomplete_ingestions()
+    title_report = backfill_document_titles()
+    report["titles_updated"] = title_report["updated"]
+    report["title_failures"] = title_report["failed"]
+    return report
 
 
 _startup_recovery = _initialize_runtime()
@@ -66,6 +83,9 @@ _ss_default("is_parsing", False)
 _ss_default("parse_queue", None)
 _ss_default("parse_group_id", None)
 _ss_default("last_ingestion_report", None)
+_ss_default("document_delete_report", None)
+_ss_default("document_selector_nonce", 0)
+_ss_default("active_citation_target", None)
 
 
 def current_group() -> storage.Group | None:
@@ -80,11 +100,18 @@ def get_memory(session_id: int, group_id: int | None = None) -> RelevantMemory:
     return st.session_state[key]
 
 
-def _open_in_system(path: str | None) -> tuple[bool, str]:
-    """用系统默认程序打开 PDF，失败则打开所在文件夹（仅本地运行有效）。"""
+def _open_in_system(path: str | None, page: int | None = None) -> tuple[bool, str]:
+    """用系统程序打开 PDF；指定页码时优先使用浏览器 PDF 页锚点。"""
     if not path:
         return False, "missing"
     p = Path(path)
+    if p.is_file() and page:
+        try:
+            page_url = f"{p.resolve().as_uri()}#page={max(1, int(page))}"
+            if webbrowser.open_new_tab(page_url):
+                return True, "page"
+        except Exception:  # noqa: BLE001 - 阅读器不支持页锚点时回退普通打开
+            pass
     if p.exists() and hasattr(os, "startfile"):
         try:
             os.startfile(str(p))  # type: ignore[attr-defined]
@@ -99,6 +126,140 @@ def _open_in_system(path: str | None) -> tuple[bool, str]:
     except Exception:  # noqa: BLE001
         pass
     return False, "fail"
+
+
+def _consume_citation_query() -> None:
+    raw = st.query_params.get("open_citation")
+    if isinstance(raw, list):
+        raw = raw[0] if raw else ""
+    target = decode_citation_target(raw)
+    if target is not None:
+        st.session_state.active_citation_target = encode_citation_target(target)
+        # Markdown 相对链接可能建立新的 Streamlit 会话；从受控 token 恢复目标文献库。
+        if storage.get_group(target.group_id) is not None:
+            st.session_state.current_group_id = target.group_id
+    if raw is not None:
+        try:
+            del st.query_params["open_citation"]
+        except (KeyError, AttributeError):
+            pass
+
+
+def _dismiss_citation_dialog() -> None:
+    st.session_state.active_citation_target = None
+
+
+def _find_citation_evidence(target: CitationTarget) -> Document | None:
+    try:
+        documents = load_group_documents(target.group_id)
+    except Exception:  # noqa: BLE001 - Chroma 不可用时仍可展示 PDF 目标页
+        return None
+    same_document: list[Document] = []
+    for document in documents:
+        metadata = document.metadata or {}
+        try:
+            if int(metadata.get("doc_id") or 0) != target.doc_id:
+                continue
+        except (TypeError, ValueError):
+            continue
+        same_document.append(document)
+        try:
+            paragraph = int(metadata.get("paragraph_index") or 0)
+            if target.paragraph and paragraph == target.paragraph:
+                return document
+        except (TypeError, ValueError):
+            continue
+    for document in same_document:
+        metadata = document.metadata or {}
+        try:
+            page = int(metadata.get("page_start") or metadata.get("page") or 0)
+        except (TypeError, ValueError):
+            page = 0
+        if target.page and page == target.page:
+            return document
+    return same_document[0] if same_document else None
+
+
+@st.dialog(
+    "论文引用定位",
+    width="large",
+    on_dismiss=_dismiss_citation_dialog,
+)
+def _citation_dialog(target: CitationTarget) -> None:
+    document_row = storage.get_document(target.doc_id)
+    if document_row is None or int(document_row.group_id) != target.group_id:
+        st.error("该引用对应的论文不存在、已删除，或不属于当前文献库。")
+        if st.button("关闭", use_container_width=True):
+            _dismiss_citation_dialog()
+            st.rerun()
+        return
+
+    evidence = _find_citation_evidence(target)
+    if evidence is None:
+        metadata = {
+            "group_id": target.group_id,
+            "doc_id": target.doc_id,
+            "library_index": document_row.library_index,
+            "paper_title": (
+                document_row.paper_title or Path(document_row.filename).stem
+            ),
+            "filename": document_row.filename,
+            "page": target.page or 1,
+            "paragraph_index": target.paragraph or None,
+        }
+        evidence = Document(page_content="", metadata=metadata)
+
+    st.markdown(f"**{build_citation_label(evidence)}**")
+    st.caption(f"上传文件：{document_row.filename}")
+    page_number = target.page or int(
+        (evidence.metadata or {}).get("page_start")
+        or (evidence.metadata or {}).get("page")
+        or 1
+    )
+    try:
+        preview = render_pdf_location(
+            document_row.original_path or "",
+            page_number,
+            evidence_text=evidence.page_content,
+            bbox=(evidence.metadata or {}).get("bbox"),
+        )
+    except Exception as exc:  # noqa: BLE001 - 缺失/损坏/加密 PDF 给出可操作降级
+        st.warning(f"无法渲染引用页：{exc}")
+    else:
+        caption = f"PDF 第 {preview.page_number} 页"
+        caption += (
+            " · 已定位证据区域"
+            if preview.highlighted
+            else " · 未匹配文字，显示整页"
+        )
+        st.image(preview.image, caption=caption, width="stretch")
+
+    if evidence.page_content:
+        st.markdown("**证据摘录**")
+        st.caption(evidence.page_content[:1200])
+
+    open_col, close_col = st.columns(2)
+    with open_col:
+        if st.button(
+            f"在系统阅读器打开第 {page_number} 页",
+            use_container_width=True,
+            key=f"open_citation_pdf_{encode_citation_target(target)}",
+        ):
+            ok, mode = _open_in_system(document_row.original_path, page_number)
+            if ok and mode == "page":
+                st.toast("已请求在浏览器 PDF 阅读器中定位该页", icon="📖")
+            elif ok:
+                st.toast("阅读器不支持页锚点，已打开 PDF", icon="📖")
+            else:
+                st.warning("无法调用系统阅读器；远程部署请使用上方页内预览。")
+    with close_col:
+        if st.button("关闭定位窗口", use_container_width=True):
+            _dismiss_citation_dialog()
+            st.rerun()
+
+    st.caption(
+        "页码定位可确定；PDF 通常没有统一的段落锚点，因此段落采用版面坐标或原文搜索尽力高亮。"
+    )
 
 
 # 侧边栏
@@ -444,6 +605,11 @@ def render_chat(group: storage.Group) -> None:
     pending_text = (
         pending["text"] if pending and pending.get("sid") == session_id else None
     )
+    pending_mode = (
+        str(pending.get("retrieval_mode") or "library")
+        if pending and pending.get("sid") == session_id
+        else "library"
+    )
 
     if not messages and not pending_text:
         doc_n = len(storage.list_documents(group.id))
@@ -451,7 +617,7 @@ def render_chat(group: storage.Group) -> None:
             '<div class="refmind-hero">'
             '<div class="logo">📚</div>'
             "<h2>RefMind 文献助手</h2>"
-            f"<p>已就绪，当前文献库共 {doc_n} 篇文献。在下方输入问题，我会基于这些文献作答。</p>"
+            f"<p>已就绪，当前文献库共 {doc_n} 篇文献。默认检索本地论文，也可开启 GS检索查找外部学术摘要。</p>"
             "</div>",
             unsafe_allow_html=True,
         )
@@ -459,17 +625,32 @@ def render_chat(group: storage.Group) -> None:
     for msg in messages:
         role = "user" if msg.role == "user" else "assistant"
         with st.chat_message(role):
-            st.markdown(msg.content)
+            content = (
+                msg.content
+                if msg.role == "user"
+                else finalize_stored_answer_citations(msg.content, group.id)
+            )
+            st.markdown(content)
 
     # 先渲染这一轮问答，输入框留到最后，保证它始终在回答下方
     if pending_text:
         with st.chat_message("user"):
             st.markdown(pending_text)
         with st.chat_message("assistant"):
-            with st.spinner("检索并生成回答中 ..."):
+            spinner_text = (
+                "正在检索外部学术论文、重排摘要并生成回答 ..."
+                if pending_mode == "academic"
+                else "检索并生成回答中 ..."
+            )
+            with st.spinner(spinner_text):
                 memory = get_memory(session_id, group.id)
                 try:
-                    result = answer_question(pending_text, group.id, memory=memory)
+                    result = answer_question(
+                        pending_text,
+                        group.id,
+                        memory=memory,
+                        retrieval_mode=pending_mode,
+                    )
                 except Exception as exc:  # noqa: BLE001
                     st.error("问答流程发生未收敛异常，请检查项目运行环境。")
                     st.code(f"{type(exc).__name__}: {exc}")
@@ -488,46 +669,145 @@ def render_chat(group: storage.Group) -> None:
                 else:
                     st.markdown(result["answer"])
                 queries = result.get("queries") or []
+                if result.get("used_academic_search"):
+                    providers = result.get("academic_providers") or [
+                        provider_label(result.get("academic_provider", ""))
+                    ]
+                    st.caption(
+                        "GS 检索 · "
+                        + " / ".join(providers)
+                        + f" · 已选 {len(result.get('academic_documents') or [])} 篇摘要证据"
+                    )
+                    academic_query = result.get("academic_query")
+                    if academic_query and academic_query != pending_text:
+                        st.caption(f"学术检索式：{academic_query}")
+                elif (
+                    result.get("academic_search_attempted")
+                    and result.get("evidence_source") == "local"
+                ):
+                    st.caption("GS 检索未获得可用摘要，本轮已明确回退本地论文库。")
                 if result.get("used_multi_agent") and len(queries) > 1:
                     st.caption("已并行检索：" + " · ".join(queries))
+                rejection_stage = result.get("rejection_stage")
+                if rejection_stage:
+                    stage_label = {
+                        "evidence_review": "证据充分性审查",
+                        "answer_review": "答案证据审校",
+                    }.get(rejection_stage, rejection_stage)
+                    st.caption(f"本轮拒答阶段：{stage_label}")
                 if result.get("degraded"):
                     # 增强环节失败不会影响基线答案，但把状态展示出来便于排障。
                     with st.expander("⚠️ 本轮部分增强已安全降级"):
                         for warning in result.get("warnings") or ():
                             st.caption(warning)
-                docs = result.get("documents") or []
-                if docs:
-                    with st.expander(f"📎 参考来源（{len(docs)} 个片段）"):
-                        for i, d in enumerate(docs, start=1):
-                            meta = d.metadata or {}
-                            head = (
-                                f"**[{i}] {meta.get('filename', '未知')} · 第 "
-                                f"{meta.get('page', '?')} 页**"
-                            )
-                            if meta.get("section"):
-                                head += f" · {meta['section']}"
-                            if meta.get("rerank_score") is not None:
-                                head += f" · 相关度 {meta['rerank_score']}"
-                            st.markdown(head)
-                            st.caption(d.page_content[:300] + " ...")
         st.session_state.pending_q = None
 
-    prompt = st.chat_input("给 RefMind 发消息 ...")
+    gs_available = settings.academic_search_available
+    gs_help = (
+        "把本轮问题发送到配置的开放学术索引，精选论文摘要作为临时证据；"
+        "结果不会写入本地文献库。"
+    )
+    if settings.academic_search_provider == "openalex" and not settings.openalex_api_key:
+        gs_help = "当前选择 OpenAlex，但尚未配置 OPENALEX_API_KEY。"
+
+    with st.bottom:
+        with st.container(key="refmind_composer", gap="small"):
+            prompt = st.chat_input(
+                "给 RefMind 发消息 ...",
+                key=f"chat_input_{session_id}",
+            )
+            gs_selection = st.pills(
+                "检索模式",
+                ["academic"],
+                selection_mode="single",
+                default=None,
+                format_func=lambda _value: "GS检索",
+                key=f"gs_search_mode_{session_id}",
+                help=gs_help,
+                disabled=not gs_available,
+                label_visibility="collapsed",
+                width="content",
+            )
+            if not gs_available:
+                st.caption(gs_help)
+
     if prompt:
-        st.session_state.pending_q = {"sid": session_id, "text": prompt}
+        st.session_state.pending_q = {
+            "sid": session_id,
+            "text": prompt,
+            "retrieval_mode": (
+                "academic"
+                if gs_available and gs_selection == "academic"
+                else "library"
+            ),
+        }
         st.rerun()
 
 
 # 文档库
 def render_documents(group: storage.Group) -> None:
     docs = storage.list_documents(group.id)
+    delete_report = st.session_state.document_delete_report
+    if delete_report and delete_report.get("group_id") == group.id:
+        deleted_names = delete_report.get("deleted_names") or []
+        if deleted_names:
+            st.success("已从文档库和知识库删除：" + "、".join(deleted_names))
+        for name, error in (delete_report.get("failed") or {}).items():
+            st.error(f"{name} 删除失败：{error}")
+        st.session_state.document_delete_report = None
     if not docs:
         st.info("当前文献库还没有文档，请在左侧上传 PDF。")
         return
 
-    st.caption(f"共 {len(docs)} 篇文献 · 点击标题可用系统默认阅读器打开")
+    by_id = {doc.id: doc for doc in docs}
+    removable = [
+        doc.id for doc in docs if doc.status not in {"parsing", "indexing"}
+    ]
+    selected = st.multiselect(
+        "选择要删除的文档",
+        options=removable,
+        format_func=lambda doc_id: (
+            f"文献{by_id[doc_id].library_index or by_id[doc_id].id}｜"
+            f"{by_id[doc_id].paper_title or Path(by_id[doc_id].filename).stem}"
+        ),
+        placeholder="可多选文档",
+        key=f"document_selector_{group.id}_{st.session_state.document_selector_nonce}",
+    )
+    if st.button(
+        "🗑️ 删除选中文档",
+        disabled=not selected,
+        help="同时删除 SQLite 记录、Chroma/BM25 知识块、解析文件、原 PDF 与图片资产。",
+    ):
+        selected_names = {
+            doc_id: (
+                f"文献{by_id[doc_id].library_index or by_id[doc_id].id}《"
+                f"{by_id[doc_id].paper_title or Path(by_id[doc_id].filename).stem}》"
+            )
+            for doc_id in selected
+        }
+        result = remove_documents(group.id, selected)
+        deleted_ids = result.get("deleted") or []
+        failures = result.get("failed") or {}
+        st.session_state.document_delete_report = {
+            "group_id": group.id,
+            "deleted_names": [selected_names[doc_id] for doc_id in deleted_ids],
+            "failed": {
+                selected_names.get(doc_id, f"文档#{doc_id}"): error
+                for doc_id, error in failures.items()
+            },
+        }
+        st.session_state.document_selector_nonce += 1
+        st.rerun()
+
+    st.caption(f"共 {len(docs)} 篇文献 · 点击论文题名可用系统默认阅读器打开")
     for doc in docs:
-        if st.button(f"📄 {doc.filename}", key=f"open_{doc.id}", use_container_width=True):
+        paper_no = doc.library_index or doc.id
+        paper_title = doc.paper_title or Path(doc.filename).stem
+        if st.button(
+            f"📄 文献{paper_no}｜{paper_title}",
+            key=f"open_{doc.id}",
+            use_container_width=True,
+        ):
             ok, how = _open_in_system(doc.original_path)
             if ok and how == "file":
                 st.toast("已在系统默认 PDF 阅读器中打开", icon="📖")
@@ -535,6 +815,7 @@ def render_documents(group: storage.Group) -> None:
                 st.toast("无法直接打开 PDF，已打开其所在文件夹", icon="📂")
             else:
                 st.warning(f"无法打开，文件路径：{doc.original_path}")
+        st.caption(f"上传文件：{doc.filename}")
 
         status_cls = "ready" if doc.status == "ready" else "warn"
         st.markdown(
@@ -545,13 +826,6 @@ def render_documents(group: storage.Group) -> None:
             f"</div>",
             unsafe_allow_html=True,
         )
-        if st.button("删除该文档", key=f"del_doc_{doc.id}"):
-            try:
-                remove_document(doc.id)
-            except Exception as exc:  # noqa: BLE001
-                st.error(f"删除未完成，记录已保留以便重试：{exc}")
-            else:
-                st.rerun()
 
 
 # 翻译
@@ -717,6 +991,87 @@ def render_settings() -> None:
                 step=0.01,
             )
 
+        st.markdown("**GS 外部学术检索（本轮临时摘要证据）**")
+        academic_providers = ["auto", "semantic_scholar", "openalex", "crossref"]
+        provider_names = {
+            "auto": "自动融合（S2 + Crossref；有 Key 时加入 OpenAlex）",
+            "semantic_scholar": "Semantic Scholar（无 Key 可用）",
+            "openalex": "OpenAlex（需要 API Key）",
+            "crossref": "Crossref（摘要覆盖较少）",
+        }
+        col_gs_a, col_gs_b, col_gs_c = st.columns(3)
+        with col_gs_a:
+            academic_search_enabled = st.checkbox(
+                "启用 GS检索按钮",
+                value=bool(settings.academic_search_enabled),
+                help=(
+                    "只在用户主动选中按钮时向外部索引发送检索式；"
+                    "结果不会进入 Chroma 或本地论文库。"
+                ),
+            )
+            academic_search_provider = st.selectbox(
+                "学术检索源",
+                academic_providers,
+                index=_idx(
+                    academic_providers,
+                    settings.academic_search_provider,
+                ),
+                format_func=lambda value: provider_names[value],
+            )
+        with col_gs_b:
+            academic_search_top_k = st.number_input(
+                "最终论文数 ACADEMIC_SEARCH_TOP_K",
+                1,
+                10,
+                value=int(settings.academic_search_top_k),
+            )
+            academic_search_candidate_k = st.number_input(
+                "候选论文数 ACADEMIC_SEARCH_CANDIDATE_K",
+                5,
+                50,
+                value=int(settings.academic_search_candidate_k),
+                help="开放索引先召回候选，再由现有 Reranker 精选最终论文。",
+            )
+        with col_gs_c:
+            academic_search_timeout = st.number_input(
+                "检索超时（秒）",
+                2.0,
+                60.0,
+                value=float(settings.academic_search_timeout_seconds),
+            )
+            academic_max_abstract_chars = st.number_input(
+                "单篇摘要字符上限",
+                500,
+                12000,
+                value=int(settings.academic_search_max_abstract_chars),
+                step=500,
+            )
+
+        col_gs_key_a, col_gs_key_b, col_gs_key_c = st.columns(3)
+        with col_gs_key_a:
+            semantic_scholar_api_key = st.text_input(
+                "SEMANTIC_SCHOLAR_API_KEY（可选）",
+                value=settings.semantic_scholar_api_key,
+                type="password",
+            )
+        with col_gs_key_b:
+            openalex_api_key = st.text_input(
+                "OPENALEX_API_KEY",
+                value=settings.openalex_api_key,
+                type="password",
+                help="OpenAlex 当前要求免费 API Key。",
+            )
+        with col_gs_key_c:
+            crossref_mailto = st.text_input(
+                "CROSSREF_MAILTO",
+                value=settings.crossref_mailto,
+                help="填写联系邮箱可进入 Crossref polite pool。",
+            )
+        st.caption(
+            "“GS检索”是开放学术检索模式的界面名称；不抓取 Google Scholar 页面。"
+            "当前证据级别为题录与摘要，回答会明确标注来源范围。"
+        )
+
         st.markdown("**召回 · 重排 · 上下文压缩**")
         col_j, col_k = st.columns(2)
         with col_j:
@@ -776,12 +1131,15 @@ def render_settings() -> None:
             evidence_review = st.checkbox(
                 "启用 LLM 证据审查",
                 value=bool(settings.evidence_review_enabled),
-                help="在重排之后再次过滤仅关键词重合的片段，会增加一次模型调用。",
+                help=(
+                    "判断检索证据能否直接回答原问题，并过滤仅关键词或相邻主题重合的片段；"
+                    "会增加一次模型调用。"
+                ),
             )
             answer_review = st.checkbox(
                 "启用答案审校",
                 value=bool(settings.answer_review_enabled),
-                help="依据最终证据最小化修正无依据断言，失败时保留原答案。",
+                help="检查答案是否对齐原问题且有直接证据，证据不足时拒答。",
             )
 
         st.markdown("**PDF 解析 (MinerU)**")
@@ -849,6 +1207,15 @@ def render_settings() -> None:
                 "CHUNK_OVERLAP": chunk_overlap,
                 "MEMORY_MAX_TURNS": mem_turns,
                 "MEMORY_RELEVANCE_THRESHOLD": mem_thr,
+                "ACADEMIC_SEARCH_ENABLED": academic_search_enabled,
+                "ACADEMIC_SEARCH_PROVIDER": academic_search_provider,
+                "ACADEMIC_SEARCH_TOP_K": academic_search_top_k,
+                "ACADEMIC_SEARCH_CANDIDATE_K": academic_search_candidate_k,
+                "ACADEMIC_SEARCH_TIMEOUT_SECONDS": academic_search_timeout,
+                "ACADEMIC_SEARCH_MAX_ABSTRACT_CHARS": academic_max_abstract_chars,
+                "SEMANTIC_SCHOLAR_API_KEY": semantic_scholar_api_key,
+                "OPENALEX_API_KEY": openalex_api_key,
+                "CROSSREF_MAILTO": crossref_mailto,
                 "LONG_TERM_MEMORY_ENABLED": long_term_memory_enabled,
                 "LONG_TERM_MEMORY_TOP_K": long_term_memory_top_k,
                 "LONG_TERM_MEMORY_RELEVANCE_THRESHOLD": long_term_memory_relevance,
@@ -882,6 +1249,7 @@ def render_settings() -> None:
 
 
 def main() -> None:
+    _consume_citation_query()
     inject_global_css(st.session_state.theme)
     render_sidebar()
 
@@ -920,6 +1288,12 @@ def main() -> None:
 
     st.title(f"📚 {group.name}")
     st.caption(f"当前文献库共 {len(storage.list_documents(group.id))} 篇文献")
+
+    active_target = decode_citation_target(
+        st.session_state.get("active_citation_target")
+    )
+    if active_target is not None:
+        _citation_dialog(active_target)
 
     tab_chat, tab_docs, tab_trans, tab_set = st.tabs(
         ["💬 对话", "📄 文档库", "🌐 翻译", "⚙️ 设置"]

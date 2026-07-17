@@ -20,6 +20,18 @@ from ..llm import get_embedding_model
 LOGGER = logging.getLogger(__name__)
 
 
+def _stable_document_key(document: Document) -> tuple[str, ...]:
+    metadata = document.metadata or {}
+    return (
+        str(metadata.get("doc_id") or ""),
+        str(metadata.get("version") or ""),
+        str(metadata.get("chunk_index") or ""),
+        str(metadata.get("chunk_id") or ""),
+        str(metadata.get("filename") or metadata.get("source") or ""),
+        " ".join(document.page_content.split()),
+    )
+
+
 @lru_cache(maxsize=1)
 def dashscope_sdk_available() -> bool:
     """不触发导入，仅检查当前解释器是否安装 DashScope SDK。"""
@@ -61,6 +73,7 @@ def _dashscope_rerank(
             else item.relevance_score
         )
         scored.append((float(score), docs[idx]))
+    scored.sort(key=lambda item: (-item[0], _stable_document_key(item[1])))
     return scored
 
 
@@ -73,7 +86,7 @@ def _embedding_rerank(
     scored = [
         (_cosine(query_vec, np.array(v)), d) for v, d in zip(doc_vecs, docs)
     ]
-    scored.sort(key=lambda x: x[0], reverse=True)
+    scored.sort(key=lambda item: (-item[0], _stable_document_key(item[1])))
     return scored
 
 

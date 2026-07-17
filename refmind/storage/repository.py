@@ -48,12 +48,36 @@ def create_document(
     original_path: str | None = None,
     status: str = "pending",
 ) -> int:
-    """新增文档记录，返回文档 ID。"""
+    """新增文档记录并原子分配稳定库内序号，返回文档 ID。"""
     with connect() as conn:
         cur = conn.execute(
-            "INSERT INTO documents (group_id, filename, original_path, status) "
-            "VALUES (?, ?, ?, ?)",
-            (group_id, filename, original_path, status),
+            """
+            INSERT INTO documents (
+                group_id, filename, original_path, status, library_index
+            ) VALUES (
+                ?, ?, ?, ?,
+                COALESCE(
+                    (
+                        SELECT library_index FROM documents
+                        WHERE group_id = ? AND filename = ? AND library_index > 0
+                        ORDER BY id DESC LIMIT 1
+                    ),
+                    (
+                        SELECT COALESCE(MAX(library_index), 0) + 1
+                        FROM documents WHERE group_id = ?
+                    )
+                )
+            )
+            """,
+            (
+                group_id,
+                filename,
+                original_path,
+                status,
+                group_id,
+                filename,
+                group_id,
+            ),
         )
         return cur.lastrowid
 
@@ -61,6 +85,7 @@ def create_document(
 def update_document(
     doc_id: int,
     *,
+    paper_title: str | None = None,
     original_path: str | None = None,
     parsed_json_path: str | None = None,
     summary: str | None = None,
@@ -69,6 +94,9 @@ def update_document(
 ) -> None:
     """更新文档字段（仅更新非 None 的字段）。"""
     fields, values = [], []
+    if paper_title is not None:
+        fields.append("paper_title = ?")
+        values.append(paper_title)
     if original_path is not None:
         fields.append("original_path = ?")
         values.append(original_path)
@@ -103,10 +131,11 @@ def get_document(doc_id: int) -> Optional[DocumentRow]:
 
 
 def list_documents(group_id: int) -> list[DocumentRow]:
-    """列出某组的所有文档。"""
+    """按稳定库内序号列出某组的所有文档。"""
     with connect() as conn:
         rows = conn.execute(
-            "SELECT * FROM documents WHERE group_id = ? ORDER BY created_at DESC",
+            "SELECT * FROM documents WHERE group_id = ? "
+            "ORDER BY library_index ASC, id ASC",
             (group_id,),
         ).fetchall()
     return [DocumentRow(**r) for r in rows]

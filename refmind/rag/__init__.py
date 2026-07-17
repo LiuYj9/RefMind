@@ -10,6 +10,7 @@ from .document_processor import (
     prepare_ingestion_batch,
 )
 from .graph import (
+    ACADEMIC_NO_CONTEXT_REPLY,
     NO_CONTEXT_REPLY,
     RETRIEVAL_ERROR_REPLY,
     SERVICE_ERROR_REPLY,
@@ -60,6 +61,7 @@ __all__ = [
     "get_system_prompt",
     "format_documents",
     "NO_CONTEXT_REPLY",
+    "ACADEMIC_NO_CONTEXT_REPLY",
     "RETRIEVAL_ERROR_REPLY",
     "SERVICE_ERROR_REPLY",
 ]

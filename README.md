@@ -18,12 +18,23 @@ RefMind 是一个面向科研文献阅读的 RAG 问答系统，基于 LangChain
 - PDF 解析与论文切分：优先 MinerU 保留标题、段落、公式、图表、页码、阅读顺序和 bbox；按章节边界合并语义块，未安装或失败时回退 PyMuPDF
 - PDF 分阶段并行：解析、图片摘要、Embedding 批次和文档中文摘要使用独立全局上限；
   摘要与向量化重叠执行，设置页可调整并发并查看逐阶段耗时
+- 论文身份与引用：从 PDF 首页恢复原始论文题名并分配稳定库内序号；正文采用论文式
+  `[1][2]`，悬浮显示题名/页码/章节/证据段落，回答末尾按论文聚合参考来源
+- PDF 引用定位：点击正文引用可在受控窗口中预览目标页，并依据 bbox 或证据原文尽力高亮；
+  本地运行还可请求系统 PDF 阅读器跳到对应页，不公开上传文件路径
+- GS 外部学术检索：输入区可按会话选中 `GS检索`；将问题改写为学术检索式，并行查询
+  Semantic Scholar 与 Crossref（配置 Key 后可选 OpenAlex），按 DOI 去重、Reranker 精选后，
+  仅把题录与摘要作为本轮临时证据；外链引用与本地 PDF 页码引用严格分离
+- 文档库治理：按论文原始题名展示，可多选后批量清理文档记录、向量/BM25、原 PDF、
+  解析结果与图片资产，单篇失败不影响其余删除
 - 图片检索与问答：入库时将原图保存到本地 docstore，并用 `qwen3.5-omni-plus-2026-03-15` 生成结构化摘要写入文本索引；命中图片摘要后才读取原图、Base64 编码并交给全模态模型回答
 - 多文献库隔离：每个库独立的 Chroma 集合与持久化目录，互不干扰
 - 三层记忆：SQLite 会话历史、SQLite 用户长期语义/情景记忆、Chroma + BM25 论文知识严格隔离
 - 翻译与摘要：流式输出，翻译可结合当前文献库做术语对齐，入库时自动生成摘要
 - 熔断降级：主对话模型连续失败后临时切到备选模型，冷却后再探测切回
-- 受控 multi-agent：规划、并行检索、可选证据审查与答案审校职责分离，失败自动回退基线
+- 受控 multi-agent：规划、并行检索、直接可回答性审查与答案审校职责分离，失败自动回退基线
+- 稳定重复问答：统一中英文尾部标点，原问题始终参与召回与重排，记忆仅扩展检索角度，
+  重复问题不会携带上一次回答作为生成历史
 - 插件扩展：解析、入库、检索和生成阶段提供类型化 hook，第三方异常不会打断主流程
 - 可选 MCP：支持 stdio / Streamable HTTP 的能力探测、工具调用与资源读取，默认不把外部内容送入答案
 - 可恢复入库：原子文件写入 + 异常补偿 + 启动恢复，未提交向量不会长期混入检索
@@ -35,6 +46,7 @@ RefMind 是一个面向科研文献阅读的 RAG 问答系统，基于 LangChain
 - Chroma（向量检索）、rank-bm25 + jieba（关键词检索与中文分词）
 - Streamlit（前端）
 - DashScope（OpenAI 兼容接口的对话/嵌入模型）
+- Semantic Scholar / OpenAlex / Crossref（用户显式开启时的开放学术检索）
 - MCP Python SDK（可选，用于连接显式配置的外部工具与资源）
 - SQLite（组、文档、会话、消息等元数据）
 
@@ -51,7 +63,7 @@ refmind/
     plugins/               hook 协议、插件注册与发现
     integrations/          可选 MCP 客户端与外部上下文信任边界
     rag/                   分块入库、混合召回、重排、上下文压缩、记忆、LangGraph 流程
-    services/              上传入库等业务编排
+    services/              上传入库、开放学术索引检索等业务编排
 evaluation/                RAG 评测（检索/生成指标）
 scripts/                   冒烟测试、模型探测等脚本
 tests/                     不依赖真实 API 的单元与集成回归测试
@@ -109,8 +121,12 @@ copy .env.example .env            # 填入 DASHSCOPE_API_KEY
   `doc_id` 补偿，进程强杀留下的非 `ready` 记录会在下次启动继续清理。
 - 并行入库安全：每篇 PDF 使用独立事务与临时文件；单篇失败不取消其他任务，同一文献库的
   Chroma 变更细粒度串行提交，SQLite 使用 WAL 与 busy timeout 缓解短写锁竞争。
-- 受控 multi-agent：规划最多三个子查询，并发召回后统一重排/压缩；规划、单路检索、审校
-  任一失败都保留上一阶段有效结果或回退单查询，不让增强能力成为单点故障。
+- 受控 multi-agent：规划最多三个子查询，并发召回后统一重排/压缩；证据门禁始终对照用户原问题，
+  仅有关键词重合或相邻主题时拒答。规划、单路检索、审校任一失败都保留上一阶段有效结果或
+  回退单查询，不让增强能力成为单点故障。
+- GS 检索边界：只有用户主动选中按钮才会把改写后的查询发送给外部学术索引；外部论文摘要
+  不写入 Chroma/SQLite 文献表，不与本地全文分块混排，也不伪造页码。外部无可用摘要时会
+  明确告警后回退本地库。项目不抓取 Google Scholar HTML，避免验证码、封禁与页面结构风险。
 - 插件隔离：hook 按注册顺序变换数据，插件注册和运行异常会被记录并隔离；核心阶段还会校验
   返回类型，避免错误插件污染主链路。
 - MCP 信任边界：只连接 `.env` 显式声明的服务；外部结果默认只供探测/人工检查，必须由代码
@@ -153,6 +169,13 @@ copy .env.example .env            # 填入 DASHSCOPE_API_KEY
 | `CONTEXT_MAX_CHARS` | 送入 Prompt 的上下文字数上限 | `4000` |
 | `MEMORY_MAX_TURNS` | 记忆保留轮数 | `30` |
 | `MEMORY_RELEVANCE_THRESHOLD` | 记忆相关性阈值 | `0.3` |
+| `ACADEMIC_SEARCH_ENABLED` | 是否显示并允许使用 GS检索 | `true` |
+| `ACADEMIC_SEARCH_PROVIDER` | `auto` / `semantic_scholar` / `openalex` / `crossref` | `auto` |
+| `ACADEMIC_SEARCH_TOP_K` | 重排后送入 LLM 的外部论文摘要数 | `5` |
+| `ACADEMIC_SEARCH_CANDIDATE_K` | 每个学术索引的候选召回数 | `15` |
+| `SEMANTIC_SCHOLAR_API_KEY` | Semantic Scholar Key（可选，可提高限流稳定性） | 空 |
+| `OPENALEX_API_KEY` | OpenAlex 免费 API Key（选择/融合 OpenAlex 时需要） | 空 |
+| `CROSSREF_MAILTO` | Crossref polite pool 联系邮箱（建议） | 空 |
 | `LONG_TERM_MEMORY_ENABLED` | 启用跨会话语义/情景记忆 | `true` |
 | `LONG_TERM_MEMORY_TOP_K` | 单轮最多召回长期记忆数 | `6` |
 | `LONG_TERM_MEMORY_MIN_IMPORTANCE` | 候选写入最低重要度 | `0.45` |
@@ -164,8 +187,8 @@ copy .env.example .env            # 填入 DASHSCOPE_API_KEY
 | `MULTI_AGENT_MAX_SUBQUERIES` | 最大检索子查询数（1~3） | `3` |
 | `MULTI_AGENT_MAX_WORKERS` | 并行检索线程数 | `3` |
 | `MULTI_AGENT_RETRIEVAL_TIMEOUT` | 并行检索等待上限（秒） | `30` |
-| `MULTI_AGENT_EVIDENCE_REVIEW` | 额外 LLM 证据审查 | `false` |
-| `MULTI_AGENT_ANSWER_REVIEW` | 基于证据审校草稿 | `true` |
+| `MULTI_AGENT_EVIDENCE_REVIEW` | 检查证据能否直接回答原问题 | `true` |
+| `MULTI_AGENT_ANSWER_REVIEW` | 检查问题对齐并基于证据审校草稿 | `true` |
 | `REFMIND_PLUGIN_MODULES` | 逗号分隔的插件模块 | 空 |
 | `REFMIND_MCP_SERVERS` | MCP 服务 JSON 数组 | 空 |
 

@@ -102,6 +102,30 @@ class LongTermMemoryTests(unittest.TestCase):
         self.assertEqual(candidates[0].memory_type, "semantic")
         self.assertEqual(candidates[0].memory_key, "research.topic")
 
+    def test_one_off_question_is_not_promoted_to_research_memory(self) -> None:
+        service = LongTermMemoryService(
+            embedding_model=_FakeEmbedding(),
+            llm=_FakeLLM(
+                {
+                    "memories": [
+                        {
+                            "content": "用户正在研究降低线圈交流损耗的方法",
+                            "memory_type": "semantic",
+                            "subtype": "research",
+                            "memory_key": "research.ac_loss",
+                            "importance": 0.85,
+                            "confidence": 0.95,
+                            "should_store": True,
+                        }
+                    ]
+                }
+            ),
+        )
+
+        candidates = service.extract("降低线圈交流损耗的方法有哪些")
+
+        self.assertEqual(candidates, [])
+
     def test_duplicate_is_merged_and_conflict_supersedes_old_fact(self) -> None:
         service = LongTermMemoryService(embedding_model=_FakeEmbedding())
         common = {
@@ -218,7 +242,19 @@ class LongTermMemoryTests(unittest.TestCase):
         document = Document(page_content="证据", metadata={"filename": "p.pdf"})
         with (
             patch.object(graph, "_get_long_term_memory_service", return_value=_FakeMemoryService()),
-            patch.object(graph, "_retrieve_documents", side_effect=lambda *_: (events.append("retrieve") or [document])),
+            patch.object(graph, "get_retriever", return_value=object()),
+            patch.object(
+                graph,
+                "_invoke_retriever",
+                side_effect=lambda *_args, **_kwargs: (
+                    events.append("retrieve") or [document]
+                ),
+            ),
+            patch.object(
+                graph,
+                "_postprocess_documents",
+                side_effect=lambda _question, docs: docs,
+            ),
             patch.object(graph, "_prepare_documents_for_generation", side_effect=lambda _q, docs, **_kw: docs),
             patch.object(graph, "_generate_answer", side_effect=lambda *_args, **_kw: (events.append("generate") or "回答")),
         ):

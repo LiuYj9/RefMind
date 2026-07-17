@@ -12,6 +12,8 @@ class LayoutChunkingTests(unittest.TestCase):
     def test_heading_sets_section_and_blocks_follow_reading_order(self) -> None:
         parsed = {
             "parser": "mineru",
+            "paper_title": "Original Paper Title",
+            "library_index": 6,
             "layout_confidence": "high",
             "pages": [{"page": 1, "text": "不得重复进入索引"}],
             "blocks": [
@@ -28,6 +30,9 @@ class LayoutChunkingTests(unittest.TestCase):
         self.assertEqual(documents[0].metadata["section"], "2 Methods")
         self.assertNotIn("不得重复", documents[0].page_content)
         self.assertIsInstance(documents[0].metadata["block_ids"], str)
+        self.assertEqual(documents[0].metadata["paper_title"], "Original Paper Title")
+        self.assertEqual(documents[0].metadata["library_index"], 6)
+        self.assertEqual(documents[0].metadata["paragraph_index"], 1)
         self.assertTrue(all(not isinstance(v, (list, dict)) for v in documents[0].metadata.values()))
 
     def test_atomic_table_is_not_merged_with_paragraphs(self) -> None:

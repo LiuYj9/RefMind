@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import tempfile
@@ -23,7 +24,7 @@ from ..config import settings
 from ..llm import generate_summary
 from ..llm.image_understanding import summarize_image
 from ..parsing.image_store import extract_pdf_figures
-from ..parsing import parse_pdf, save_parsed
+from ..parsing import extract_paper_title, parse_pdf, save_parsed
 from ..plugins import CoreHook, get_plugin_manager
 from ..rag import (
     get_vectorstore,
@@ -397,6 +398,8 @@ def _run_before_ingest_hook(
     doc_id: int,
     filename: str,
     version: str,
+    paper_title: str = "",
+    library_index: int = 0,
 ) -> list[Document]:
     """允许插件变换分块，同时重申删除/权限/溯源所依赖的 metadata。"""
     candidate = get_plugin_manager().run_hook(
@@ -422,6 +425,8 @@ def _run_before_ingest_hook(
                 "filename": filename,
                 "source": filename,
                 "doc_id": doc_id,
+                "paper_title": paper_title or Path(filename).stem,
+                "library_index": max(0, int(library_index)),
                 "char_count": len(document.page_content),
             }
         )
@@ -529,6 +534,11 @@ def _ingest_pdf_impl(
     doc_id = storage.create_document(
         group_id, filename, original_path=None, status="parsing"
     )
+    get_created_document = getattr(storage, "get_document", None)
+    created_row = (
+        get_created_document(doc_id) if callable(get_created_document) else None
+    )
+    library_index = int(getattr(created_row, "library_index", 0) or 0)
     # doc_id 进入文件名后，同名重传也不会让两条记录共享并互删源 PDF。
     stored_pdf = settings.upload_dir / f"{group_id}_{doc_id}_{filename}"
 
@@ -575,6 +585,15 @@ def _ingest_pdf_impl(
                     ),
                 )
 
+        progress(0.25, "正在识别论文原始题名 ...")
+        paper_title = _timed(
+            "title_detection",
+            lambda: extract_paper_title(parsed, stored_pdf, filename),
+        )
+        parsed["paper_title"] = paper_title
+        parsed["library_index"] = library_index
+        storage.update_document(doc_id, paper_title=paper_title)
+
         progress(0.28, "正在提取图片并并行生成可检索摘要 ...")
         image_count = _timed(
             "image_enrichment",
@@ -600,6 +619,8 @@ def _ingest_pdf_impl(
                 doc_id=doc_id,
                 filename=filename,
                 version=version,
+                paper_title=paper_title,
+                library_index=library_index,
             )
 
         documents = _timed("chunking", _chunk_documents)
@@ -875,6 +896,37 @@ def remove_document(doc_id: int) -> None:
         _remove_document_impl(doc_id)
 
 
+def remove_documents(group_id: int, doc_ids: Sequence[int]) -> dict[str, object]:
+    """批量删除文档正文、向量、解析结果与原图；单篇失败不取消其他删除。"""
+    deleted: list[int] = []
+    failed: dict[int, str] = {}
+    seen: set[int] = set()
+    for raw_id in doc_ids:
+        try:
+            doc_id = int(raw_id)
+        except (TypeError, ValueError):
+            continue
+        if doc_id in seen:
+            continue
+        seen.add(doc_id)
+        document = storage.get_document(doc_id)
+        if document is None:
+            failed[doc_id] = "文档不存在或已被删除"
+            continue
+        if int(document.group_id) != int(group_id):
+            failed[doc_id] = "文档不属于当前文献库"
+            continue
+        if document.status in {"parsing", "indexing"}:
+            failed[doc_id] = "文档仍在入库，暂不能删除"
+            continue
+        try:
+            remove_document(doc_id)
+            deleted.append(doc_id)
+        except Exception as exc:  # noqa: BLE001 - 单篇失败不取消其余批量删除
+            failed[doc_id] = str(exc)[:300]
+    return {"deleted": deleted, "failed": failed}
+
+
 def _remove_document_impl(doc_id: int) -> None:
     """已持有 group 生命周期租约时执行可恢复的单文档删除。"""
     doc = storage.get_document(doc_id)
@@ -916,6 +968,34 @@ def recover_incomplete_ingestions() -> dict[str, list[int]]:
             except Exception:  # noqa: BLE001
                 failed.append(document.id)
     return {"recovered": recovered, "failed": failed}
+
+
+def backfill_document_titles() -> dict[str, list[int]]:
+    """为旧文档从解析 JSON/PDF 首页补齐论文题名，不要求重新向量化。"""
+    updated: list[int] = []
+    failed: list[int] = []
+    for group in storage.list_groups():
+        for document in storage.list_documents(group.id):
+            if str(getattr(document, "paper_title", "") or "").strip():
+                continue
+            parsed: dict = {}
+            try:
+                if document.parsed_json_path:
+                    parsed_path = Path(document.parsed_json_path)
+                    if parsed_path.is_file():
+                        loaded = json.loads(parsed_path.read_text(encoding="utf-8"))
+                        if isinstance(loaded, dict):
+                            parsed = loaded
+                title = extract_paper_title(
+                    parsed,
+                    Path(document.original_path or ""),
+                    document.filename,
+                )
+                storage.update_document(document.id, paper_title=title)
+                updated.append(document.id)
+            except Exception:  # noqa: BLE001 - 单篇旧数据损坏不能阻断应用启动
+                failed.append(document.id)
+    return {"updated": updated, "failed": failed}
 
 
 def remove_group(group_id: int) -> None:

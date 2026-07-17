@@ -73,8 +73,9 @@ class ImageAnswerTests(unittest.TestCase):
             patch.object(graph, "get_multimodal_llm", return_value=model) as factory,
         ):
             answer = graph._generate_answer("图中是什么？", [document])
-        self.assertEqual(answer, "携图答案")
-        factory.assert_called_once()
+        self.assertTrue(answer.startswith("携图答案"))
+        self.assertIn("### 参考来源", answer)
+        factory.assert_called_once_with(temperature=0.0)
 
 
 if __name__ == "__main__":

@@ -47,6 +47,16 @@ def _as_stage_parallelism(value: object) -> int:
     return min(8, max(1, int(value)))
 
 
+def _as_academic_provider(value: object) -> str:
+    """校验设置页选择的开放学术索引。"""
+    provider = str(value or "").strip().casefold()
+    return (
+        provider
+        if provider in {"auto", "semantic_scholar", "openalex", "crossref"}
+        else "auto"
+    )
+
+
 class Settings:
     """应用配置。相对路径均相对于项目根目录。"""
 
@@ -117,6 +127,34 @@ class Settings:
         self.memory_relevance_threshold = _get_float(
             "MEMORY_RELEVANCE_THRESHOLD", 0.3
         )
+        # 按钮触发的外部学术检索只生成本轮临时摘要证据，不写入论文向量库。
+        self.academic_search_enabled = _get_bool("ACADEMIC_SEARCH_ENABLED", True)
+        self.academic_search_provider = _as_academic_provider(
+            os.getenv("ACADEMIC_SEARCH_PROVIDER", "auto")
+        )
+        self.academic_search_top_k = min(
+            10, max(1, _get_int("ACADEMIC_SEARCH_TOP_K", 5))
+        )
+        self.academic_search_candidate_k = min(
+            50,
+            max(
+                self.academic_search_top_k,
+                _get_int("ACADEMIC_SEARCH_CANDIDATE_K", 15),
+            ),
+        )
+        self.academic_search_timeout_seconds = min(
+            60.0,
+            max(2.0, _get_float("ACADEMIC_SEARCH_TIMEOUT_SECONDS", 15.0)),
+        )
+        self.academic_search_max_abstract_chars = min(
+            12_000,
+            max(500, _get_int("ACADEMIC_SEARCH_MAX_ABSTRACT_CHARS", 5_000)),
+        )
+        self.semantic_scholar_api_key = os.getenv(
+            "SEMANTIC_SCHOLAR_API_KEY", ""
+        ).strip()
+        self.openalex_api_key = os.getenv("OPENALEX_API_KEY", "").strip()
+        self.crossref_mailto = os.getenv("CROSSREF_MAILTO", "").strip()
         # 跨会话用户长期记忆。与论文 Chroma/BM25 索引完全分离。
         self.long_term_memory_enabled = _get_bool("LONG_TERM_MEMORY_ENABLED", True)
         self.long_term_memory_top_k = max(1, _get_int("LONG_TERM_MEMORY_TOP_K", 6))
@@ -201,7 +239,7 @@ class Settings:
             max(1.0, _get_float("MULTI_AGENT_RETRIEVAL_TIMEOUT", 30.0)),
         )
         self.evidence_review_enabled = _get_bool(
-            "MULTI_AGENT_EVIDENCE_REVIEW", False
+            "MULTI_AGENT_EVIDENCE_REVIEW", True
         )
         self.answer_review_enabled = _get_bool("MULTI_AGENT_ANSWER_REVIEW", True)
 
@@ -234,6 +272,19 @@ class Settings:
         """是否已配置 API 密钥。"""
         return bool(self.dashscope_api_key)
 
+    @property
+    def academic_search_available(self) -> bool:
+        """当前设置能否发起外部学术检索。"""
+        if not self.academic_search_enabled:
+            return False
+        if self.academic_search_provider == "openalex":
+            return bool(self.openalex_api_key)
+        return self.academic_search_provider in {
+            "auto",
+            "semantic_scholar",
+            "crossref",
+        }
+
     # 设置界面可编辑项：环境变量名 -> (属性名, 类型转换)
     _ENV_ATTR_MAP = {
         "DASHSCOPE_API_KEY": ("dashscope_api_key", str),
@@ -259,6 +310,24 @@ class Settings:
         "RETRIEVAL_TOP_K": ("retrieval_top_k", int),
         "MEMORY_MAX_TURNS": ("memory_max_turns", int),
         "MEMORY_RELEVANCE_THRESHOLD": ("memory_relevance_threshold", float),
+        "ACADEMIC_SEARCH_ENABLED": ("academic_search_enabled", _as_bool),
+        "ACADEMIC_SEARCH_PROVIDER": (
+            "academic_search_provider",
+            _as_academic_provider,
+        ),
+        "ACADEMIC_SEARCH_TOP_K": ("academic_search_top_k", int),
+        "ACADEMIC_SEARCH_CANDIDATE_K": ("academic_search_candidate_k", int),
+        "ACADEMIC_SEARCH_TIMEOUT_SECONDS": (
+            "academic_search_timeout_seconds",
+            float,
+        ),
+        "ACADEMIC_SEARCH_MAX_ABSTRACT_CHARS": (
+            "academic_search_max_abstract_chars",
+            int,
+        ),
+        "SEMANTIC_SCHOLAR_API_KEY": ("semantic_scholar_api_key", str),
+        "OPENALEX_API_KEY": ("openalex_api_key", str),
+        "CROSSREF_MAILTO": ("crossref_mailto", str),
         "LONG_TERM_MEMORY_ENABLED": ("long_term_memory_enabled", _as_bool),
         "LONG_TERM_MEMORY_TOP_K": ("long_term_memory_top_k", int),
         "LONG_TERM_MEMORY_SCAN_LIMIT": ("long_term_memory_scan_limit", int),

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from threading import RLock
 
 import jieba
@@ -23,12 +24,26 @@ _RETRIEVER_CACHE_LOCK = RLock()
 _TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
 
 
+def _stable_document_key(document: Document) -> tuple[str, ...]:
+    metadata = document.metadata or {}
+    return (
+        str(metadata.get("doc_id") or ""),
+        str(metadata.get("version") or ""),
+        str(metadata.get("chunk_index") or ""),
+        str(metadata.get("chunk_id") or ""),
+        str(metadata.get("filename") or metadata.get("source") or ""),
+        " ".join(document.page_content.split()),
+    )
+
+
 def _preprocess(text: str) -> list[str]:
     """中英文混合分词：jieba 切中文，英文/数字整体保留并转小写。"""
     tokens: list[str] = []
-    for token in jieba.cut(text):
+    for token in jieba.cut(unicodedata.normalize("NFKC", text)):
         token = token.strip()
         if not token:
+            continue
+        if all(unicodedata.category(char).startswith("P") for char in token):
             continue
         if _TOKEN_RE.fullmatch(token):
             tokens.append(token.lower())
@@ -50,6 +65,7 @@ def build_retriever(
     if not documents:
         return None
 
+    documents = sorted(documents, key=_stable_document_key)
     k = k or settings.recall_top_k
 
     bm25 = BM25Retriever.from_documents(documents, preprocess_func=_preprocess)
@@ -62,6 +78,11 @@ def build_retriever(
     return EnsembleRetriever(
         retrievers=[bm25, vector_retriever],
         weights=[0.5, 0.5],
+        id_key=(
+            "chunk_id"
+            if all((document.metadata or {}).get("chunk_id") for document in documents)
+            else None
+        ),
     )
 
 

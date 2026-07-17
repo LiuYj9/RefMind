@@ -11,6 +11,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import dataclass
+from pathlib import Path
 from threading import Condition, RLock
 from typing import Any
 
@@ -96,6 +97,11 @@ def parsed_to_documents(
     """把解析结果切成带完整 metadata 的分块，按页切分以保留页码与章节。"""
     splitter = _build_splitter()
     parser = parsed.get("parser", "")
+    paper_title = str(parsed.get("paper_title") or Path(filename).stem).strip()
+    try:
+        library_index = max(0, int(parsed.get("library_index") or 0))
+    except (TypeError, ValueError):
+        library_index = 0
     documents: list[Document] = []
     section = "正文"
     chunk_index = 0
@@ -112,12 +118,15 @@ def parsed_to_documents(
             "permission": f"group:{group_id}",
             "filename": filename,
             "source": filename,
+            "paper_title": paper_title,
+            "library_index": library_index,
             "doc_id": doc_id if doc_id is not None else -1,
             "version": version or "",
             "parser": parser,
             "page": page_no,
             "section": sec,
             "chunk_index": chunk_index,
+            "paragraph_index": chunk_index + 1,
             "char_count": len(chunk),
             "chunk_id": str(uuid.uuid4()),
         }

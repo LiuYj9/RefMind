@@ -38,6 +38,18 @@ class ChatOverflowStyleTests(unittest.TestCase):
         self.assertIn("white-space: pre", css)
         self.assertIn("word-break: normal", css)
 
+    def test_gs_composer_uses_stable_keyed_container_and_selected_pill_state(self) -> None:
+        css = _css("light")
+
+        self.assertIn(".st-key-refmind_composer", css)
+        self.assertIn('[data-testid="stChatInput"]', css)
+        self.assertIn('[data-testid="stPills"]', css)
+        self.assertIn('button[aria-pressed="true"]', css)
+        self.assertNotRegex(
+            css,
+            r"\.st-key-refmind_composer\s*\{[^}]*position:\s*(?:fixed|absolute)",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

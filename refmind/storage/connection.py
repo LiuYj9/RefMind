@@ -10,6 +10,49 @@ from ..config import settings
 from .models import SCHEMA
 
 
+def _migrate_documents_schema(conn: sqlite3.Connection) -> None:
+    """为旧数据库补齐论文题名与稳定库内序号，不要求用户重建文献库。"""
+    columns = {
+        str(row["name"])
+        for row in conn.execute("PRAGMA table_info(documents)").fetchall()
+    }
+    if "paper_title" not in columns:
+        conn.execute("ALTER TABLE documents ADD COLUMN paper_title TEXT")
+    if "library_index" not in columns:
+        conn.execute(
+            "ALTER TABLE documents ADD COLUMN library_index INTEGER NOT NULL DEFAULT 0"
+        )
+
+    # 旧数据全部为 0。按最早入库顺序分配稳定序号；后续删除不重排，避免历史引用漂移。
+    group_rows = conn.execute(
+        "SELECT DISTINCT group_id FROM documents ORDER BY group_id"
+    ).fetchall()
+    for group_row in group_rows:
+        group_id = int(group_row["group_id"])
+        rows = conn.execute(
+            "SELECT id, library_index FROM documents "
+            "WHERE group_id = ? ORDER BY id ASC",
+            (group_id,),
+        ).fetchall()
+        next_index = max(
+            (int(row["library_index"] or 0) for row in rows),
+            default=0,
+        ) + 1
+        for row in rows:
+            if int(row["library_index"] or 0) > 0:
+                continue
+            conn.execute(
+                "UPDATE documents SET library_index = ? WHERE id = ?",
+                (next_index, int(row["id"])),
+            )
+            next_index += 1
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_documents_group_library_index "
+        "ON documents(group_id, library_index)"
+    )
+
+
 @contextmanager
 def connect() -> Iterator[sqlite3.Connection]:
     """提供一个自动提交并关闭的数据库连接（按调用创建，适配 Streamlit）。"""
@@ -38,3 +81,4 @@ def init_db() -> None:
         except sqlite3.DatabaseError:
             pass
         conn.executescript(SCHEMA)
+        _migrate_documents_schema(conn)

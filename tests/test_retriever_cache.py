@@ -43,6 +43,16 @@ class RetrieverCacheTests(unittest.TestCase):
         self.assertFalse(invalidator.is_alive())
         self.assertNotIn(7, retrieval._RETRIEVER_CACHE)
 
+    def test_terminal_punctuation_is_not_a_bm25_token(self) -> None:
+        plain = retrieval._preprocess("降低线圈交流损耗的方法有哪些")
+
+        self.assertEqual(
+            retrieval._preprocess("降低线圈交流损耗的方法有哪些？"), plain
+        )
+        self.assertEqual(
+            retrieval._preprocess("降低线圈交流损耗的方法有哪些?"), plain
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

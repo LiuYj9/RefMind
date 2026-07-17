@@ -188,6 +188,46 @@ h1 {{ font-weight: 700; letter-spacing: -0.02em; font-size: 1.6rem; }}
 }}
 [data-testid="stChatInput"] textarea {{ color: var(--text) !important; }}
 
+/* DeepSeek 风格的一体式输入区：原生 chat_input + 可取消选择的 GS pill。 */
+.st-key-refmind_composer {{
+    max-width: 900px;
+    margin: 0 auto .35rem;
+    padding: .18rem .45rem .38rem;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--input-bg);
+    box-shadow: 0 7px 24px rgba(15, 23, 42, .12);
+    transition: border-color .15s ease, box-shadow .15s ease;
+}}
+.st-key-refmind_composer:focus-within {{
+    border-color: var(--primary);
+    box-shadow: 0 8px 28px rgba(37, 99, 235, .16);
+}}
+.st-key-refmind_composer [data-testid="stChatInput"] {{
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}}
+.st-key-refmind_composer [data-testid="stPills"] {{
+    margin-left: .25rem;
+}}
+.st-key-refmind_composer [data-testid="stPills"] button {{
+    min-height: 30px;
+    padding: 2px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg2);
+    color: var(--muted);
+    font-weight: 650;
+}}
+.st-key-refmind_composer [data-testid="stPills"] button[aria-pressed="true"],
+.st-key-refmind_composer [data-testid="stPills"] button[aria-selected="true"] {{
+    border-color: var(--primary);
+    background: rgba(37, 99, 235, .13);
+    color: var(--primary);
+}}
+
 /* ===== 空状态欢迎区 ===== */
 .refmind-hero {{ text-align: center; padding: 56px 20px 28px; color: var(--muted); }}
 .refmind-hero .logo {{ font-size: 46px; }}

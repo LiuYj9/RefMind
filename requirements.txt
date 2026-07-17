@@ -21,7 +21,7 @@ dashscope>=1.20.0
 pymupdf>=1.24.0
 
 # 前端
-streamlit>=1.40.0
+streamlit>=1.58.0
 
 # 工具库
 python-dotenv>=1.0.0
