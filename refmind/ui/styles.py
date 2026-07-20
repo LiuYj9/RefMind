@@ -102,28 +102,33 @@ h1 {{ font-weight: 700; letter-spacing: -0.02em; font-size: 1.6rem; }}
     border-color: var(--primary);
 }}
 
-/* ===== Tabs =====
- * 主导航与长对话共用页面滚动。让标签栏吸附在可视区顶部，避免滚到最新
- * 消息后「文档库 / 翻译 / 设置」离开视口；窄屏时允许横向滚动而不换行。
+/* ===== 主导航 =====
+ * 使用真正的视口固定定位，不依赖 Streamlit 主滚动区的 sticky 行为。
  */
-.stTabs [data-baseweb="tab-list"] {{
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    gap: 4px;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: thin;
-    border-bottom: 1px solid var(--border);
+.st-key-refmind_main_nav {{
+    position: fixed;
+    top: 5rem;
+    right: 1rem;
+    z-index: 1000;
+    width: 7.5rem;
+    padding: .55rem;
     background: var(--bg);
-    box-shadow: 0 6px 12px -12px rgba(15, 23, 42, .45);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .14);
 }}
-.stTabs [data-baseweb="tab"] {{
-    height: 42px; padding: 0 16px; border-radius: 10px 10px 0 0;
-    flex: 0 0 auto;
-    font-weight: 600; color: var(--muted);
+.st-key-refmind_main_nav [data-testid="stVerticalBlock"] {{
+    gap: .4rem;
 }}
-.stTabs [aria-selected="true"] {{ color: var(--primary); }}
+.st-key-refmind_main_nav .stButton > button {{
+    white-space: nowrap;
+    font-weight: 600;
+}}
+
+/* 中等宽度下为右侧浮动栏预留内容空间，避免遮住正文。 */
+@media (max-width: 1180px) {{
+    .block-container {{ padding-right: 9rem; }}
+}}
 
 /* ===== 聊天气泡 ===== */
 [data-testid="stChatMessage"] {{

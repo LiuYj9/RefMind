@@ -86,6 +86,7 @@ _ss_default("last_ingestion_report", None)
 _ss_default("document_delete_report", None)
 _ss_default("document_selector_nonce", 0)
 _ss_default("active_citation_target", None)
+_ss_default("main_view", "chat")
 
 
 def current_group() -> storage.Group | None:
@@ -1295,16 +1296,34 @@ def main() -> None:
     if active_target is not None:
         _citation_dialog(active_target)
 
-    tab_chat, tab_docs, tab_trans, tab_set = st.tabs(
-        ["💬 对话", "📄 文档库", "🌐 翻译", "⚙️ 设置"]
-    )
-    with tab_chat:
+    # 主导航使用独立按钮和 fixed 容器，避免 Streamlit 主滚动区对 sticky 的
+    # 限制。按钮放在右侧后，无论对话多长都始终留在视口内。
+    with st.container(key="refmind_main_nav"):
+        nav_items = (
+            ("chat", "💬 对话"),
+            ("documents", "📄 文档库"),
+            ("translation", "🌐 翻译"),
+            ("settings", "⚙️ 设置"),
+        )
+        for view, label in nav_items:
+            if st.button(
+                label,
+                key=f"main_nav_{view}",
+                type="primary" if st.session_state.main_view == view else "secondary",
+                use_container_width=True,
+            ):
+                st.session_state.main_view = view
+                st.rerun()
+
+    active_view = st.session_state.main_view
+
+    if active_view == "chat":
         render_chat(group)
-    with tab_docs:
+    elif active_view == "documents":
         render_documents(group)
-    with tab_trans:
+    elif active_view == "translation":
         render_translation(group)
-    with tab_set:
+    elif active_view == "settings":
         render_settings()
 
 

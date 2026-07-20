@@ -50,23 +50,19 @@ class ChatOverflowStyleTests(unittest.TestCase):
             r"\.st-key-refmind_composer\s*\{[^}]*position:\s*(?:fixed|absolute)",
         )
 
-    def test_main_tabs_stay_accessible_during_long_conversations(self) -> None:
+    def test_main_navigation_is_fixed_to_the_right_of_long_conversations(self) -> None:
         css = _css("light")
 
         self.assertRegex(
             css,
-            r'(?s)\.stTabs \[data-baseweb="tab-list"\]\s*\{'
-            r"[^}]*position:\s*sticky"
-            r"[^}]*top:\s*0"
-            r"[^}]*z-index:\s*100"
-            r"[^}]*flex-wrap:\s*nowrap"
-            r"[^}]*overflow-x:\s*auto",
+            r"(?s)\.st-key-refmind_main_nav\s*\{"
+            r"[^}]*position:\s*fixed"
+            r"[^}]*top:\s*5rem"
+            r"[^}]*right:\s*1rem"
+            r"[^}]*z-index:\s*1000",
         )
-        self.assertRegex(
-            css,
-            r'(?s)\.stTabs \[data-baseweb="tab"\]\s*\{'
-            r"[^}]*flex:\s*0 0 auto",
-        )
+        self.assertIn("padding-right: 9rem", css)
+        self.assertNotIn('[data-baseweb="tab-list"]', css)
 
 
 if __name__ == "__main__":
