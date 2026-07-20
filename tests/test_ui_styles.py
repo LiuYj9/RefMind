@@ -50,6 +50,24 @@ class ChatOverflowStyleTests(unittest.TestCase):
             r"\.st-key-refmind_composer\s*\{[^}]*position:\s*(?:fixed|absolute)",
         )
 
+    def test_main_tabs_stay_accessible_during_long_conversations(self) -> None:
+        css = _css("light")
+
+        self.assertRegex(
+            css,
+            r'(?s)\.stTabs \[data-baseweb="tab-list"\]\s*\{'
+            r"[^}]*position:\s*sticky"
+            r"[^}]*top:\s*0"
+            r"[^}]*z-index:\s*100"
+            r"[^}]*flex-wrap:\s*nowrap"
+            r"[^}]*overflow-x:\s*auto",
+        )
+        self.assertRegex(
+            css,
+            r'(?s)\.stTabs \[data-baseweb="tab"\]\s*\{'
+            r"[^}]*flex:\s*0 0 auto",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

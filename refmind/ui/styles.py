@@ -102,10 +102,25 @@ h1 {{ font-weight: 700; letter-spacing: -0.02em; font-size: 1.6rem; }}
     border-color: var(--primary);
 }}
 
-/* ===== Tabs ===== */
-.stTabs [data-baseweb="tab-list"] {{ gap: 4px; border-bottom: 1px solid var(--border); }}
+/* ===== Tabs =====
+ * 主导航与长对话共用页面滚动。让标签栏吸附在可视区顶部，避免滚到最新
+ * 消息后「文档库 / 翻译 / 设置」离开视口；窄屏时允许横向滚动而不换行。
+ */
+.stTabs [data-baseweb="tab-list"] {{
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    box-shadow: 0 6px 12px -12px rgba(15, 23, 42, .45);
+}}
 .stTabs [data-baseweb="tab"] {{
     height: 42px; padding: 0 16px; border-radius: 10px 10px 0 0;
+    flex: 0 0 auto;
     font-weight: 600; color: var(--muted);
 }}
 .stTabs [aria-selected="true"] {{ color: var(--primary); }}
