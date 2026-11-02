@@ -14,7 +14,10 @@ from unittest.mock import Mock, call, patch
 def _load_ingestion_without_optional_dependencies():
     """用轻量替身加载编排模块，测试不依赖 LangChain/Chroma。"""
     llm_stub = types.ModuleType("refmind.llm")
+    llm_stub.__path__ = []
     llm_stub.generate_summary = lambda _documents: "summary"
+    image_stub = types.ModuleType("refmind.llm.image_understanding")
+    image_stub.summarize_image = Mock()
 
     rag_stub = types.ModuleType("refmind.rag")
     rag_stub.get_vectorstore = Mock()
@@ -30,7 +33,8 @@ def _load_ingestion_without_optional_dependencies():
     module = importlib.util.module_from_spec(spec)
     with patch.dict(
         sys.modules,
-        {"refmind.llm": llm_stub, "refmind.rag": rag_stub, module_name: module},
+        {"refmind.llm": llm_stub, "refmind.llm.image_understanding": image_stub,
+         "refmind.rag": rag_stub, module_name: module},
     ):
         spec.loader.exec_module(module)
     return module

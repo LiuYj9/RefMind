@@ -1,168 +1,202 @@
-"""RAG 评测命令行入口。
-
-常用：
-    python evaluation/run_eval.py               # 完整评测
-    python evaluation/run_eval.py --no-judge    # 只跑检索侧，不调用裁判
-    python evaluation/run_eval.py --golden x.json --k 1 3 5 10
-
-报告写到 evaluation/reports/，同时输出 JSON 与 Markdown。
-"""
-
+"""Safe evaluation CLI. Default is offline validation; paid operations require opt-in."""
 from __future__ import annotations
-
 import argparse
+import hashlib
 import json
+import os
+import platform
+import subprocess
 import sys
-import time
+import tempfile
+import uuid
+from importlib.metadata import PackageNotFoundError, version
+from collections import Counter
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
-# 允许从项目根目录导入 refmind
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(_PROJECT_ROOT))
-
-# 避免 Windows GBK 控制台输出中文/emoji 报错
-try:
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
-except Exception:  # noqa: BLE001
-    pass
-
-from evaluation.evaluator import run_evaluation  # noqa: E402
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+from evaluation.dataset import load_golden_set
+from evaluation.evaluator import evaluate_items
 
 
-def _ensure_sample_corpus(golden_path: Path) -> None:
-    """若 golden set 引用了内置合成语料却尚未生成，则自动生成。"""
+def _workspace(path: Path, *, create: bool) -> Path:
+    path = path.resolve()
+    parent = (PROJECT_ROOT / "evaluation" / "workspaces").resolve()
+    if path == parent or not path.is_relative_to(parent):
+        raise ValueError("workspace must be a child of evaluation/workspaces")
+    marker = path / ".refmind-eval"
+    if create:
+        path.mkdir(parents=True, exist_ok=False)
+        marker.write_text("RefMind evaluation-owned storage\n", encoding="utf-8")
+    elif not marker.is_file():
+        raise ValueError("not a prepared evaluation workspace")
+    return path
+
+
+def worker_environment(workspace: Path) -> dict:
+    env = os.environ.copy()
+    for key, relative in {"DATABASE_PATH": "db/evaluation.db", "UPLOAD_DIR": "uploads",
+                          "PARSED_DIR": "parsed", "DOCSTORE_DIR": "docstore",
+                          "CHROMA_PERSIST_DIR": "chroma"}.items():
+        env[key] = str(workspace / relative)
+    env.update(REFMIND_EVAL_WORKSPACE=str(workspace), IMAGE_SUMMARY_ENABLED="false",
+               LONG_TERM_MEMORY_ENABLED="false", ACADEMIC_SEARCH_ENABLED="false",
+               REFMIND_PLUGIN_MODULES="", REFMIND_MCP_SERVERS="[]",
+               PYTHONIOENCODING="utf-8", PYTHONDONTWRITEBYTECODE="1")
+    return env
+
+
+def run_backend(request: dict, workspace: Path) -> dict:
+    # Child lifetime bounds settings mutations and model/retriever caches to this run.
+    with tempfile.TemporaryDirectory(prefix="eval-result-") as tmp:
+        result = Path(tmp) / "result.json"
+        request = {**request, "result_path": str(result)}
+        try:
+            proc = subprocess.run([sys.executable, "-B", "-m", "evaluation.worker"],
+                                  input=json.dumps(request), text=True, encoding="utf-8",
+                                  cwd=PROJECT_ROOT, env=worker_environment(workspace),
+                                  capture_output=True, timeout=1800)
+        except subprocess.TimeoutExpired:
+            return {"schema_version": 2, "mode": request["mode"], "status": "failed",
+                    "error": {"type": "TimeoutExpired", "message": "isolated worker exceeded 1800 seconds"}}
+        if proc.stderr:
+            import re
+            diagnostic = re.sub(r"sk-[A-Za-z0-9_-]+", "[REDACTED]", proc.stderr)
+            (workspace / "worker.stderr.log").write_text(diagnostic, encoding="utf-8")
+        if not result.exists():
+            raise RuntimeError(f"evaluation worker exited {proc.returncode} without a result")
+        report = json.loads(result.read_text(encoding="utf-8"))
+        if proc.stderr:
+            report["diagnostic_log"] = "worker.stderr.log"
+        if proc.returncode and report.get("status") == "completed":
+            raise RuntimeError("worker exit status inconsistent with report")
+        return report
+
+
+def offline_bm25(golden, k_values):
+    """Diagnostic page-level lexical baseline, explicitly NOT production hybrid RAG."""
+    import fitz
+    import jieba
+    import unicodedata
+    from rank_bm25 import BM25Okapi
+    def tokens(text):
+        result = []
+        for t in jieba.cut(unicodedata.normalize("NFKC", text)):
+            t = t.strip()
+            if t and not all(unicodedata.category(c).startswith("P") for c in t):
+                result.append(t.casefold())
+        return result
+    splits = {i.split for i in golden.items}
+    docs = []
+    for source in golden.manifest:
+        if source.get("split", "dev") not in splits:
+            continue
+        p = PROJECT_ROOT / source["path"]
+        with fitz.open(p) as pdf:
+            for page, pg in enumerate(pdf, 1):
+                text = pg.get_text()
+                if text.strip():
+                    docs.append({"page_content": text, "metadata": {"filename": p.name, "page": page}})
+    model = BM25Okapi([tokens(d["page_content"]) for d in docs])
+    def retrieve(question):
+        scores = model.get_scores(tokens(question))
+        ranked = sorted(range(len(docs)), key=lambda i: (-scores[i], i))
+        return [docs[i] for i in ranked[:max(k_values)] if scores[i] > 0]
+    report = evaluate_items(golden, mode="retrieval", component=retrieve, k_values=k_values)
+    report["retrieval_stage"] = "diagnostic_bm25_pdf_pages"
+    report["limitations"] = ["Not production hybrid retrieval; no vector search, reranking or answer generation.",
+                             "Evidence labels were agent-authored and source-checked, pending human review."]
+    report["api_usage"] = {"calls": 0, "cost_usd": 0}
+    return report
+
+
+def markdown(report):
+    lines = ["# RefMind evaluation report", "", f"- Run: {report['run_id']}",
+             f"- Mode: {report['mode']}", f"- Status: {report['status']}",
+             f"- Time: {report['created_at']}", f"- Dataset SHA256: {report.get('dataset_hash', 'N/A')}"]
+    if "summary" in report:
+        lines += ["", "## Summary", "", "```json", json.dumps(report["summary"], ensure_ascii=False, indent=2), "```"]
+    if report.get("limitations"):
+        lines += ["", "## Limitations", ""] + ["- " + s for s in report["limitations"]]
+    if "items" in report:
+        lines += ["", "## Items", "", "| ID | Status | Recall@10 | MRR | Seconds |", "|---|---|---|---|---|"]
+        for row in report["items"]:
+            ret = row.get("retrieval") or {}
+            lines.append(f"| {row['id']} | {row['status']} | {(ret.get('recall') or {}).get('@10', 'N/A')} | {ret.get('mrr', 'N/A')} | {row.get('latency_s', 'N/A')} |")
+    return "\n".join(lines) + "\n"
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--mode", choices=("validate", "prepare", "retrieval", "answer", "judge"))
+    parser.add_argument("--golden", type=Path, default=PROJECT_ROOT / "evaluation/golden_set.json")
+    parser.add_argument("--split", choices=("dev", "holdout", "all"), default="dev")
+    parser.add_argument("--unlock-holdout", action="store_true")
+    parser.add_argument("--backend", choices=("production", "bm25"), default="production")
+    parser.add_argument("--workspace", type=Path)
+    parser.add_argument("--input", type=Path, help="Saved answer report; required for judge")
+    parser.add_argument("--allow-api", action="store_true", help="Explicitly allow billable model calls")
+    parser.add_argument("--no-judge", action="store_true", help="Deprecated alias for retrieval mode")
+    parser.add_argument("--k", type=int, nargs="+", default=[1, 3, 5, 10])
+    parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "evaluation/reports")
+    args = parser.parse_args(argv)
+    mode = args.mode or ("retrieval" if args.no_judge else "validate")
     try:
-        data = json.loads(golden_path.read_text(encoding="utf-8"))
-    except Exception:  # noqa: BLE001
-        return
-    corpus = data.get("corpus", [])
-    needs_sample = any("RefMindNet.pdf" in c for c in corpus)
-    target = _PROJECT_ROOT / "evaluation" / "corpus" / "RefMindNet.pdf"
-    if needs_sample and not target.exists():
-        from evaluation.make_sample_corpus import build_sample_pdf
-
-        print("首次运行：生成内置合成语料 RefMindNet.pdf ...")
-        build_sample_pdf(target)
-
-
-def _fmt(value) -> str:
-    return "N/A" if value is None else f"{value:.4f}"
-
-
-def _to_markdown(report: dict) -> str:
-    s = report["summary"]
-    cfg = report["config"]
-    lines: list[str] = []
-    lines.append("# RefMind RAG 评测报告\n")
-    lines.append(f"- golden set：`{report['golden_path']}`")
-    lines.append(f"- 题目数：{s['num_items']}（可答 {s['num_answerable']} / 拒答 {s['num_refusal']}）")
-    lines.append(f"- K 取值：{cfg['k_values']} ｜ 生产 top-k：{cfg['production_top_k']} ｜ LLM 裁判：{cfg['judge']}")
-    lines.append("")
-
-    lines.append("## 检索侧指标（均值）\n")
-    r = s["retrieval"]
-    lines.append("| 指标 | " + " | ".join(f"@{k}" for k in cfg["k_values"]) + " |")
-    lines.append("|---|" + "---|" * len(cfg["k_values"]))
-    lines.append(
-        "| Recall | "
-        + " | ".join(_fmt(r["recall"].get(f"@{k}")) for k in cfg["k_values"])
-        + " |"
-    )
-    lines.append(
-        "| nDCG | "
-        + " | ".join(_fmt(r["ndcg"].get(f"@{k}")) for k in cfg["k_values"])
-        + " |"
-    )
-    lines.append(f"\n- MRR：{_fmt(r['mrr'])}\n")
-
-    lines.append("## 生成侧指标（均值，LLM-as-judge）\n")
-    g = s["generation"]
-    lines.append("| Faithfulness | Answer Relevance | Context Precision | Context Recall |")
-    lines.append("|---|---|---|---|")
-    lines.append(
-        f"| {_fmt(g['faithfulness'])} | {_fmt(g['answer_relevance'])} "
-        f"| {_fmt(g['context_precision'])} | {_fmt(g['context_recall'])} |"
-    )
-    lines.append("")
-
-    lines.append("## 其他\n")
-    lines.append(f"- 拒答正确率：{_fmt(s['refusal_accuracy'])}")
-    lat = s["latency"]
-    lines.append(
-        f"- 端到端问答延迟：mean {_fmt(lat['mean_s'])}s ｜ P50 {_fmt(lat['p50_s'])}s "
-        f"｜ P95 {_fmt(lat['p95_s'])}s ｜ P99 {_fmt(lat['p99_s'])}s"
-    )
-    lines.append("")
-
-    lines.append("## 逐题明细\n")
-    lines.append("| ID | 拒答期望/实际 | Recall@" + str(max(cfg["k_values"])) + " | MRR | Faith. | Ans.Rel | Ctx.Prec | Ctx.Rec | 延迟(s) |")
-    lines.append("|---|---|---|---|---|---|---|---|---|")
-    maxk = max(cfg["k_values"])
-    for it in report["items"]:
-        ret = it["retrieval"] or {}
-        gen = it["generation"] or {}
-        recall = (ret.get("recall") or {}).get(f"@{maxk}")
-        lines.append(
-            f"| {it['id']} "
-            f"| {it['expect_refusal']}/{it['is_refusal']} "
-            f"| {_fmt(recall)} "
-            f"| {_fmt(ret.get('mrr'))} "
-            f"| {_fmt(gen.get('faithfulness'))} "
-            f"| {_fmt(gen.get('answer_relevance'))} "
-            f"| {_fmt(gen.get('context_precision'))} "
-            f"| {_fmt(gen.get('context_recall'))} "
-            f"| {it['latency_s']:.2f} |"
-        )
-    lines.append("")
-    return "\n".join(lines)
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description="RefMind RAG 评测")
-    parser.add_argument(
-        "--golden",
-        default=str(_PROJECT_ROOT / "evaluation" / "golden_set.json"),
-        help="golden set JSON 路径",
-    )
-    parser.add_argument(
-        "--k", type=int, nargs="+", default=[1, 3, 5, 10], help="Recall/nDCG 的 K 取值"
-    )
-    parser.add_argument(
-        "--top-k", type=int, default=5, help="生产问答使用的检索 top-k"
-    )
-    parser.add_argument(
-        "--no-judge", action="store_true", help="跳过 LLM 裁判，仅评测检索侧"
-    )
-    parser.add_argument(
-        "--keep-group", action="store_true", help="评测后保留临时文献库（默认清理）"
-    )
-    args = parser.parse_args()
-
-    golden_path = Path(args.golden).resolve()
-    _ensure_sample_corpus(golden_path)
-
-    report = run_evaluation(
-        golden_path=golden_path,
-        k_values=tuple(args.k),
-        production_top_k=args.top_k,
-        judge=not args.no_judge,
-        keep_group=args.keep_group,
-    )
-
-    reports_dir = _PROJECT_ROOT / "evaluation" / "reports"
-    reports_dir.mkdir(parents=True, exist_ok=True)
-    stamp = time.strftime("%Y%m%d_%H%M%S")
-    json_path = reports_dir / f"report_{stamp}.json"
-    md_path = reports_dir / f"report_{stamp}.md"
-    json_path.write_text(
-        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
-    md_path.write_text(_to_markdown(report), encoding="utf-8")
-
-    print("\n" + _to_markdown(report))
-    print(f"\n报告已保存：\n  {json_path}\n  {md_path}")
-    return 0
+        if args.no_judge and mode != "retrieval":
+            raise ValueError("--no-judge is only compatible with retrieval")
+        if any(k < 1 for k in args.k):
+            raise ValueError("K values must be positive")
+        if args.backend == "bm25" and mode not in {"validate", "retrieval"}:
+            raise ValueError("bm25 backend supports retrieval only")
+        paid = mode in {"prepare", "answer", "judge"} or (mode == "retrieval" and args.backend == "production")
+        if paid and not args.allow_api:
+            raise ValueError("this mode may call paid APIs; --allow-api is required")
+        if mode != "judge":
+            golden = load_golden_set(args.golden, verify_files=True)
+            # Validation checks all labels, but never runs a query or exposes holdout questions.
+            if mode == "validate":
+                report = {"schema_version": 2, "mode": mode, "status": "completed", "dataset_hash": golden.dataset_hash,
+                          "summary": {"documents": len(golden.corpus), "items": len(golden.items),
+                                      "splits": dict(Counter(i.split for i in golden.items)),
+                                      "categories": dict(Counter(i.category for i in golden.items))},
+                          "api_usage": {"calls": 0, "cost_usd": 0}}
+            else:
+                selected = golden.select(args.split, args.unlock_holdout)
+        if mode == "retrieval" and args.backend == "bm25":
+            report = offline_bm25(selected, tuple(args.k))
+        elif paid:
+            if mode == "judge" and (args.input is None or not args.input.is_file()):
+                raise ValueError("judge requires --input answer_report.json")
+            if mode in {"retrieval", "answer"} and args.workspace is None:
+                raise ValueError("production evaluation requires an explicitly prepared --workspace")
+            path = args.workspace or PROJECT_ROOT / "evaluation/workspaces" / uuid.uuid4().hex
+            workspace = _workspace(path, create=mode in {"prepare", "judge"})
+            report = run_backend({"mode": mode, "golden": str(args.golden.resolve()), "split": args.split,
+                                  "unlock_holdout": args.unlock_holdout, "k_values": args.k,
+                                  "input": str(args.input.resolve()) if args.input else None}, workspace)
+            report["workspace"] = str(workspace)
+        source_files = ("evaluation/dataset.py", "evaluation/evaluator.py", "evaluation/run_eval.py",
+                        "evaluation/worker.py", "evaluation/metrics/retrieval.py", "evaluation/metrics/generation.py")
+        packages = {}
+        for package in ("langchain", "langchain-core", "langchain-openai", "chromadb", "pymupdf", "rank-bm25", "jieba"):
+            try:
+                packages[package] = version(package)
+            except PackageNotFoundError:
+                packages[package] = None
+        report.update(run_id=uuid.uuid4().hex, created_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
+                      source_hashes={p: hashlib.sha256((PROJECT_ROOT/p).read_bytes()).hexdigest() for p in source_files},
+                      environment={"python": platform.python_version(), "platform": platform.platform(), "packages": packages})
+        args.output_dir.mkdir(parents=True, exist_ok=True)
+        stem = args.output_dir / (mode + "_" + report["run_id"])
+        stem.with_suffix(".json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        stem.with_suffix(".md").write_text(markdown(report), encoding="utf-8")
+        print(json.dumps({"status": report["status"], "report": str(stem.with_suffix('.json'))}, ensure_ascii=False))
+        return 0 if report["status"] == "completed" else 1
+    except (ValueError, OSError, subprocess.TimeoutExpired) as exc:
+        parser.error(str(exc))
 
 
 if __name__ == "__main__":
