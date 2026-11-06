@@ -1,0 +1,3825 @@
+{
+  "schema_version": 3,
+  "corpus": [
+    {
+      "id": "public_llzo",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1209.0690v1.pdf",
+      "sha256": "5b4c1f0bcea518a8466bf8ae7fa2215618082f41716eb24492afb348e8daf192",
+      "pages": 5,
+      "family": "arxiv:1209.0690",
+      "question_split": "dev",
+      "domain": "materials_energy",
+      "title": "Origin of the structural phase transition in Li7La3Zr2O12",
+      "authors": [
+        "N. Bernstein",
+        "M. D. Johannes",
+        "Khang Hoang"
+      ],
+      "version": "arxiv:1209.0690v1",
+      "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+      "source_url": "https://arxiv.org/pdf/1209.0690v1"
+    },
+    {
+      "id": "public_robotic_hts",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/robotic_hts_published.pdf",
+      "sha256": "d767453814ad7195b5ca593de543e092ad014810c59947d2ec6d6931376e9eeb",
+      "pages": 19,
+      "family": "doi:10.1088/1361-6668/ae2362",
+      "question_split": "dev",
+      "domain": "superconductivity_physics",
+      "title": "Robotic winding of non-planar high-temperature superconducting coils",
+      "authors": [
+        "Magnus Dam",
+        "Tabea Arndt"
+      ],
+      "version": "Superconductor Science and Technology 38 (2025) 125004 published version",
+      "license": "https://creativecommons.org/licenses/by/4.0/",
+      "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623"
+    },
+    {
+      "id": "qasper_1601_00901",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1601.00901.pdf",
+      "title": "Joint learning of ontology and semantic parser from text",
+      "sha256": "3d95063ad147f8793ed5f49c146b2be3ba7f284fc737a945f440ff2760aa9316",
+      "pages": 22,
+      "family": "arxiv:1601.00901",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1601.00901",
+      "version": "1601.00901v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1601_01705",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1601.01705.pdf",
+      "title": "Learning to Compose Neural Networks for Question Answering",
+      "sha256": "eea0ca8433a1bb118f8a2fe87c159750b5ecca88e7dd2c00fc18a6152848d288",
+      "pages": 10,
+      "family": "arxiv:1601.01705",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1601.01705",
+      "version": "1601.01705v4",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1601_02543",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1601.02543.pdf",
+      "title": "Evaluating the Performance of a Speech Recognition based System",
+      "sha256": "c233bfa49b82cc284bf6c47ffacfc03274f29b3eaf30d25babe66687879ae024",
+      "pages": 8,
+      "family": "arxiv:1601.02543",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1601.02543",
+      "version": "1601.02543v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1601_04012",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1601.04012.pdf",
+      "title": "Detecting and Extracting Events from Text Documents",
+      "sha256": "64e7ad46dbc832fd3ded82eb43b3e2b4f06895bd4cd70a00f9991505b88dd88d",
+      "pages": 62,
+      "family": "arxiv:1601.04012",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1601.04012",
+      "version": "1601.04012v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1601_06068",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1601.06068.pdf",
+      "title": "Paraphrase Generation from Latent-Variable PCFGs for Semantic Parsing",
+      "sha256": "3444762771ba7640f84a0922ad053574bfd96886543308c46affc697f0de346f",
+      "pages": 10,
+      "family": "arxiv:1601.06068",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1601.06068",
+      "version": "1601.06068v2",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1602_00812",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1602.00812.pdf",
+      "title": "The Grail theorem prover: Type theory for syntax and semantics",
+      "sha256": "b81ea822f6717b10687b4d0c0cb028e2efcdaf0764354159100dbe02219d0364",
+      "pages": 32,
+      "family": "arxiv:1602.00812",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1602.00812",
+      "version": "1602.00812v2",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1602_01208",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1602.01208.pdf",
+      "title": "Spatial Concept Acquisition for a Mobile Robot that Integrates Self-Localization and Unsupervised Word Discovery from Spoken Sentences",
+      "sha256": "ee38c0004251adcfe7b76d30e9b0186efa835c7525e7368cf0ac863f9c97e4cb",
+      "pages": 13,
+      "family": "arxiv:1602.01208",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1602.01208",
+      "version": "1602.01208v3",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1602_01595",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1602.01595.pdf",
+      "title": "Many Languages, One Parser",
+      "sha256": "c084a246414ee2921c21066ef78bbf8b2bd0d59066051f7ae3267307e6dc2423",
+      "pages": 14,
+      "family": "arxiv:1602.01595",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1602.01595",
+      "version": "1602.01595v4",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1602_03661",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1602.03661.pdf",
+      "title": "On the emergence of syntactic structures: quantifying and modelling duality of patterning",
+      "sha256": "2247ed68c0de712a870065bed992264217da0cb3da9c88b8ae4b2c4d6227d262",
+      "pages": 11,
+      "family": "arxiv:1602.03661",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1602.03661",
+      "version": "1602.03661v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1602_07618",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1602.07618.pdf",
+      "title": "From quantum foundations via natural language meaning to a theory of everything",
+      "sha256": "bd6564bd558283720c7b081c464e6aafbbf3d41bdb68795944f6a6c71ced931d",
+      "pages": 19,
+      "family": "arxiv:1602.07618",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1602.07618",
+      "version": "1602.07618v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1602_08741",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1602.08741.pdf",
+      "title": "Gibberish Semantics: How Good is Russian Twitter in Word Semantic Similarity Task?",
+      "sha256": "b3dccc824deb616cadc95fe240f408383b32ac1498103f77a61237009d7fb3b0",
+      "pages": 10,
+      "family": "arxiv:1602.08741",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1602.08741",
+      "version": "1602.08741v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1603_00968",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1603.00968.pdf",
+      "title": "MGNC-CNN: A Simple Approach to Exploiting Multiple Word Embeddings for Sentence Classification",
+      "sha256": "89adb39244014c68059c51110a7d14c0df222e5c349a4f4030da4e8a57d90d24",
+      "pages": 7,
+      "family": "arxiv:1603.00968",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1603.00968",
+      "version": "1603.00968v2",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1603_01417",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1603.01417.pdf",
+      "title": "Dynamic Memory Networks for Visual and Textual Question Answering",
+      "sha256": "ce961743dc7bc5ebd00a86dd7209476d4dc0e4f24dcf2cb36054bb50bda0f2ab",
+      "pages": 10,
+      "family": "arxiv:1603.01417",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1603.01417",
+      "version": "1603.01417v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1603_04513",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1603.04513.pdf",
+      "title": "Multichannel Variable-Size Convolution for Sentence Classification",
+      "sha256": "4ac0227b1513480f484704cb4b96b94acad602570f132c24449404dc0703685f",
+      "pages": 11,
+      "family": "arxiv:1603.04513",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1603.04513",
+      "version": "1603.04513v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1603_04553",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1603.04553.pdf",
+      "title": "Unsupervised Ranking Model for Entity Coreference Resolution",
+      "sha256": "0f2d8b9f603d52c9464071ef4265c381bb2b0ce49f2d8e9f2a5cc3e6891d8c48",
+      "pages": 8,
+      "family": "arxiv:1603.04553",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1603.04553",
+      "version": "1603.04553v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1603_07044",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1603.07044.pdf",
+      "title": "Recurrent Neural Network Encoder with Attention for Community Question Answering",
+      "sha256": "e08adbb4f75ee504159cb4098f9fc80319e043eead5dda51b828dd124a99c6f5",
+      "pages": 9,
+      "family": "arxiv:1603.07044",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1603.07044",
+      "version": "1603.07044v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1604_00117",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1604.00117.pdf",
+      "title": "Domain Adaptation of Recurrent Neural Networks for Natural Language Understanding",
+      "sha256": "776ce0da34ef794acdfe625caddef1df48d9ba0982b0aae3ccc209449cb53784",
+      "pages": 5,
+      "family": "arxiv:1604.00117",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1604.00117",
+      "version": "1604.00117v2",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1604_00125",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1604.00125.pdf",
+      "title": "AttSum: Joint Learning of Focusing and Summarization with Neural Attention",
+      "sha256": "d8312a098049ba161315cbf2c75321fed5c09c37b98cb20d46003b9b2358750f",
+      "pages": 10,
+      "family": "arxiv:1604.00125",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1604.00125",
+      "version": "1604.00125v2",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1604_05781",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1604.05781.pdf",
+      "title": "What we write about when we write about causality: Features of causal statements across large-scale social discourse",
+      "sha256": "ac0aa81f98a860c0d869c46063846543c581e9b5b748e049e98071b39eb0a2ba",
+      "pages": 8,
+      "family": "arxiv:1604.05781",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1604.05781",
+      "version": "1604.05781v2",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1604_06076",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1604.06076.pdf",
+      "title": "Question Answering via Integer Programming over Semi-Structured Knowledge",
+      "sha256": "c00c375ca7ba577b3cdd4bee13c52522aa902cb64cdec7468c4f543c9d98d55e",
+      "pages": 12,
+      "family": "arxiv:1604.06076",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1604.06076",
+      "version": "1604.06076v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1604_07236",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1604.07236.pdf",
+      "title": "Towards Real-Time, Country-Level Location Classification of Worldwide Tweets",
+      "sha256": "9ae7ba348d1d62e5bbd092db368bb885d487c99251be9969c2bc18b475bd288b",
+      "pages": 14,
+      "family": "arxiv:1604.07236",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1604.07236",
+      "version": "1604.07236v3",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1605_04655",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1605.04655.pdf",
+      "title": "Joint Learning of Sentence Embeddings for Relevance and Entailment",
+      "sha256": "ffccd9b66838da89fd06d9eeabf5929ce3bac9b98d8ebad24d948af7a6281549",
+      "pages": 10,
+      "family": "arxiv:1605.04655",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1605.04655",
+      "version": "1605.04655v2",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    }
+  ],
+  "items": [
+    {
+      "id": "PUBLIC-EXTERNAL-public_llzo-lookup",
+      "track": "external",
+      "question": "精确定位论文《Origin of the structural phase transition in Li7La3Zr2O12》，核对文献身份arxiv:1209.0690并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1209.0690，题名为Origin of the structural phase transition in Li7La3Zr2O12；公开版本链接https://arxiv.org/pdf/1209.0690v1。",
+      "domain": "materials_energy",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1209.0690"
+        ],
+        "qrels": {
+          "arxiv:1209.0690": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1209.0690": "arxiv:1209.0690",
+          "10.1103/physrevlett.109.205702": "arxiv:1209.0690"
+        },
+        "fulltext_sha256": "5b4c1f0bcea518a8466bf8ae7fa2215618082f41716eb24492afb348e8daf192",
+        "fulltext_source_url": "https://arxiv.org/pdf/1209.0690v1",
+        "version": "arxiv:1209.0690v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "PUBLIC-LLZO-01",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-public_llzo-abstract_boundary",
+      "track": "external",
+      "question": "检索《Origin of the structural phase transition in Li7La3Zr2O12》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：引言所引实验中，LLZO立方相与四方相的离子电导率分别是多少？请保留单位并区分它们不是本文MD直接测得的电导率。",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：引言引用的立方相电导率为1.9×10^-4 S/cm，四方相为1.63×10^-6 S/cm；这是所引实验值，并非本文MD新计算的电导率。",
+      "domain": "materials_energy",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1209.0690"
+        ],
+        "qrels": {
+          "arxiv:1209.0690": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1209.0690": "arxiv:1209.0690",
+          "10.1103/physrevlett.109.205702": "arxiv:1209.0690"
+        },
+        "fulltext_sha256": "5b4c1f0bcea518a8466bf8ae7fa2215618082f41716eb24492afb348e8daf192",
+        "fulltext_source_url": "https://arxiv.org/pdf/1209.0690v1",
+        "version": "arxiv:1209.0690v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "PUBLIC-LLZO-01",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-public_llzo-fulltext_read",
+      "track": "external",
+      "question": "读取《Origin of the structural phase transition in Li7La3Zr2O12》的公开全文版本arxiv:1209.0690v1，基于原文页证据回答：引言所引实验中，LLZO立方相与四方相的离子电导率分别是多少？请保留单位并区分它们不是本文MD直接测得的电导率。",
+      "ground_truth": "引言引用的立方相电导率为1.9×10^-4 S/cm，四方相为1.63×10^-6 S/cm；这是所引实验值，并非本文MD新计算的电导率。",
+      "domain": "materials_energy",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 1,
+          "quote": "ould be used to improve electrolytic performance.\nThe garnet structure material Li7La3Zr2O12 (LLZO)\nhas an ionic conductivity that varies by two orders\nof magnitude depending on whether synthesis pro-\nduces a cubic (σcubic=1.9×10−4 S/cm) [1] or tetragonal\n(σtetra=1.63×10−6 S/cm) [2] phase. With the higher con-\nductivity, LLZO has excellent solid electrolyte material\ncharacteristics. Its stability against both Li metal and\nstandard cathode LiCoO2 [3], combined with a ∼5 eV\nband gap [1] and high ionic conductivity, make it suitable\nfor exploiting the full voltage diﬀerence between anode\nand cathode while circumventing the safety concerns in-\nherent to all current liquid electrolytes. Initially, the pro-\ncess by which the cubic ground state could be stabilized\nagainst the tetragonal was unknown and uncontrolled.\nThe relevant factor was event",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "cubic_conductivity_with_phase",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        },
+        {
+          "id": "tetragonal_conductivity_with_phase",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        },
+        {
+          "id": "cited_experiment_scope",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1209.0690"
+        ],
+        "qrels": {
+          "arxiv:1209.0690": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1209.0690": "arxiv:1209.0690",
+          "10.1103/physrevlett.109.205702": "arxiv:1209.0690"
+        },
+        "fulltext_sha256": "5b4c1f0bcea518a8466bf8ae7fa2215618082f41716eb24492afb348e8daf192",
+        "fulltext_source_url": "https://arxiv.org/pdf/1209.0690v1",
+        "version": "arxiv:1209.0690v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "PUBLIC-LLZO-01",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-public_robotic_hts-lookup",
+      "track": "external",
+      "question": "精确定位论文《Robotic winding of non-planar high-temperature superconducting coils》，核对文献身份doi:10.1088/1361-6668/ae2362并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为doi:10.1088/1361-6668/ae2362，题名为Robotic winding of non-planar high-temperature superconducting coils；公开版本链接https://publikationen.bibliothek.kit.edu/1000188018/170298623。",
+      "domain": "superconductivity_physics",
+      "question_split": "dev",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "doi:10.1088/1361-6668/ae2362"
+        ],
+        "qrels": {
+          "doi:10.1088/1361-6668/ae2362": 2
+        },
+        "aliases": {},
+        "fulltext_sha256": "d767453814ad7195b5ca593de543e092ad014810c59947d2ec6d6931376e9eeb",
+        "fulltext_source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+        "version": "Superconductor Science and Technology 38 (2025) 125004 published version",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "PUBLIC-HTS-01",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-public_robotic_hts-abstract_boundary",
+      "track": "external",
+      "question": "检索《Robotic winding of non-planar high-temperature superconducting coils》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：这项非平面HTS绕制研究的机器人硬件由哪两类主要运动机构组成？",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：由带专用绕制工具的关节机器人与同步工件变位机构成。",
+      "domain": "superconductivity_physics",
+      "question_split": "dev",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "doi:10.1088/1361-6668/ae2362"
+        ],
+        "qrels": {
+          "doi:10.1088/1361-6668/ae2362": 2
+        },
+        "aliases": {},
+        "fulltext_sha256": "d767453814ad7195b5ca593de543e092ad014810c59947d2ec6d6931376e9eeb",
+        "fulltext_source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+        "version": "Superconductor Science and Technology 38 (2025) 125004 published version",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "PUBLIC-HTS-01",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-public_robotic_hts-fulltext_read",
+      "track": "external",
+      "question": "读取《Robotic winding of non-planar high-temperature superconducting coils》的公开全文版本Superconductor Science and Technology 38 (2025) 125004 published version，基于原文页证据回答：这项非平面HTS绕制研究的机器人硬件由哪两类主要运动机构组成？",
+      "ground_truth": "由带专用绕制工具的关节机器人与同步工件变位机构成。",
+      "domain": "superconductivity_physics",
+      "question_split": "dev",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 1,
+          "quote": "les consistent, safe, and adaptable construction of such non-planar coil geometries.\nWe present our robotic winding setup consisting of an articulated robot equipped with a\nspecialized winding tool and a synchronized workpiece positioner. We employ a differential\ngeometry approach to design non-planar HTS coil shapes with hard-way bending, in which the\nmechanical strain remains within material limits. Based on the coil shape, we derive winding\ntool trajectory and rotations required for robotic execution. We validate our appr",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "robot_and_synchronized_positioner",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "doi:10.1088/1361-6668/ae2362"
+        ],
+        "qrels": {
+          "doi:10.1088/1361-6668/ae2362": 2
+        },
+        "aliases": {},
+        "fulltext_sha256": "d767453814ad7195b5ca593de543e092ad014810c59947d2ec6d6931376e9eeb",
+        "fulltext_source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+        "version": "Superconductor Science and Technology 38 (2025) 125004 published version",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "PUBLIC-HTS-01",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_00901-lookup",
+      "track": "external",
+      "question": "精确定位论文《Joint learning of ontology and semantic parser from text》，核对文献身份arxiv:1601.00901并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1601.00901，题名为Joint learning of ontology and semantic parser from text；公开版本链接https://arxiv.org/pdf/1601.00901。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.00901"
+      ],
+      "corpus_scope": [
+        "qasper_1601_00901"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1601.00901"
+        ],
+        "qrels": {
+          "arxiv:1601.00901": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.00901": "arxiv:1601.00901"
+        },
+        "fulltext_sha256": "3d95063ad147f8793ed5f49c146b2be3ba7f284fc737a945f440ff2760aa9316",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.00901",
+        "version": "1601.00901v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-74b0d3ee0cc9b0a3d9b264aba9901ff97048a897",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_00901-abstract_boundary",
+      "track": "external",
+      "question": "检索《Joint learning of ontology and semantic parser from text》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：How did they induce the CFG?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：the parser first learns to parse simple sentences, then proceeds to learn more complex ones. The induction method is iterative, semi-automatic and based on frequent patterns",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.00901"
+      ],
+      "corpus_scope": [
+        "qasper_1601_00901"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1601.00901"
+        ],
+        "qrels": {
+          "arxiv:1601.00901": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.00901": "arxiv:1601.00901"
+        },
+        "fulltext_sha256": "3d95063ad147f8793ed5f49c146b2be3ba7f284fc737a945f440ff2760aa9316",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.00901",
+        "version": "1601.00901v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-74b0d3ee0cc9b0a3d9b264aba9901ff97048a897",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_00901-fulltext_read",
+      "track": "external",
+      "question": "读取《Joint learning of ontology and semantic parser from text》的公开全文版本1601.00901v1，基于原文页证据回答：How did they induce the CFG?",
+      "ground_truth": "the parser first learns to parse simple sentences, then proceeds to learn more complex ones. The induction method is iterative, semi-automatic and based on frequent patterns",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.00901"
+      ],
+      "corpus_scope": [
+        "qasper_1601_00901"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1601_00901",
+          "filename": "1601.00901.pdf",
+          "page": 2,
+          "quote": " parsing. The grammar induction method\nworks on the premise of curriculum learning [8], where the parser ﬁrst learns to parse\nsimple sentences, then proceeds to learn more complex ones. The induction method is\niterative, semi-automatic and based on frequent patterns. A context-free grammar (CFG)\nis induced from the text, which is represented by several layers of semantic annotations.\nThe motivation to use CFG is that it is very suit",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1601.00901"
+        ],
+        "qrels": {
+          "arxiv:1601.00901": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.00901": "arxiv:1601.00901"
+        },
+        "fulltext_sha256": "3d95063ad147f8793ed5f49c146b2be3ba7f284fc737a945f440ff2760aa9316",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.00901",
+        "version": "1601.00901v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-74b0d3ee0cc9b0a3d9b264aba9901ff97048a897",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_01705-lookup",
+      "track": "external",
+      "question": "精确定位论文《Learning to Compose Neural Networks for Question Answering》，核对文献身份arxiv:1601.01705并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1601.01705，题名为Learning to Compose Neural Networks for Question Answering；公开版本链接https://arxiv.org/pdf/1601.01705。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.01705"
+      ],
+      "corpus_scope": [
+        "qasper_1601_01705"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1601.01705"
+        ],
+        "qrels": {
+          "arxiv:1601.01705": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.01705": "arxiv:1601.01705"
+        },
+        "fulltext_sha256": "eea0ca8433a1bb118f8a2fe87c159750b5ecca88e7dd2c00fc18a6152848d288",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.01705",
+        "version": "1601.01705v4",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-5712a0b1e33484ebc6d71c70ae222109c08dede2",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_01705-abstract_boundary",
+      "track": "external",
+      "question": "检索《Learning to Compose Neural Networks for Question Answering》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：What benchmark datasets they use?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：VQA and GeoQA",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.01705"
+      ],
+      "corpus_scope": [
+        "qasper_1601_01705"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1601.01705"
+        ],
+        "qrels": {
+          "arxiv:1601.01705": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.01705": "arxiv:1601.01705"
+        },
+        "fulltext_sha256": "eea0ca8433a1bb118f8a2fe87c159750b5ecca88e7dd2c00fc18a6152848d288",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.01705",
+        "version": "1601.01705v4",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-5712a0b1e33484ebc6d71c70ae222109c08dede2",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_01705-fulltext_read",
+      "track": "external",
+      "question": "读取《Learning to Compose Neural Networks for Question Answering》的公开全文版本1601.01705v4，基于原文页证据回答：What benchmark datasets they use?",
+      "ground_truth": "VQA and GeoQA",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.01705"
+      ],
+      "corpus_scope": [
+        "qasper_1601_01705"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1601_01705",
+          "filename": "1601.01705.pdf",
+          "page": 7,
+          "quote": "ataset, and a small col-\nlection of more structured geography questions.\n5.1\nQuestions about images\nOur ﬁrst task is the recently-introduced Visual Ques-\ntion Answering challenge (VQA) (Antol et al.,\n2015).\nThe VQA dataset consists of more than\n200,000 images paired with human-annotated ques-\nt",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e2",
+          "source_id": "qasper_1601_01705",
+          "filename": "1601.01705.pdf",
+          "page": 8,
+          "quote": " dataset, and a ﬁxed-\nstructure NMN under both evaluation conditions.\n5.2\nQuestions about geography\nThe next set of experiments we consider focuses\non GeoQA, a geographical question-answering\ntask ﬁrst introduced by Krishnamurthy and Kollar\n(2013). This task was originally paired with a vi-\nsual question answering task much simpler than the\n",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1601.01705"
+        ],
+        "qrels": {
+          "arxiv:1601.01705": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.01705": "arxiv:1601.01705"
+        },
+        "fulltext_sha256": "eea0ca8433a1bb118f8a2fe87c159750b5ecca88e7dd2c00fc18a6152848d288",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.01705",
+        "version": "1601.01705v4",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-5712a0b1e33484ebc6d71c70ae222109c08dede2",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_02543-lookup",
+      "track": "external",
+      "question": "精确定位论文《Evaluating the Performance of a Speech Recognition based System》，核对文献身份arxiv:1601.02543并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1601.02543，题名为Evaluating the Performance of a Speech Recognition based System；公开版本链接https://arxiv.org/pdf/1601.02543。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.02543"
+      ],
+      "corpus_scope": [
+        "qasper_1601_02543"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1601.02543"
+        ],
+        "qrels": {
+          "arxiv:1601.02543": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.02543": "arxiv:1601.02543"
+        },
+        "fulltext_sha256": "c233bfa49b82cc284bf6c47ffacfc03274f29b3eaf30d25babe66687879ae024",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.02543",
+        "version": "1601.02543v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-8d793bda51a53a4605c1c33e7fd20ba35581a518",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_02543-abstract_boundary",
+      "track": "external",
+      "question": "检索《Evaluating the Performance of a Speech Recognition based System》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：what bottlenecks were identified?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：Confusion in recognizing the words that are active at a given node by a speech recognition solution developed for Indian Railway Inquiry System.",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.02543"
+      ],
+      "corpus_scope": [
+        "qasper_1601_02543"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1601.02543"
+        ],
+        "qrels": {
+          "arxiv:1601.02543": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.02543": "arxiv:1601.02543"
+        },
+        "fulltext_sha256": "c233bfa49b82cc284bf6c47ffacfc03274f29b3eaf30d25babe66687879ae024",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.02543",
+        "version": "1601.02543v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-8d793bda51a53a4605c1c33e7fd20ba35581a518",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_02543-fulltext_read",
+      "track": "external",
+      "question": "读取《Evaluating the Performance of a Speech Recognition based System》的公开全文版本1601.02543v1，基于原文页证据回答：what bottlenecks were identified?",
+      "ground_truth": "Confusion in recognizing the words that are active at a given node by a speech recognition solution developed for Indian Railway Inquiry System.",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.02543"
+      ],
+      "corpus_scope": [
+        "qasper_1601_02543"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1601_02543",
+          "filename": "1601.02543.pdf",
+          "page": 7,
+          "quote": "nsaction completion rate. We will present\nmore experimental results in the ﬁnal paper.\n4\nConclusion\nIn this paper we proposed a methodology to identify words that could lead to\nconfusion at any given node of a speech recognition based system. We used\n",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e2",
+          "source_id": "qasper_1601_02543",
+          "filename": "1601.02543.pdf",
+          "page": 8,
+          "quote": "ctively to enhance the\nperformance of a speech solution without actually putting it to people test. There\nis a signiﬁcant saving in terms of being able to identify recognition bottlenecks in\na menu based speech solution through this analysis because it does not require\nactual people testing the system. This methodology was adopted to restructuring\nthe set of active words at each node for better speech recognition in an actual\nmenu base",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e3",
+          "source_id": "qasper_1601_02543",
+          "filename": "1601.02543.pdf",
+          "page": 4,
+          "quote": " the speech recognition engine to be\nequipped to be able to distinguish the confusing words better. Actual use of\nthis analysis was carried out for a speech solution developed for Indian Railway\nInquiry System to identify bottlenecks in the system before its actual launch.\n3\nCase Study\nA schematic of a speech based Railway Information system, developed for Hindi\nlanguage is shown in Fig. 3. The system enables user to ge",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1601.02543"
+        ],
+        "qrels": {
+          "arxiv:1601.02543": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.02543": "arxiv:1601.02543"
+        },
+        "fulltext_sha256": "c233bfa49b82cc284bf6c47ffacfc03274f29b3eaf30d25babe66687879ae024",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.02543",
+        "version": "1601.02543v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-8d793bda51a53a4605c1c33e7fd20ba35581a518",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_04012-lookup",
+      "track": "external",
+      "question": "精确定位论文《Detecting and Extracting Events from Text Documents》，核对文献身份arxiv:1601.04012并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1601.04012，题名为Detecting and Extracting Events from Text Documents；公开版本链接https://arxiv.org/pdf/1601.04012。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.04012"
+      ],
+      "corpus_scope": [
+        "qasper_1601_04012"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1601.04012"
+        ],
+        "qrels": {
+          "arxiv:1601.04012": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.04012": "arxiv:1601.04012"
+        },
+        "fulltext_sha256": "64e7ad46dbc832fd3ded82eb43b3e2b4f06895bd4cd70a00f9991505b88dd88d",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.04012",
+        "version": "1601.04012v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-eac042734f76e787cb98ba3d0c13a916a49bdfb3",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_04012-abstract_boundary",
+      "track": "external",
+      "question": "检索《Detecting and Extracting Events from Text Documents》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：Which datasets are used in this work?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：GENIA corpus",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.04012"
+      ],
+      "corpus_scope": [
+        "qasper_1601_04012"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1601.04012"
+        ],
+        "qrels": {
+          "arxiv:1601.04012": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.04012": "arxiv:1601.04012"
+        },
+        "fulltext_sha256": "64e7ad46dbc832fd3ded82eb43b3e2b4f06895bd4cd70a00f9991505b88dd88d",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.04012",
+        "version": "1601.04012v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-eac042734f76e787cb98ba3d0c13a916a49bdfb3",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_04012-fulltext_read",
+      "track": "external",
+      "question": "读取《Detecting and Extracting Events from Text Documents》的公开全文版本1601.04012v1，基于原文页证据回答：Which datasets are used in this work?",
+      "ground_truth": "GENIA corpus",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.04012"
+      ],
+      "corpus_scope": [
+        "qasper_1601_04012"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1601_04012",
+          "filename": "1601.04012.pdf",
+          "page": 40,
+          "quote": "al. 2009] was based\non the GENIA corpus [Kim et al. 2003] which contains PubMed11 abstracts of\narticles on transcription factors in human blood cells. There was a second BioNLP\nShared Task competition organized in 2011 to measure the advances in approaches\nand associated results [Kim et al. 2011]",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1601.04012"
+        ],
+        "qrels": {
+          "arxiv:1601.04012": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.04012": "arxiv:1601.04012"
+        },
+        "fulltext_sha256": "64e7ad46dbc832fd3ded82eb43b3e2b4f06895bd4cd70a00f9991505b88dd88d",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.04012",
+        "version": "1601.04012v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-eac042734f76e787cb98ba3d0c13a916a49bdfb3",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_06068-lookup",
+      "track": "external",
+      "question": "精确定位论文《Paraphrase Generation from Latent-Variable PCFGs for Semantic Parsing》，核对文献身份arxiv:1601.06068并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1601.06068，题名为Paraphrase Generation from Latent-Variable PCFGs for Semantic Parsing；公开版本链接https://arxiv.org/pdf/1601.06068。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.06068"
+      ],
+      "corpus_scope": [
+        "qasper_1601_06068"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1601.06068"
+        ],
+        "qrels": {
+          "arxiv:1601.06068": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.06068": "arxiv:1601.06068"
+        },
+        "fulltext_sha256": "3444762771ba7640f84a0922ad053574bfd96886543308c46affc697f0de346f",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.06068",
+        "version": "1601.06068v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-c359ab8ebef6f60c5a38f5244e8c18d85e92761d",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_06068-abstract_boundary",
+      "track": "external",
+      "question": "检索《Paraphrase Generation from Latent-Variable PCFGs for Semantic Parsing》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：How many paraphrases are generated per question?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：10*n paraphrases, where n depends on the number of paraphrases that contain the entity mention spans",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.06068"
+      ],
+      "corpus_scope": [
+        "qasper_1601_06068"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1601.06068"
+        ],
+        "qrels": {
+          "arxiv:1601.06068": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.06068": "arxiv:1601.06068"
+        },
+        "fulltext_sha256": "3444762771ba7640f84a0922ad053574bfd96886543308c46affc697f0de346f",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.06068",
+        "version": "1601.06068v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-c359ab8ebef6f60c5a38f5244e8c18d85e92761d",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1601_06068-fulltext_read",
+      "track": "external",
+      "question": "读取《Paraphrase Generation from Latent-Variable PCFGs for Semantic Parsing》的公开全文版本1601.06068v2，基于原文页证据回答：How many paraphrases are generated per question?",
+      "ground_truth": "10*n paraphrases, where n depends on the number of paraphrases that contain the entity mention spans",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1601.06068"
+      ],
+      "corpus_scope": [
+        "qasper_1601_06068"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1601_06068",
+          "filename": "1601.06068.pdf",
+          "page": 7,
+          "quote": "For each candidate\nmention span, we retrieve the top 10 entities accord-\ning to the Freebase API.10 We then create a lattice in\nwhich the nodes correspond to mention-entity pairs,\nscored by their Freebase API scores, and the edges\nencode the fact that no joint assignment of entities\nto mentions can contain overlapping spans. We take\nthe top 10 paths through the lattice as possible en-\ntity disambiguations. For each possibility, we gener-\n",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1601.06068"
+        ],
+        "qrels": {
+          "arxiv:1601.06068": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1601.06068": "arxiv:1601.06068"
+        },
+        "fulltext_sha256": "3444762771ba7640f84a0922ad053574bfd96886543308c46affc697f0de346f",
+        "fulltext_source_url": "https://arxiv.org/pdf/1601.06068",
+        "version": "1601.06068v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-c359ab8ebef6f60c5a38f5244e8c18d85e92761d",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_00812-lookup",
+      "track": "external",
+      "question": "精确定位论文《The Grail theorem prover: Type theory for syntax and semantics》，核对文献身份arxiv:1602.00812并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1602.00812，题名为The Grail theorem prover: Type theory for syntax and semantics；公开版本链接https://arxiv.org/pdf/1602.00812。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.00812"
+      ],
+      "corpus_scope": [
+        "qasper_1602_00812"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1602.00812"
+        ],
+        "qrels": {
+          "arxiv:1602.00812": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.00812": "arxiv:1602.00812"
+        },
+        "fulltext_sha256": "b81ea822f6717b10687b4d0c0cb028e2efcdaf0764354159100dbe02219d0364",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.00812",
+        "version": "1602.00812v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-48fa2ccc236e217fcf0e5aab0e7a146faf439b02",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_00812-abstract_boundary",
+      "track": "external",
+      "question": "检索《The Grail theorem prover: Type theory for syntax and semantics》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：Does Grail accept Prolog inputs?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：No",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.00812"
+      ],
+      "corpus_scope": [
+        "qasper_1602_00812"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1602.00812"
+        ],
+        "qrels": {
+          "arxiv:1602.00812": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.00812": "arxiv:1602.00812"
+        },
+        "fulltext_sha256": "b81ea822f6717b10687b4d0c0cb028e2efcdaf0764354159100dbe02219d0364",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.00812",
+        "version": "1602.00812v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-48fa2ccc236e217fcf0e5aab0e7a146faf439b02",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_00812-fulltext_read",
+      "track": "external",
+      "question": "读取《The Grail theorem prover: Type theory for syntax and semantics》的公开全文版本1602.00812v2，基于原文页证据回答：Does Grail accept Prolog inputs?",
+      "ground_truth": "No",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.00812"
+      ],
+      "corpus_scope": [
+        "qasper_1602_00812"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1602_00812",
+          "filename": "1602.00812.pdf",
+          "page": 2,
+          "quote": "nation. This combi-\nnation of linguistic and computational applications has proved very inﬂuential.\nIn its general form, a type-logical grammar consists of following components:\n1. a logic, which fulﬁls the role of “Universal Grammar” mainstream linguistics1,\n2. a homomorphism from this logic to intuitionistic (linear) logic,",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1602.00812"
+        ],
+        "qrels": {
+          "arxiv:1602.00812": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.00812": "arxiv:1602.00812"
+        },
+        "fulltext_sha256": "b81ea822f6717b10687b4d0c0cb028e2efcdaf0764354159100dbe02219d0364",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.00812",
+        "version": "1602.00812v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-48fa2ccc236e217fcf0e5aab0e7a146faf439b02",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_01208-lookup",
+      "track": "external",
+      "question": "精确定位论文《Spatial Concept Acquisition for a Mobile Robot that Integrates Self-Localization and Unsupervised Word Discovery from Spoken Sentences》，核对文献身份arxiv:1602.01208并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1602.01208，题名为Spatial Concept Acquisition for a Mobile Robot that Integrates Self-Localization and Unsupervised Word Discovery from Spoken Sentences；公开版本链接https://arxiv.org/pdf/1602.01208。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.01208"
+      ],
+      "corpus_scope": [
+        "qasper_1602_01208"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1602.01208"
+        ],
+        "qrels": {
+          "arxiv:1602.01208": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.01208": "arxiv:1602.01208"
+        },
+        "fulltext_sha256": "ee38c0004251adcfe7b76d30e9b0186efa835c7525e7368cf0ac863f9c97e4cb",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.01208",
+        "version": "1602.01208v3",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-23d0637f8ae72ae343556ab135eedc7f4cb58032",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_01208-abstract_boundary",
+      "track": "external",
+      "question": "检索《Spatial Concept Acquisition for a Mobile Robot that Integrates Self-Localization and Unsupervised Word Discovery from Spoken Sentences》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：How do they show that acquiring names of places helps self-localization?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：unsupervised morphological analyzer capable of using lattices improved the accuracy of phoneme recognition and word segmentation; Consequently, this result suggests that this word segmentation method considers the multiple hypothesis of speech recognition as a whole and reduces uncertainty such as variability in recognition",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.01208"
+      ],
+      "corpus_scope": [
+        "qasper_1602_01208"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1602.01208"
+        ],
+        "qrels": {
+          "arxiv:1602.01208": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.01208": "arxiv:1602.01208"
+        },
+        "fulltext_sha256": "ee38c0004251adcfe7b76d30e9b0186efa835c7525e7368cf0ac863f9c97e4cb",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.01208",
+        "version": "1602.01208v3",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-23d0637f8ae72ae343556ab135eedc7f4cb58032",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_01208-fulltext_read",
+      "track": "external",
+      "question": "读取《Spatial Concept Acquisition for a Mobile Robot that Integrates Self-Localization and Unsupervised Word Discovery from Spoken Sentences》的公开全文版本1602.01208v3，基于原文页证据回答：How do they show that acquiring names of places helps self-localization?",
+      "ground_truth": "unsupervised morphological analyzer capable of using lattices improved the accuracy of phoneme recognition and word segmentation; Consequently, this result suggests that this word segmentation method considers the multiple hypothesis of speech recognition as a whole and reduces uncertainty such as variability in recognition",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.01208"
+      ],
+      "corpus_scope": [
+        "qasper_1602_01208"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1602_01208",
+          "filename": "1602.01208.pdf",
+          "page": 8,
+          "quote": "f PAR. Table IV\npresents examples of the word segmentation results of the\nthree considered methods. We found that the unsupervised\nmorphological analyzer capable of using lattices improved\nthe accuracy of phoneme recognition and word segmentation.\nConsequently, this result suggests that this word segmentation\nmethod considers the multiple hypothesis of speech recogni-\ntion as a whole and reduces uncertainty such as variability\nin ",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1602.01208"
+        ],
+        "qrels": {
+          "arxiv:1602.01208": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.01208": "arxiv:1602.01208"
+        },
+        "fulltext_sha256": "ee38c0004251adcfe7b76d30e9b0186efa835c7525e7368cf0ac863f9c97e4cb",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.01208",
+        "version": "1602.01208v3",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-23d0637f8ae72ae343556ab135eedc7f4cb58032",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_01595-lookup",
+      "track": "external",
+      "question": "精确定位论文《Many Languages, One Parser》，核对文献身份arxiv:1602.01595并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1602.01595，题名为Many Languages, One Parser；公开版本链接https://arxiv.org/pdf/1602.01595。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.01595"
+      ],
+      "corpus_scope": [
+        "qasper_1602_01595"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1602.01595"
+        ],
+        "qrels": {
+          "arxiv:1602.01595": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.01595": "arxiv:1602.01595"
+        },
+        "fulltext_sha256": "c084a246414ee2921c21066ef78bbf8b2bd0d59066051f7ae3267307e6dc2423",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.01595",
+        "version": "1602.01595v4",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-b0fd686183b056ea3f63a7ab494620df1d598c24",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_01595-abstract_boundary",
+      "track": "external",
+      "question": "检索《Many Languages, One Parser》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：How does the model work if no treebank is available?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：train the parser on six other languages in the Google universal dependency treebanks version 2.0 (de, en, es, fr, it, pt, sv, excluding whichever is the target language), and we use gold coarse POS tags",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.01595"
+      ],
+      "corpus_scope": [
+        "qasper_1602_01595"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1602.01595"
+        ],
+        "qrels": {
+          "arxiv:1602.01595": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.01595": "arxiv:1602.01595"
+        },
+        "fulltext_sha256": "c084a246414ee2921c21066ef78bbf8b2bd0d59066051f7ae3267307e6dc2423",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.01595",
+        "version": "1602.01595v4",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-b0fd686183b056ea3f63a7ab494620df1d598c24",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_01595-fulltext_read",
+      "track": "external",
+      "question": "读取《Many Languages, One Parser》的公开全文版本1602.01595v4，基于原文页证据回答：How does the model work if no treebank is available?",
+      "ground_truth": "train the parser on six other languages in the Google universal dependency treebanks version 2.0 (de, en, es, fr, it, pt, sv, excluding whichever is the target language), and we use gold coarse POS tags",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.01595"
+      ],
+      "corpus_scope": [
+        "qasper_1602_01595"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1602_01595",
+          "filename": "1602.01595.pdf",
+          "page": 10,
+          "quote": "bank annotations are available in the target lan-\nguage, training on multiple source languages out-\nperforms training on one (i.e., multi-source model\ntransfer outperforms single-source model transfer).\nIn this section, we evaluate the performance of our\nparser in this setup.\nWe use two strong baseline\nmulti-source model transfer parsers ",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e2",
+          "source_id": "qasper_1602_01595",
+          "filename": "1602.01595.pdf",
+          "page": 11,
+          "quote": "Following Guo et al. (2016), for each target lan-\nguage, we train the parser on six other languages in\nthe Google universal dependency treebanks version\n2.029 (de, en, es, fr, it, pt, sv, excluding whichever\nis the target language), and we use gold coarse POS\ntags. Our parser uses the same word embeddin",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1602.01595"
+        ],
+        "qrels": {
+          "arxiv:1602.01595": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.01595": "arxiv:1602.01595"
+        },
+        "fulltext_sha256": "c084a246414ee2921c21066ef78bbf8b2bd0d59066051f7ae3267307e6dc2423",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.01595",
+        "version": "1602.01595v4",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-b0fd686183b056ea3f63a7ab494620df1d598c24",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_03661-lookup",
+      "track": "external",
+      "question": "精确定位论文《On the emergence of syntactic structures: quantifying and modelling duality of patterning》，核对文献身份arxiv:1602.03661并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1602.03661，题名为On the emergence of syntactic structures: quantifying and modelling duality of patterning；公开版本链接https://arxiv.org/pdf/1602.03661。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.03661"
+      ],
+      "corpus_scope": [
+        "qasper_1602_03661"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1602.03661"
+        ],
+        "qrels": {
+          "arxiv:1602.03661": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.03661": "arxiv:1602.03661"
+        },
+        "fulltext_sha256": "2247ed68c0de712a870065bed992264217da0cb3da9c88b8ae4b2c4d6227d262",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.03661",
+        "version": "1602.03661v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-4d60e9494a412d581bd5e85f4e78881914085afc",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_03661-abstract_boundary",
+      "track": "external",
+      "question": "检索《On the emergence of syntactic structures: quantifying and modelling duality of patterning》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：What empirical data are the Blending Game predictions compared to?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：words length distribution, the frequency of use of the different forms and a measure for the combinatoriality",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.03661"
+      ],
+      "corpus_scope": [
+        "qasper_1602_03661"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1602.03661"
+        ],
+        "qrels": {
+          "arxiv:1602.03661": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.03661": "arxiv:1602.03661"
+        },
+        "fulltext_sha256": "2247ed68c0de712a870065bed992264217da0cb3da9c88b8ae4b2c4d6227d262",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.03661",
+        "version": "1602.03661v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-4d60e9494a412d581bd5e85f4e78881914085afc",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_03661-fulltext_read",
+      "track": "external",
+      "question": "读取《On the emergence of syntactic structures: quantifying and modelling duality of patterning》的公开全文版本1602.03661v1，基于原文页证据回答：What empirical data are the Blending Game predictions compared to?",
+      "ground_truth": "words length distribution, the frequency of use of the different forms and a measure for the combinatoriality",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.03661"
+      ],
+      "corpus_scope": [
+        "qasper_1602_03661"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1602_03661",
+          "filename": "1602.03661.pdf",
+          "page": 9,
+          "quote": "a function of the two parameters of the model,\nthe graph connectivity plink and the memory scale τ.\nWe found that properties of the\nemerging lexicon related to the combinatoriality, namely the words length distribution,\nthe frequency of use of the diﬀerent forms and a measure for the combinatoriality itself,\nreﬂect both qualitatively and quantitatively the corresponding properties as measured in\nhuman languages, provided that the memor",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1602.03661"
+        ],
+        "qrels": {
+          "arxiv:1602.03661": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.03661": "arxiv:1602.03661"
+        },
+        "fulltext_sha256": "2247ed68c0de712a870065bed992264217da0cb3da9c88b8ae4b2c4d6227d262",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.03661",
+        "version": "1602.03661v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-4d60e9494a412d581bd5e85f4e78881914085afc",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_07618-lookup",
+      "track": "external",
+      "question": "精确定位论文《From quantum foundations via natural language meaning to a theory of everything》，核对文献身份arxiv:1602.07618并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1602.07618，题名为From quantum foundations via natural language meaning to a theory of everything；公开版本链接https://arxiv.org/pdf/1602.07618。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.07618"
+      ],
+      "corpus_scope": [
+        "qasper_1602_07618"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1602.07618"
+        ],
+        "qrels": {
+          "arxiv:1602.07618": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.07618": "arxiv:1602.07618"
+        },
+        "fulltext_sha256": "bd6564bd558283720c7b081c464e6aafbbf3d41bdb68795944f6a6c71ced931d",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.07618",
+        "version": "1602.07618v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-691cba5713c76a6870e35bc248ce1d29c0550bc7",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_07618-abstract_boundary",
+      "track": "external",
+      "question": "检索《From quantum foundations via natural language meaning to a theory of everything》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：Do they argue that all words can be derived from other (elementary) words?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：No",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.07618"
+      ],
+      "corpus_scope": [
+        "qasper_1602_07618"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1602.07618"
+        ],
+        "qrels": {
+          "arxiv:1602.07618": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.07618": "arxiv:1602.07618"
+        },
+        "fulltext_sha256": "bd6564bd558283720c7b081c464e6aafbbf3d41bdb68795944f6a6c71ced931d",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.07618",
+        "version": "1602.07618v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-691cba5713c76a6870e35bc248ce1d29c0550bc7",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_07618-fulltext_read",
+      "track": "external",
+      "question": "读取《From quantum foundations via natural language meaning to a theory of everything》的公开全文版本1602.07618v1，基于原文页证据回答：Do they argue that all words can be derived from other (elementary) words?",
+      "ground_truth": "No",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.07618"
+      ],
+      "corpus_scope": [
+        "qasper_1602_07618"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1602_07618",
+          "filename": "1602.07618.pdf",
+          "page": 10,
+          "quote": "this context?\nIn order to understand what X is, we need to understand the mathe-\nmatics of grammar. The study of the mathematical structure of grammar\nhas indicated that the fundamental things making up sentences are not the\n7A more detailed discussion is in [11].\n10\n",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1602.07618"
+        ],
+        "qrels": {
+          "arxiv:1602.07618": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.07618": "arxiv:1602.07618"
+        },
+        "fulltext_sha256": "bd6564bd558283720c7b081c464e6aafbbf3d41bdb68795944f6a6c71ced931d",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.07618",
+        "version": "1602.07618v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-691cba5713c76a6870e35bc248ce1d29c0550bc7",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_08741-lookup",
+      "track": "external",
+      "question": "精确定位论文《Gibberish Semantics: How Good is Russian Twitter in Word Semantic Similarity Task?》，核对文献身份arxiv:1602.08741并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1602.08741，题名为Gibberish Semantics: How Good is Russian Twitter in Word Semantic Similarity Task?；公开版本链接https://arxiv.org/pdf/1602.08741。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.08741"
+      ],
+      "corpus_scope": [
+        "qasper_1602_08741"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1602.08741"
+        ],
+        "qrels": {
+          "arxiv:1602.08741": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.08741": "arxiv:1602.08741"
+        },
+        "fulltext_sha256": "b3dccc824deb616cadc95fe240f408383b32ac1498103f77a61237009d7fb3b0",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.08741",
+        "version": "1602.08741v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-e51d0c2c336f255e342b5f6c3cf2a13231789fed",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_08741-abstract_boundary",
+      "track": "external",
+      "question": "检索《Gibberish Semantics: How Good is Russian Twitter in Word Semantic Similarity Task?》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：Which Twitter corpus was used to train the word vectors?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：They collected tweets in Russian language using a heuristic query specific to Russian",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.08741"
+      ],
+      "corpus_scope": [
+        "qasper_1602_08741"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1602.08741"
+        ],
+        "qrels": {
+          "arxiv:1602.08741": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.08741": "arxiv:1602.08741"
+        },
+        "fulltext_sha256": "b3dccc824deb616cadc95fe240f408383b32ac1498103f77a61237009d7fb3b0",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.08741",
+        "version": "1602.08741v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-e51d0c2c336f255e342b5f6c3cf2a13231789fed",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1602_08741-fulltext_read",
+      "track": "external",
+      "question": "读取《Gibberish Semantics: How Good is Russian Twitter in Word Semantic Similarity Task?》的公开全文版本1602.08741v1，基于原文页证据回答：Which Twitter corpus was used to train the word vectors?",
+      "ground_truth": "They collected tweets in Russian language using a heuristic query specific to Russian",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1602.08741"
+      ],
+      "corpus_scope": [
+        "qasper_1602_08741"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1602_08741",
+          "filename": "1602.08741.pdf",
+          "page": 3,
+          "quote": "Streaming API7, that provides a real-time stream of\ntweets. The key diﬀerence with regular API is that connection is kept alive as\nlong as possible, and Tweets are sent in real-time to the client. There are three\nendpoints of Streaming API of our interest: “sample”, “ﬁlter” and “ﬁrehose”. The\nﬁrst one provides a sample (random subset) of the full Tweet stream. The second\none allows to receive Tweets matching some search criteria: match",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1602.08741"
+        ],
+        "qrels": {
+          "arxiv:1602.08741": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1602.08741": "arxiv:1602.08741"
+        },
+        "fulltext_sha256": "b3dccc824deb616cadc95fe240f408383b32ac1498103f77a61237009d7fb3b0",
+        "fulltext_source_url": "https://arxiv.org/pdf/1602.08741",
+        "version": "1602.08741v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-e51d0c2c336f255e342b5f6c3cf2a13231789fed",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_00968-lookup",
+      "track": "external",
+      "question": "精确定位论文《MGNC-CNN: A Simple Approach to Exploiting Multiple Word Embeddings for Sentence Classification》，核对文献身份arxiv:1603.00968并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1603.00968，题名为MGNC-CNN: A Simple Approach to Exploiting Multiple Word Embeddings for Sentence Classification；公开版本链接https://arxiv.org/pdf/1603.00968。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.00968"
+      ],
+      "corpus_scope": [
+        "qasper_1603_00968"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1603.00968"
+        ],
+        "qrels": {
+          "arxiv:1603.00968": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.00968": "arxiv:1603.00968"
+        },
+        "fulltext_sha256": "89adb39244014c68059c51110a7d14c0df222e5c349a4f4030da4e8a57d90d24",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.00968",
+        "version": "1603.00968v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-f7d67d6c6fbc62b2953ab74db6871b122b3c92cc",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_00968-abstract_boundary",
+      "track": "external",
+      "question": "检索《MGNC-CNN: A Simple Approach to Exploiting Multiple Word Embeddings for Sentence Classification》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：How much faster is training time for MGNC-CNN over the baselines?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：It is an order of magnitude more efficient in terms of training time.; his model requires pre-training and mutual-learning and requires days of training time, whereas the simple architecture we propose requires on the order of an hour",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.00968"
+      ],
+      "corpus_scope": [
+        "qasper_1603_00968"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1603.00968"
+        ],
+        "qrels": {
+          "arxiv:1603.00968": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.00968": "arxiv:1603.00968"
+        },
+        "fulltext_sha256": "89adb39244014c68059c51110a7d14c0df222e5c349a4f4030da4e8a57d90d24",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.00968",
+        "version": "1603.00968v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-f7d67d6c6fbc62b2953ab74db6871b122b3c92cc",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_00968-fulltext_read",
+      "track": "external",
+      "question": "读取《MGNC-CNN: A Simple Approach to Exploiting Multiple Word Embeddings for Sentence Classification》的公开全文版本1603.00968v2，基于原文页证据回答：How much faster is training time for MGNC-CNN over the baselines?",
+      "ground_truth": "It is an order of magnitude more efficient in terms of training time.; his model requires pre-training and mutual-learning and requires days of training time, whereas the simple architecture we propose requires on the order of an hour",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.00968"
+      ],
+      "corpus_scope": [
+        "qasper_1603_00968"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1603_00968",
+          "filename": "1603.00968.pdf",
+          "page": 2,
+          "quote": "s compar-\natively simple, and does not, for example, require\nmutual learning or pre-training. (iii) It is an order of\nmagnitude more efﬁcient in terms of training time.\n2\nRelated Work\nPrior work has considered combining latent repre-\nsentations of words that capture syntactic and se-\nmantic properties (Van de Cruys e",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e2",
+          "source_id": "qasper_1603_00968",
+          "filename": "1603.00968.pdf",
+          "page": 2,
+          "quote": "dings that\nhappen to have a set number of dimensions or to es-\ntimate embeddings from scratch. (ii) The model is\ncomplex, both in terms of implementation and run-\ntime. Indeed, this model requires pre-training and\nmutual-learning and requires days of training time,\nwhereas the simple architecture we propose requires\non the order of an hour (and is easy to implement).\n3\nModel Description\nWe ﬁrst review standard one-layer CNN (which ex-",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e3",
+          "source_id": "qasper_1603_00968",
+          "filename": "1603.00968.pdf",
+          "page": 5,
+          "quote": "C.\nWe can see that MGNC-CNN and MG-CNN al-\nways outperform baseline methods (including C-\nCNN), and MGNC-CNN is usually better than\nMG-CNN. And on the Subj dataset, MG-CNN ac-\ntually achieves slightly better results than (Yin and\nSch¨utze, 2015), with far less complexity and re-\nquired training ti",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1603.00968"
+        ],
+        "qrels": {
+          "arxiv:1603.00968": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.00968": "arxiv:1603.00968"
+        },
+        "fulltext_sha256": "89adb39244014c68059c51110a7d14c0df222e5c349a4f4030da4e8a57d90d24",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.00968",
+        "version": "1603.00968v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-f7d67d6c6fbc62b2953ab74db6871b122b3c92cc",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_01417-lookup",
+      "track": "external",
+      "question": "精确定位论文《Dynamic Memory Networks for Visual and Textual Question Answering》，核对文献身份arxiv:1603.01417并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1603.01417，题名为Dynamic Memory Networks for Visual and Textual Question Answering；公开版本链接https://arxiv.org/pdf/1603.01417。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.01417"
+      ],
+      "corpus_scope": [
+        "qasper_1603_01417"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1603.01417"
+        ],
+        "qrels": {
+          "arxiv:1603.01417": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.01417": "arxiv:1603.01417"
+        },
+        "fulltext_sha256": "ce961743dc7bc5ebd00a86dd7209476d4dc0e4f24dcf2cb36054bb50bda0f2ab",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.01417",
+        "version": "1603.01417v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-129c03acb0963ede3915415953317556a55f34ee",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_01417-abstract_boundary",
+      "track": "external",
+      "question": "检索《Dynamic Memory Networks for Visual and Textual Question Answering》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：Why is supporting fact supervision necessary for DMN?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：First, the GRU only allows sentences to have context from sentences before them, but not after them. This prevents information propagation from future sentences. Second, the supporting sentences may be too far away from each other on a word level to allow for these distant sentences to interact through the word level GRU.",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.01417"
+      ],
+      "corpus_scope": [
+        "qasper_1603_01417"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1603.01417"
+        ],
+        "qrels": {
+          "arxiv:1603.01417": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.01417": "arxiv:1603.01417"
+        },
+        "fulltext_sha256": "ce961743dc7bc5ebd00a86dd7209476d4dc0e4f24dcf2cb36054bb50bda0f2ab",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.01417",
+        "version": "1603.01417v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-129c03acb0963ede3915415953317556a55f34ee",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_01417-fulltext_read",
+      "track": "external",
+      "question": "读取《Dynamic Memory Networks for Visual and Textual Question Answering》的公开全文版本1603.01417v1，基于原文页证据回答：Why is supporting fact supervision necessary for DMN?",
+      "ground_truth": "First, the GRU only allows sentences to have context from sentences before them, but not after them. This prevents information propagation from future sentences. Second, the supporting sentences may be too far away from each other on a word level to allow for these distant sentences to interact through the word level GRU.",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.01417"
+      ],
+      "corpus_scope": [
+        "qasper_1603_01417"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1603_01417",
+          "filename": "1603.01417.pdf",
+          "page": 2,
+          "quote": "ain reasons for this per-\nformance disparity, all exacerbated by the removal of sup-\nporting facts.\nFirst, the GRU only allows sentences to\nhave context from sentences before them, but not after\nthem. This prevents information propagation from future\nsentences. Second, the supporting sentences may be too\nfar away from each other on a word level to allow for these\ndistant sentences to interact through the word level GRU.\nInput Fusion ",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1603.01417"
+        ],
+        "qrels": {
+          "arxiv:1603.01417": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.01417": "arxiv:1603.01417"
+        },
+        "fulltext_sha256": "ce961743dc7bc5ebd00a86dd7209476d4dc0e4f24dcf2cb36054bb50bda0f2ab",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.01417",
+        "version": "1603.01417v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-129c03acb0963ede3915415953317556a55f34ee",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_04513-lookup",
+      "track": "external",
+      "question": "精确定位论文《Multichannel Variable-Size Convolution for Sentence Classification》，核对文献身份arxiv:1603.04513并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1603.04513，题名为Multichannel Variable-Size Convolution for Sentence Classification；公开版本链接https://arxiv.org/pdf/1603.04513。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.04513"
+      ],
+      "corpus_scope": [
+        "qasper_1603_04513"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1603.04513"
+        ],
+        "qrels": {
+          "arxiv:1603.04513": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.04513": "arxiv:1603.04513"
+        },
+        "fulltext_sha256": "4ac0227b1513480f484704cb4b96b94acad602570f132c24449404dc0703685f",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.04513",
+        "version": "1603.04513v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-67a28fe78f07c1383176b89e78630ee191cf15db",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_04513-abstract_boundary",
+      "track": "external",
+      "question": "检索《Multichannel Variable-Size Convolution for Sentence Classification》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：Where is MVCNN pertained?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：on the unlabeled data of each task",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.04513"
+      ],
+      "corpus_scope": [
+        "qasper_1603_04513"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1603.04513"
+        ],
+        "qrels": {
+          "arxiv:1603.04513": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.04513": "arxiv:1603.04513"
+        },
+        "fulltext_sha256": "4ac0227b1513480f484704cb4b96b94acad602570f132c24449404dc0703685f",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.04513",
+        "version": "1603.04513v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-67a28fe78f07c1383176b89e78630ee191cf15db",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_04513-fulltext_read",
+      "track": "external",
+      "question": "读取《Multichannel Variable-Size Convolution for Sentence Classification》的公开全文版本1603.04513v1，基于原文页证据回答：Where is MVCNN pertained?",
+      "ground_truth": "on the unlabeled data of each task",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.04513"
+      ],
+      "corpus_scope": [
+        "qasper_1603_04513"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1603_04513",
+          "filename": "1603.04513.pdf",
+          "page": 5,
+          "quote": "\nregimes where training loss is between true la-\nbel distribution and predicted label distribution. In\nthis work, we use pretraining on the unlabeled data\nof each task and show that it can increase the per-\nformance of classiﬁcation systems.\nFigure 1 shows our pretraining setup.\nThe\n“sentence representation” – the output of “Fully\nconnected” hidde",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1603.04513"
+        ],
+        "qrels": {
+          "arxiv:1603.04513": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.04513": "arxiv:1603.04513"
+        },
+        "fulltext_sha256": "4ac0227b1513480f484704cb4b96b94acad602570f132c24449404dc0703685f",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.04513",
+        "version": "1603.04513v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-67a28fe78f07c1383176b89e78630ee191cf15db",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_04553-lookup",
+      "track": "external",
+      "question": "精确定位论文《Unsupervised Ranking Model for Entity Coreference Resolution》，核对文献身份arxiv:1603.04553并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1603.04553，题名为Unsupervised Ranking Model for Entity Coreference Resolution；公开版本链接https://arxiv.org/pdf/1603.04553。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.04553"
+      ],
+      "corpus_scope": [
+        "qasper_1603_04553"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1603.04553"
+        ],
+        "qrels": {
+          "arxiv:1603.04553": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.04553": "arxiv:1603.04553"
+        },
+        "fulltext_sha256": "0f2d8b9f603d52c9464071ef4265c381bb2b0ce49f2d8e9f2a5cc3e6891d8c48",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.04553",
+        "version": "1603.04553v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-80de3baf97a55ea33e0fe0cafa6f6221ba347d0a",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_04553-abstract_boundary",
+      "track": "external",
+      "question": "检索《Unsupervised Ranking Model for Entity Coreference Resolution》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：Are resolution mode variables hand crafted?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：No",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.04553"
+      ],
+      "corpus_scope": [
+        "qasper_1603_04553"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1603.04553"
+        ],
+        "qrels": {
+          "arxiv:1603.04553": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.04553": "arxiv:1603.04553"
+        },
+        "fulltext_sha256": "0f2d8b9f603d52c9464071ef4265c381bb2b0ce49f2d8e9f2a5cc3e6891d8c48",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.04553",
+        "version": "1603.04553v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-80de3baf97a55ea33e0fe0cafa6f6221ba347d0a",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_04553-fulltext_read",
+      "track": "external",
+      "question": "读取《Unsupervised Ranking Model for Entity Coreference Resolution》的公开全文版本1603.04553v1，基于原文页证据回答：Are resolution mode variables hand crafted?",
+      "ground_truth": "No",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.04553"
+      ],
+      "corpus_scope": [
+        "qasper_1603_04553"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1603_04553",
+          "filename": "1603.04553.pdf",
+          "page": 2,
+          "quote": "n mode variables\nΠ\n=\n{π1, . . . , πn}, where for each mention j\nthe variable πj\n∈{str, prec, attr} indicates in\nwhich mode the mention should be resolved.\nIn\nour model, we deﬁne three resolution modes —\nstring-matching (str), precise-construct (prec), and\nattribute-matching (attr) — and Π is deterministic\nwhen D is given (i.e. P(Π|D) is a point distribu-\ntion). We determine πj for each mention mj in the\nfollowing way:\n• πj = str, i",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1603.04553"
+        ],
+        "qrels": {
+          "arxiv:1603.04553": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.04553": "arxiv:1603.04553"
+        },
+        "fulltext_sha256": "0f2d8b9f603d52c9464071ef4265c381bb2b0ce49f2d8e9f2a5cc3e6891d8c48",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.04553",
+        "version": "1603.04553v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-80de3baf97a55ea33e0fe0cafa6f6221ba347d0a",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_07044-lookup",
+      "track": "external",
+      "question": "精确定位论文《Recurrent Neural Network Encoder with Attention for Community Question Answering》，核对文献身份arxiv:1603.07044并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1603.07044，题名为Recurrent Neural Network Encoder with Attention for Community Question Answering；公开版本链接https://arxiv.org/pdf/1603.07044。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.07044"
+      ],
+      "corpus_scope": [
+        "qasper_1603_07044"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1603.07044"
+        ],
+        "qrels": {
+          "arxiv:1603.07044": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.07044": "arxiv:1603.07044"
+        },
+        "fulltext_sha256": "e08adbb4f75ee504159cb4098f9fc80319e043eead5dda51b828dd124a99c6f5",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.07044",
+        "version": "1603.07044v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-efc65e5032588da4a134d121fe50d49fe8fe5e8c",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_07044-abstract_boundary",
+      "track": "external",
+      "question": "检索《Recurrent Neural Network Encoder with Attention for Community Question Answering》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：What supplemental tasks are used for multitask learning?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：Multitask learning is used for the task of predicting relevance of a comment on a different question to a given question, where the supplemental tasks are predicting relevance between the questions, and between the comment and the corresponding question",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.07044"
+      ],
+      "corpus_scope": [
+        "qasper_1603_07044"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1603.07044"
+        ],
+        "qrels": {
+          "arxiv:1603.07044": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.07044": "arxiv:1603.07044"
+        },
+        "fulltext_sha256": "e08adbb4f75ee504159cb4098f9fc80319e043eead5dda51b828dd124a99c6f5",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.07044",
+        "version": "1603.07044v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-efc65e5032588da4a134d121fe50d49fe8fe5e8c",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1603_07044-fulltext_read",
+      "track": "external",
+      "question": "读取《Recurrent Neural Network Encoder with Attention for Community Question Answering》的公开全文版本1603.07044v1，基于原文页证据回答：What supplemental tasks are used for multitask learning?",
+      "ground_truth": "Multitask learning is used for the task of predicting relevance of a comment on a different question to a given question, where the supplemental tasks are predicting relevance between the questions, and between the comment and the corresponding question",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1603.07044"
+      ],
+      "corpus_scope": [
+        "qasper_1603_07044"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1603_07044",
+          "filename": "1603.07044.pdf",
+          "page": 1,
+          "quote": "for users with a new question, or when looking for\nsolutions from comments of an existing question.\nAutomation of cQA forums can be divided into\nthree tasks: question-comment relevance (Task A),\nquestion-question relevance (Task B), and question-\nexternal comment relevance (Task C). One might\nthink that classic retrieval models like language\nmodels for information retrieval (Zhai and Lafferty,\n2004) could solve these tasks.\nHowev",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e2",
+          "source_id": "qasper_1603_07044",
+          "filename": "1603.07044.pdf",
+          "page": 3,
+          "quote": "ed question/comment selection.\n3.3\nPredicting Relationships of Object Pairs\nwith an Attention Model\nIn our cQA tasks, the pair of objects are (question,\nquestion) or (question, comment), and the relation-\nship is relevant/irrelevant. The left side of Figure 1\nshows one intuitive way to predict relationships us-\ning RNNs. Parallel LSTMs encode t",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e3",
+          "source_id": "qasper_1603_07044",
+          "filename": "1603.07044.pdf",
+          "page": 4,
+          "quote": "he classiﬁer will be\nhN, h′, as well as augmented features.\n3.4\nModeling Question-External Comments\nFor task C, in addition to an original question (oriQ)\nand an external comment (relC), the question which\nrelC commented on is also given (relQ). To incor-\nporate this extra information, we consider a multi-\ntask learning framework which jointly ",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1603.07044"
+        ],
+        "qrels": {
+          "arxiv:1603.07044": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1603.07044": "arxiv:1603.07044"
+        },
+        "fulltext_sha256": "e08adbb4f75ee504159cb4098f9fc80319e043eead5dda51b828dd124a99c6f5",
+        "fulltext_source_url": "https://arxiv.org/pdf/1603.07044",
+        "version": "1603.07044v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-efc65e5032588da4a134d121fe50d49fe8fe5e8c",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_00117-lookup",
+      "track": "external",
+      "question": "精确定位论文《Domain Adaptation of Recurrent Neural Networks for Natural Language Understanding》，核对文献身份arxiv:1604.00117并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1604.00117，题名为Domain Adaptation of Recurrent Neural Networks for Natural Language Understanding；公开版本链接https://arxiv.org/pdf/1604.00117。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.00117"
+      ],
+      "corpus_scope": [
+        "qasper_1604_00117"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1604.00117"
+        ],
+        "qrels": {
+          "arxiv:1604.00117": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.00117": "arxiv:1604.00117"
+        },
+        "fulltext_sha256": "776ce0da34ef794acdfe625caddef1df48d9ba0982b0aae3ccc209449cb53784",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.00117",
+        "version": "1604.00117v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-3c378074111a6cc7319c0db0aced5752c30bfffb",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_00117-abstract_boundary",
+      "track": "external",
+      "question": "检索《Domain Adaptation of Recurrent Neural Networks for Natural Language Understanding》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：Does the performance increase using their method?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：The multi-task model outperforms the single-task model at all data sizes; but none have an overall benefit from the open vocabulary system",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.00117"
+      ],
+      "corpus_scope": [
+        "qasper_1604_00117"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1604.00117"
+        ],
+        "qrels": {
+          "arxiv:1604.00117": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.00117": "arxiv:1604.00117"
+        },
+        "fulltext_sha256": "776ce0da34ef794acdfe625caddef1df48d9ba0982b0aae3ccc209449cb53784",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.00117",
+        "version": "1604.00117v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-3c378074111a6cc7319c0db0aced5752c30bfffb",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_00117-fulltext_read",
+      "track": "external",
+      "question": "读取《Domain Adaptation of Recurrent Neural Networks for Natural Language Understanding》的公开全文版本1604.00117v2，基于原文页证据回答：Does the performance increase using their method?",
+      "ground_truth": "The multi-task model outperforms the single-task model at all data sizes; but none have an overall benefit from the open vocabulary system",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.00117"
+      ],
+      "corpus_scope": [
+        "qasper_1604_00117"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1604_00117",
+          "filename": "1604.00117.pdf",
+          "page": 3,
+          "quote": " we show the single-task vs. multi-task model\nperformance for each of three different applications. The multi-\ntask model outperforms the single-task model at all data sizes,\nand the relative performance increases as the size of the train-\ning data decreases. When only 200 sentences of training data\nare used, the performance of the multi-task ",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e2",
+          "source_id": "qasper_1604_00117",
+          "filename": "1604.00117.pdf",
+          "page": 4,
+          "quote": "V words.\nTable 4 reports F1 scores on the test set for both the closed\nand open vocabulary systems. The results differ between the\ntasks, but none have an overall beneﬁt from the open vocab-\nulary system. Looking at the subset of sentences that contain\nan OOV token, the open vocabulary system deli",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1604.00117"
+        ],
+        "qrels": {
+          "arxiv:1604.00117": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.00117": "arxiv:1604.00117"
+        },
+        "fulltext_sha256": "776ce0da34ef794acdfe625caddef1df48d9ba0982b0aae3ccc209449cb53784",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.00117",
+        "version": "1604.00117v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-3c378074111a6cc7319c0db0aced5752c30bfffb",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_00125-lookup",
+      "track": "external",
+      "question": "精确定位论文《AttSum: Joint Learning of Focusing and Summarization with Neural Attention》，核对文献身份arxiv:1604.00125并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1604.00125，题名为AttSum: Joint Learning of Focusing and Summarization with Neural Attention；公开版本链接https://arxiv.org/pdf/1604.00125。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.00125"
+      ],
+      "corpus_scope": [
+        "qasper_1604_00125"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1604.00125"
+        ],
+        "qrels": {
+          "arxiv:1604.00125": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.00125": "arxiv:1604.00125"
+        },
+        "fulltext_sha256": "d8312a098049ba161315cbf2c75321fed5c09c37b98cb20d46003b9b2358750f",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.00125",
+        "version": "1604.00125v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-03b939ad70593f6475c56e9be73ba409d33faa62",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_00125-abstract_boundary",
+      "track": "external",
+      "question": "检索《AttSum: Joint Learning of Focusing and Summarization with Neural Attention》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：What models do they compare to?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：LEAD; QUERY_SIM; MultiMR; SVR; DocEmb; ISOLATION",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.00125"
+      ],
+      "corpus_scope": [
+        "qasper_1604_00125"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1604.00125"
+        ],
+        "qrels": {
+          "arxiv:1604.00125": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.00125": "arxiv:1604.00125"
+        },
+        "fulltext_sha256": "d8312a098049ba161315cbf2c75321fed5c09c37b98cb20d46003b9b2358750f",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.00125",
+        "version": "1604.00125v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-03b939ad70593f6475c56e9be73ba409d33faa62",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_00125-fulltext_read",
+      "track": "external",
+      "question": "读取《AttSum: Joint Learning of Focusing and Summarization with Neural Attention》的公开全文版本1604.00125v2，基于原文页证据回答：What models do they compare to?",
+      "ground_truth": "LEAD; QUERY_SIM; MultiMR; SVR; DocEmb; ISOLATION",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.00125"
+      ],
+      "corpus_scope": [
+        "qasper_1604_00125"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1604_00125",
+          "filename": "1604.00125.pdf",
+          "page": 5,
+          "quote": "aluate the summarization performance of AttSum, we implement rich extractive summarization\nmethods. Above all, we introduce two common baselines. The ﬁrst one just selects the leading sentences\nto form a summary. It is often used as an ofﬁcial baseline of DUC, and we name it “LEAD”. The\nother system is called “QUERY SIM”, which directly ranks sentences according to its TF-IDF cosine\nsimilarity to the query. In addition, we implement two po",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e2",
+          "source_id": "qasper_1604_00125",
+          "filename": "1604.00125.pdf",
+          "page": 5,
+          "quote": "aluate the summarization performance of AttSum, we implement rich extractive summarization\nmethods. Above all, we introduce two common baselines. The ﬁrst one just selects the leading sentences\nto form a summary. It is often used as an ofﬁcial baseline of DUC, and we name it “LEAD”. The\nother system is called “QUERY SIM”, which directly ranks sentences according to its TF-IDF cosine\nsimilarity to the query. In addition, we implement two po",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e3",
+          "source_id": "qasper_1604_00125",
+          "filename": "1604.00125.pdf",
+          "page": 5,
+          "quote": "“QUERY SIM”, which directly ranks sentences according to its TF-IDF cosine\nsimilarity to the query. In addition, we implement two popular extractive query-focused summarization\nmethods, called MultiMR (Wan and Xiao, 2009) and SVR (Ouyang et al., 2011). MultiMR is a graph-\nbased manifold ranking method which makes uniform use of the senten",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e4",
+          "source_id": "qasper_1604_00125",
+          "filename": "1604.00125.pdf",
+          "page": 5,
+          "quote": "tor Regression to learn feature weights. Note that MultiMR is unsupervised while\nSVR is supervised. Since our model is totally data-driven, we introduce a recent summarization system\nDocEmb (Kobayashi et al., 2015) that also just use deep neural network features to rank sentences.\nIt initially wo",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e5",
+          "source_id": "qasper_1604_00125",
+          "filename": "1604.00125.pdf",
+          "page": 6,
+          "quote": "To verify the effectiveness of the joint model, we design a baseline called ISOLATION, which per-\nforms saliency ranking and relevance ranking in isolation. Speciﬁcally, it directly uses the sum pool-\ning over sentence embeddings to represent th",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1604.00125"
+        ],
+        "qrels": {
+          "arxiv:1604.00125": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.00125": "arxiv:1604.00125"
+        },
+        "fulltext_sha256": "d8312a098049ba161315cbf2c75321fed5c09c37b98cb20d46003b9b2358750f",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.00125",
+        "version": "1604.00125v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-03b939ad70593f6475c56e9be73ba409d33faa62",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_05781-lookup",
+      "track": "external",
+      "question": "精确定位论文《What we write about when we write about causality: Features of causal statements across large-scale social discourse》，核对文献身份arxiv:1604.05781并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1604.05781，题名为What we write about when we write about causality: Features of causal statements across large-scale social discourse；公开版本链接https://arxiv.org/pdf/1604.05781。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.05781"
+      ],
+      "corpus_scope": [
+        "qasper_1604_05781"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1604.05781"
+        ],
+        "qrels": {
+          "arxiv:1604.05781": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.05781": "arxiv:1604.05781"
+        },
+        "fulltext_sha256": "ac0aa81f98a860c0d869c46063846543c581e9b5b748e049e98071b39eb0a2ba",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.05781",
+        "version": "1604.05781v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-4c822bbb06141433d04bbc472f08c48bc8378865",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_05781-abstract_boundary",
+      "track": "external",
+      "question": "检索《What we write about when we write about causality: Features of causal statements across large-scale social discourse》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：How do they extract causality from text?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：They identify documents that contain the unigrams 'caused', 'causing', or 'causes'",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.05781"
+      ],
+      "corpus_scope": [
+        "qasper_1604_05781"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1604.05781"
+        ],
+        "qrels": {
+          "arxiv:1604.05781": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.05781": "arxiv:1604.05781"
+        },
+        "fulltext_sha256": "ac0aa81f98a860c0d869c46063846543c581e9b5b748e049e98071b39eb0a2ba",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.05781",
+        "version": "1604.05781v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-4c822bbb06141433d04bbc472f08c48bc8378865",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_05781-fulltext_read",
+      "track": "external",
+      "question": "读取《What we write about when we write about causality: Features of causal statements across large-scale social discourse》的公开全文版本1604.05781v2，基于原文页证据回答：How do they extract causality from text?",
+      "ground_truth": "They identify documents that contain the unigrams 'caused', 'causing', or 'causes'",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.05781"
+      ],
+      "corpus_scope": [
+        "qasper_1604_05781"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1604_05781",
+          "filename": "1604.05781.pdf",
+          "page": 2,
+          "quote": "ed lowercase only (see also the Appendix).\nStemming [31] and lemmatization [32] were not performed.\nCausal documents were chosen to contain one occurrence\nonly of the exact unigrams: ‘caused’, ‘causing’, or ‘causes’.\nThe word ‘cause’ was not included due to its use as a popular\ncontraction for ‘b",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1604.05781"
+        ],
+        "qrels": {
+          "arxiv:1604.05781": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.05781": "arxiv:1604.05781"
+        },
+        "fulltext_sha256": "ac0aa81f98a860c0d869c46063846543c581e9b5b748e049e98071b39eb0a2ba",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.05781",
+        "version": "1604.05781v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-4c822bbb06141433d04bbc472f08c48bc8378865",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_06076-lookup",
+      "track": "external",
+      "question": "精确定位论文《Question Answering via Integer Programming over Semi-Structured Knowledge》，核对文献身份arxiv:1604.06076并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1604.06076，题名为Question Answering via Integer Programming over Semi-Structured Knowledge；公开版本链接https://arxiv.org/pdf/1604.06076。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.06076"
+      ],
+      "corpus_scope": [
+        "qasper_1604_06076"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1604.06076"
+        ],
+        "qrels": {
+          "arxiv:1604.06076": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.06076": "arxiv:1604.06076"
+        },
+        "fulltext_sha256": "c00c375ca7ba577b3cdd4bee13c52522aa902cb64cdec7468c4f543c9d98d55e",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.06076",
+        "version": "1604.06076v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-cb1126992a39555e154bedec388465b249a02ded",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_06076-abstract_boundary",
+      "track": "external",
+      "question": "检索《Question Answering via Integer Programming over Semi-Structured Knowledge》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：How is the semi-structured knowledge base created?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：using a mixture of manual and semi-automatic techniques",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.06076"
+      ],
+      "corpus_scope": [
+        "qasper_1604_06076"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1604.06076"
+        ],
+        "qrels": {
+          "arxiv:1604.06076": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.06076": "arxiv:1604.06076"
+        },
+        "fulltext_sha256": "c00c375ca7ba577b3cdd4bee13c52522aa902cb64cdec7468c4f543c9d98d55e",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.06076",
+        "version": "1604.06076v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-cb1126992a39555e154bedec388465b249a02ded",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_06076-fulltext_read",
+      "track": "external",
+      "question": "读取《Question Answering via Integer Programming over Semi-Structured Knowledge》的公开全文版本1604.06076v1，基于原文页证据回答：How is the semi-structured knowledge base created?",
+      "ground_truth": "using a mixture of manual and semi-automatic techniques",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.06076"
+      ],
+      "corpus_scope": [
+        "qasper_1604_06076"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1604_06076",
+          "filename": "1604.06076.pdf",
+          "page": 3,
+          "quote": "ity\nis often represented differently in different tables, posing an\nadditional inference challenge.\nAlthough techniques for constructing this knowledge base\nare outside the scope of this paper, we brieﬂy mention them.\nTables were constructed using a mixture of manual and semi-\nautomatic techniques. First, the table schemas were manu-\nally deﬁned based on the syllabus, study guides, and train-\ning questions.\nTables were then populated",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1604.06076"
+        ],
+        "qrels": {
+          "arxiv:1604.06076": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.06076": "arxiv:1604.06076"
+        },
+        "fulltext_sha256": "c00c375ca7ba577b3cdd4bee13c52522aa902cb64cdec7468c4f543c9d98d55e",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.06076",
+        "version": "1604.06076v1",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-cb1126992a39555e154bedec388465b249a02ded",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_07236-lookup",
+      "track": "external",
+      "question": "精确定位论文《Towards Real-Time, Country-Level Location Classification of Worldwide Tweets》，核对文献身份arxiv:1604.07236并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1604.07236，题名为Towards Real-Time, Country-Level Location Classification of Worldwide Tweets；公开版本链接https://arxiv.org/pdf/1604.07236。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.07236"
+      ],
+      "corpus_scope": [
+        "qasper_1604_07236"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1604.07236"
+        ],
+        "qrels": {
+          "arxiv:1604.07236": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.07236": "arxiv:1604.07236"
+        },
+        "fulltext_sha256": "9ae7ba348d1d62e5bbd092db368bb885d487c99251be9969c2bc18b475bd288b",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.07236",
+        "version": "1604.07236v3",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-d9eacd965bbdc468da522e5e6fe7491adc34b93b",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_07236-abstract_boundary",
+      "track": "external",
+      "question": "检索《Towards Real-Time, Country-Level Location Classification of Worldwide Tweets》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：What model do they train?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：Support Vector Machines (SVM), Gaussian Naive Bayes, Multinomial Naive Bayes, Decision Trees, Random Forests and a Maximum Entropy classifier",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.07236"
+      ],
+      "corpus_scope": [
+        "qasper_1604_07236"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1604.07236"
+        ],
+        "qrels": {
+          "arxiv:1604.07236": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.07236": "arxiv:1604.07236"
+        },
+        "fulltext_sha256": "9ae7ba348d1d62e5bbd092db368bb885d487c99251be9969c2bc18b475bd288b",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.07236",
+        "version": "1604.07236v3",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-d9eacd965bbdc468da522e5e6fe7491adc34b93b",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1604_07236-fulltext_read",
+      "track": "external",
+      "question": "读取《Towards Real-Time, Country-Level Location Classification of Worldwide Tweets》的公开全文版本1604.07236v3，基于原文页证据回答：What model do they train?",
+      "ground_truth": "Support Vector Machines (SVM), Gaussian Naive Bayes, Multinomial Naive Bayes, Decision Trees, Random Forests and a Maximum Entropy classifier",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1604.07236"
+      ],
+      "corpus_scope": [
+        "qasper_1604_07236"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1604_07236",
+          "filename": "1604.07236.pdf",
+          "page": 4,
+          "quote": "ques\nWe carried out the experimentation with a range of clas-\nsiﬁers of different types: Support Vector Machines (SVM),\nGaussian Naive Bayes, Multinomial Naive Bayes, Decision\nTrees, Random Forests and a Maximum Entropy classiﬁer.\nThey were tested in two different settings, one without bal-\nancing the weights of the different classes and th",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1604.07236"
+        ],
+        "qrels": {
+          "arxiv:1604.07236": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1604.07236": "arxiv:1604.07236"
+        },
+        "fulltext_sha256": "9ae7ba348d1d62e5bbd092db368bb885d487c99251be9969c2bc18b475bd288b",
+        "fulltext_source_url": "https://arxiv.org/pdf/1604.07236",
+        "version": "1604.07236v3",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-d9eacd965bbdc468da522e5e6fe7491adc34b93b",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1605_04655-lookup",
+      "track": "external",
+      "question": "精确定位论文《Joint Learning of Sentence Embeddings for Relevance and Entailment》，核对文献身份arxiv:1605.04655并返回其公开来源，不把题录称为已读全文。",
+      "ground_truth": "目标论文身份为arxiv:1605.04655，题名为Joint Learning of Sentence Embeddings for Relevance and Entailment；公开版本链接https://arxiv.org/pdf/1605.04655。",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1605.04655"
+      ],
+      "corpus_scope": [
+        "qasper_1605_04655"
+      ],
+      "category": "lookup",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "lookup",
+        "required_work_ids": [
+          "arxiv:1605.04655"
+        ],
+        "qrels": {
+          "arxiv:1605.04655": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1605.04655": "arxiv:1605.04655"
+        },
+        "fulltext_sha256": "ffccd9b66838da89fd06d9eeabf5929ce3bac9b98d8ebad24d948af7a6281549",
+        "fulltext_source_url": "https://arxiv.org/pdf/1605.04655",
+        "version": "1605.04655v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance",
+        "expected_status": "discovered"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-225a567eeb2698a9d3f1024a8b270313a6d15f82",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1605_04655-abstract_boundary",
+      "track": "external",
+      "question": "检索《Joint Learning of Sentence Embeddings for Relevance and Entailment》后，仅凭摘要能否回答以下问题？请明确证据层级，不足时指出需要全文核对：what were the baselines?",
+      "ground_truth": "摘要支撑程度待独立人审；全文参考答案为：RNN model; CNN model ; RNN-CNN model; attn1511 model; Deep Averaging Network model; avg mean of word embeddings in the sentence with projection matrix",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1605.04655"
+      ],
+      "corpus_scope": [
+        "qasper_1605_04655"
+      ],
+      "category": "abstract_boundary",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "abstract_boundary",
+        "required_work_ids": [
+          "arxiv:1605.04655"
+        ],
+        "qrels": {
+          "arxiv:1605.04655": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1605.04655": "arxiv:1605.04655"
+        },
+        "fulltext_sha256": "ffccd9b66838da89fd06d9eeabf5929ce3bac9b98d8ebad24d948af7a6281549",
+        "fulltext_source_url": "https://arxiv.org/pdf/1605.04655",
+        "version": "1605.04655v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-225a567eeb2698a9d3f1024a8b270313a6d15f82",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    },
+    {
+      "id": "PUBLIC-EXTERNAL-qasper_1605_04655-fulltext_read",
+      "track": "external",
+      "question": "读取《Joint Learning of Sentence Embeddings for Relevance and Entailment》的公开全文版本1605.04655v2，基于原文页证据回答：what were the baselines?",
+      "ground_truth": "RNN model; CNN model ; RNN-CNN model; attn1511 model; Deep Averaging Network model; avg mean of word embeddings in the sentence with projection matrix",
+      "domain": "computer_science_ml",
+      "question_split": "dev",
+      "family_ids": [
+        "arxiv:1605.04655"
+      ],
+      "corpus_scope": [
+        "qasper_1605_04655"
+      ],
+      "category": "fulltext_read",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1605_04655",
+          "filename": "1605.04655.pdf",
+          "page": 4,
+          "quote": "uate an RNN model which uses bidirec-\ntionally summed GRU memory cells (Cho et al.,\n2014) and uses the ﬁnal states as embeddings;\na CNN model which uses sentence-max-pooled\nconvolutional ﬁlters as embeddings (Kim, 2014);\nan RNN-CNN model which puts the CNN on top\nof per-token GRU outputs rather than the word\nembeddings (Tan et al., 2015);",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "external_gold": {
+        "task_type": "fulltext_read",
+        "required_work_ids": [
+          "arxiv:1605.04655"
+        ],
+        "qrels": {
+          "arxiv:1605.04655": 2
+        },
+        "aliases": {
+          "10.48550/arxiv.1605.04655": "arxiv:1605.04655"
+        },
+        "fulltext_sha256": "ffccd9b66838da89fd06d9eeabf5929ce3bac9b98d8ebad24d948af7a6281549",
+        "fulltext_source_url": "https://arxiv.org/pdf/1605.04655",
+        "version": "1605.04655v2",
+        "abstract_support": "pending_human_review",
+        "qrels_scope": "known_target_work_only_not_exhaustive_web_relevance"
+      },
+      "task_metadata": {
+        "source_local_question_id": "QASPER-225a567eeb2698a9d3f1024a8b270313a6d15f82",
+        "provenance": "Real pinned public PDF and source question; no live result or human support judgment fabricated."
+      }
+    }
+  ]
+}

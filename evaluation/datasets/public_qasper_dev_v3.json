@@ -1,0 +1,592 @@
+{
+  "schema_version": 3,
+  "annotation_status": "source_checked_draft_pending_human_review",
+  "description": "Licensed public QASPER train questions, exact PDF excerpt location checked; no RefMind human approval.",
+  "page_tolerance": 0,
+  "corpus": [
+    {
+      "id": "qasper_1601_00901",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1601.00901.pdf",
+      "title": "Joint learning of ontology and semantic parser from text",
+      "sha256": "3d95063ad147f8793ed5f49c146b2be3ba7f284fc737a945f440ff2760aa9316",
+      "pages": 22,
+      "family": "arxiv:1601.00901",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1601.00901",
+      "version": "1601.00901v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1601_02543",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1601.02543.pdf",
+      "title": "Evaluating the Performance of a Speech Recognition based System",
+      "sha256": "c233bfa49b82cc284bf6c47ffacfc03274f29b3eaf30d25babe66687879ae024",
+      "pages": 8,
+      "family": "arxiv:1601.02543",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1601.02543",
+      "version": "1601.02543v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1601_04012",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1601.04012.pdf",
+      "title": "Detecting and Extracting Events from Text Documents",
+      "sha256": "64e7ad46dbc832fd3ded82eb43b3e2b4f06895bd4cd70a00f9991505b88dd88d",
+      "pages": 62,
+      "family": "arxiv:1601.04012",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1601.04012",
+      "version": "1601.04012v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1601_06068",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1601.06068.pdf",
+      "title": "Paraphrase Generation from Latent-Variable PCFGs for Semantic Parsing",
+      "sha256": "3444762771ba7640f84a0922ad053574bfd96886543308c46affc697f0de346f",
+      "pages": 10,
+      "family": "arxiv:1601.06068",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1601.06068",
+      "version": "1601.06068v2",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1602_00812",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1602.00812.pdf",
+      "title": "The Grail theorem prover: Type theory for syntax and semantics",
+      "sha256": "b81ea822f6717b10687b4d0c0cb028e2efcdaf0764354159100dbe02219d0364",
+      "pages": 32,
+      "family": "arxiv:1602.00812",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1602.00812",
+      "version": "1602.00812v2",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1602_01208",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1602.01208.pdf",
+      "title": "Spatial Concept Acquisition for a Mobile Robot that Integrates Self-Localization and Unsupervised Word Discovery from Spoken Sentences",
+      "sha256": "ee38c0004251adcfe7b76d30e9b0186efa835c7525e7368cf0ac863f9c97e4cb",
+      "pages": 13,
+      "family": "arxiv:1602.01208",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1602.01208",
+      "version": "1602.01208v3",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    },
+    {
+      "id": "qasper_1602_03661",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1602.03661.pdf",
+      "title": "On the emergence of syntactic structures: quantifying and modelling duality of patterning",
+      "sha256": "2247ed68c0de712a870065bed992264217da0cb3da9c88b8ae4b2c4d6227d262",
+      "pages": 11,
+      "family": "arxiv:1602.03661",
+      "question_split": "dev",
+      "domain": "computer_science_ml",
+      "source_url": "https://arxiv.org/pdf/1602.03661",
+      "version": "1602.03661v1",
+      "license": "check_individual_arxiv_record",
+      "source_status": "downloaded_bytes_and_excerpt_checked_pending_human_review"
+    }
+  ],
+  "items": [
+    {
+      "id": "QASPER-74b0d3ee0cc9b0a3d9b264aba9901ff97048a897",
+      "question": "How did they induce the CFG?",
+      "ground_truth": "the parser first learns to parse simple sentences, then proceeds to learn more complex ones. The induction method is iterative, semi-automatic and based on frequent patterns",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "computer_science_ml",
+      "family_ids": [
+        "arxiv:1601.00901"
+      ],
+      "corpus_scope": [
+        "qasper_1601_00901"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1601_00901",
+          "filename": "1601.00901.pdf",
+          "page": 2,
+          "quote": "hich is designed for homogeneous collections of text, where each fact is\nusually stated only once, therefore we cannot rely on data redundancy. Our approach\nis text-driven, semi-automatic",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "task_metadata": {
+        "provenance": {
+          "dataset": "QASPER",
+          "version": "0.3",
+          "original_split": "train",
+          "question_id": "74b0d3ee0cc9b0a3d9b264aba9901ff97048a897",
+          "dataset_license": "https://creativecommons.org/licenses/by/4.0/",
+          "citation": "Dasigi et al., NAACL 2021, https://aclanthology.org/2021.naacl-main.365/",
+          "public_benchmark_may_be_in_pretraining": true
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "annotated_paragraph_excerpt_located_exactly_in_downloaded_pdf_pending_semantic_review",
+        "fact_slot_status": "pending_human_decomposition",
+        "category_status": "proposed_pending_human_review"
+      }
+    },
+    {
+      "id": "QASPER-8d793bda51a53a4605c1c33e7fd20ba35581a518",
+      "question": "what bottlenecks were identified?",
+      "ground_truth": "Confusion in recognizing the words that are active at a given node by a speech recognition solution developed for Indian Railway Inquiry System.",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "computer_science_ml",
+      "family_ids": [
+        "arxiv:1601.02543"
+      ],
+      "corpus_scope": [
+        "qasper_1601_02543"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1601_02543",
+          "filename": "1601.02543.pdf",
+          "page": 8,
+          "quote": "the possible confusion between the\nactive words. We showed that this metric can be used eﬀectively to enhance the\nperformance of a speech solution without actually putting it to people test",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e2",
+          "source_id": "qasper_1601_02543",
+          "filename": "1601.02543.pdf",
+          "page": 4,
+          "quote": "a given node. This analysis\ngives a list of all set of words that have a high degree of confusability among\nthem; this understanding can be then used to (a) restructure the set of active\nwords at t",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "task_metadata": {
+        "provenance": {
+          "dataset": "QASPER",
+          "version": "0.3",
+          "original_split": "train",
+          "question_id": "8d793bda51a53a4605c1c33e7fd20ba35581a518",
+          "dataset_license": "https://creativecommons.org/licenses/by/4.0/",
+          "citation": "Dasigi et al., NAACL 2021, https://aclanthology.org/2021.naacl-main.365/",
+          "public_benchmark_may_be_in_pretraining": true
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "annotated_paragraph_excerpt_located_exactly_in_downloaded_pdf_pending_semantic_review",
+        "fact_slot_status": "pending_human_decomposition",
+        "category_status": "proposed_pending_human_review"
+      }
+    },
+    {
+      "id": "QASPER-eac042734f76e787cb98ba3d0c13a916a49bdfb3",
+      "question": "Which datasets are used in this work?",
+      "ground_truth": "GENIA corpus",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "computer_science_ml",
+      "family_ids": [
+        "arxiv:1601.04012"
+      ],
+      "corpus_scope": [
+        "qasper_1601_04012"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1601_04012",
+          "filename": "1601.04012.pdf",
+          "page": 40,
+          "quote": "There have been several workshops on biomedical natural language processing.\nWe focus on the BioNLP Shared Tasks in recent years that had competitions on\nevent extraction. There have been t",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "task_metadata": {
+        "provenance": {
+          "dataset": "QASPER",
+          "version": "0.3",
+          "original_split": "train",
+          "question_id": "eac042734f76e787cb98ba3d0c13a916a49bdfb3",
+          "dataset_license": "https://creativecommons.org/licenses/by/4.0/",
+          "citation": "Dasigi et al., NAACL 2021, https://aclanthology.org/2021.naacl-main.365/",
+          "public_benchmark_may_be_in_pretraining": true
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "annotated_paragraph_excerpt_located_exactly_in_downloaded_pdf_pending_semantic_review",
+        "fact_slot_status": "pending_human_decomposition",
+        "category_status": "proposed_pending_human_review"
+      }
+    },
+    {
+      "id": "QASPER-c359ab8ebef6f60c5a38f5244e8c18d85e92761d",
+      "question": "How many paraphrases are generated per question?",
+      "ground_truth": "10*n paraphrases, where n depends on the number of paraphrases that contain the entity mention spans",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "computer_science_ml",
+      "family_ids": [
+        "arxiv:1601.06068"
+      ],
+      "corpus_scope": [
+        "qasper_1601_06068"
+      ],
+      "category": "numerical",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1601_06068",
+          "filename": "1601.06068.pdf",
+          "page": 7,
+          "quote": "ed by their Freebase API scores, and the edges\nencode the fact that no joint assignment of entities\nto mentions can contain overlapping spans. We take\nthe top 10 paths through the lattice as pos",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "task_metadata": {
+        "provenance": {
+          "dataset": "QASPER",
+          "version": "0.3",
+          "original_split": "train",
+          "question_id": "c359ab8ebef6f60c5a38f5244e8c18d85e92761d",
+          "dataset_license": "https://creativecommons.org/licenses/by/4.0/",
+          "citation": "Dasigi et al., NAACL 2021, https://aclanthology.org/2021.naacl-main.365/",
+          "public_benchmark_may_be_in_pretraining": true
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "annotated_paragraph_excerpt_located_exactly_in_downloaded_pdf_pending_semantic_review",
+        "fact_slot_status": "pending_human_decomposition",
+        "category_status": "proposed_pending_human_review"
+      }
+    },
+    {
+      "id": "QASPER-48fa2ccc236e217fcf0e5aab0e7a146faf439b02",
+      "question": "Does Grail accept Prolog inputs?",
+      "ground_truth": "No",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "computer_science_ml",
+      "family_ids": [
+        "arxiv:1602.00812"
+      ],
+      "corpus_scope": [
+        "qasper_1602_00812"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1602_00812",
+          "filename": "1602.00812.pdf",
+          "page": 2,
+          "quote": "In its general form, a type-logical grammar consists of following components:",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "task_metadata": {
+        "provenance": {
+          "dataset": "QASPER",
+          "version": "0.3",
+          "original_split": "train",
+          "question_id": "48fa2ccc236e217fcf0e5aab0e7a146faf439b02",
+          "dataset_license": "https://creativecommons.org/licenses/by/4.0/",
+          "citation": "Dasigi et al., NAACL 2021, https://aclanthology.org/2021.naacl-main.365/",
+          "public_benchmark_may_be_in_pretraining": true
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "annotated_paragraph_excerpt_located_exactly_in_downloaded_pdf_pending_semantic_review",
+        "fact_slot_status": "pending_human_decomposition",
+        "category_status": "proposed_pending_human_review"
+      }
+    },
+    {
+      "id": "QASPER-23d0637f8ae72ae343556ab135eedc7f4cb58032",
+      "question": "How do they show that acquiring names of places helps self-localization?",
+      "ground_truth": "unsupervised morphological analyzer capable of using lattices improved the accuracy of phoneme recognition and word segmentation; Consequently, this result suggests that this word segmentation method considers the multiple hypothesis of speech recognition as a whole and reduces uncertainty such as variability in recognition",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "computer_science_ml",
+      "family_ids": [
+        "arxiv:1602.01208"
+      ],
+      "corpus_scope": [
+        "qasper_1602_01208"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1602_01208",
+          "filename": "1602.01208.pdf",
+          "page": 8,
+          "quote": "tion results of the\nthree considered methods. We found that the unsupervised\nmorphological analyzer capable of using lattices improved\nthe accuracy of phoneme recognition and word segmen",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "task_metadata": {
+        "provenance": {
+          "dataset": "QASPER",
+          "version": "0.3",
+          "original_split": "train",
+          "question_id": "23d0637f8ae72ae343556ab135eedc7f4cb58032",
+          "dataset_license": "https://creativecommons.org/licenses/by/4.0/",
+          "citation": "Dasigi et al., NAACL 2021, https://aclanthology.org/2021.naacl-main.365/",
+          "public_benchmark_may_be_in_pretraining": true
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "annotated_paragraph_excerpt_located_exactly_in_downloaded_pdf_pending_semantic_review",
+        "fact_slot_status": "pending_human_decomposition",
+        "category_status": "proposed_pending_human_review"
+      }
+    },
+    {
+      "id": "QASPER-21c104d14ba3db7fe2cd804a191f9e6258208235",
+      "question": "How do they evaluate how their model acquired words?",
+      "ground_truth": "PAR score",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "computer_science_ml",
+      "family_ids": [
+        "arxiv:1602.01208"
+      ],
+      "corpus_scope": [
+        "qasper_1602_01208"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1602_01208",
+          "filename": "1602.01208.pdf",
+          "page": 9,
+          "quote": "Accuracy of acquired phoneme sequences representing the\nnames of places",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e2",
+          "source_id": "qasper_1602_01208",
+          "filename": "1602.01208.pdf",
+          "page": 9,
+          "quote": "s selected. We compared\nthe PAR with the correct phoneme sequence and a selected\nname of the place. Because “kiqchiN” and “daidokoro” were\ntaught for the same place, the word whose PAR was the h",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e3",
+          "source_id": "qasper_1602_01208",
+          "filename": "1602.01208.pdf",
+          "page": 9,
+          "quote": "he speech recognition results in\nthe lattice format, showed the best PAR score. In the 1-best\nand BoS methods, a part syllable sequence of the name of a\nplace was more minutely segmented as show",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "task_metadata": {
+        "provenance": {
+          "dataset": "QASPER",
+          "version": "0.3",
+          "original_split": "train",
+          "question_id": "21c104d14ba3db7fe2cd804a191f9e6258208235",
+          "dataset_license": "https://creativecommons.org/licenses/by/4.0/",
+          "citation": "Dasigi et al., NAACL 2021, https://aclanthology.org/2021.naacl-main.365/",
+          "public_benchmark_may_be_in_pretraining": true
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "annotated_paragraph_excerpt_located_exactly_in_downloaded_pdf_pending_semantic_review",
+        "fact_slot_status": "pending_human_decomposition",
+        "category_status": "proposed_pending_human_review"
+      }
+    },
+    {
+      "id": "QASPER-d557752c4706b65dcdb7718272180c59d77fb7a7",
+      "question": "Which method do they use for word segmentation?",
+      "ground_truth": "unsupervised word segmentation method latticelm",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "computer_science_ml",
+      "family_ids": [
+        "arxiv:1602.01208"
+      ],
+      "corpus_scope": [
+        "qasper_1602_01208"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1602_01208",
+          "filename": "1602.01208.pdf",
+          "page": 4,
+          "quote": "The proposed method can learn words related to places\nfrom the utterances of sentences. We use an unsupervised\nword segmentation method latticelm that can directly segment\nwords from the la",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "task_metadata": {
+        "provenance": {
+          "dataset": "QASPER",
+          "version": "0.3",
+          "original_split": "train",
+          "question_id": "d557752c4706b65dcdb7718272180c59d77fb7a7",
+          "dataset_license": "https://creativecommons.org/licenses/by/4.0/",
+          "citation": "Dasigi et al., NAACL 2021, https://aclanthology.org/2021.naacl-main.365/",
+          "public_benchmark_may_be_in_pretraining": true
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "annotated_paragraph_excerpt_located_exactly_in_downloaded_pdf_pending_semantic_review",
+        "fact_slot_status": "pending_human_decomposition",
+        "category_status": "proposed_pending_human_review"
+      }
+    },
+    {
+      "id": "QASPER-1bdf7e9f3f804930b2933ebd9207a3e000b27742",
+      "question": "Does their model start with any prior knowledge of words?",
+      "ground_truth": "No",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "computer_science_ml",
+      "family_ids": [
+        "arxiv:1602.01208"
+      ],
+      "corpus_scope": [
+        "qasper_1602_01208"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1602_01208",
+          "filename": "1602.01208.pdf",
+          "page": 1,
+          "quote": "The objectives of this study were to build a robot that learns\nwords related to places and efﬁciently utilizes this learned\nvocabulary in self-localization. Lexical acquisition related t",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "task_metadata": {
+        "provenance": {
+          "dataset": "QASPER",
+          "version": "0.3",
+          "original_split": "train",
+          "question_id": "1bdf7e9f3f804930b2933ebd9207a3e000b27742",
+          "dataset_license": "https://creativecommons.org/licenses/by/4.0/",
+          "citation": "Dasigi et al., NAACL 2021, https://aclanthology.org/2021.naacl-main.365/",
+          "public_benchmark_may_be_in_pretraining": true
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "annotated_paragraph_excerpt_located_exactly_in_downloaded_pdf_pending_semantic_review",
+        "fact_slot_status": "pending_human_decomposition",
+        "category_status": "proposed_pending_human_review"
+      }
+    },
+    {
+      "id": "QASPER-4d60e9494a412d581bd5e85f4e78881914085afc",
+      "question": "What empirical data are the Blending Game predictions compared to?",
+      "ground_truth": "words length distribution, the frequency of use of the different forms and a measure for the combinatoriality",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "computer_science_ml",
+      "family_ids": [
+        "arxiv:1602.03661"
+      ],
+      "corpus_scope": [
+        "qasper_1602_03661"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "source_checked_draft",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "qasper_1602_03661",
+          "filename": "1602.03661.pdf",
+          "page": 9,
+          "quote": "In this paper we have investigated duality of patterning at the lexicon level. We have\nquantiﬁed in particular the notions of combinatoriality and compositionality as observed in\nreal lan",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [],
+      "task_metadata": {
+        "provenance": {
+          "dataset": "QASPER",
+          "version": "0.3",
+          "original_split": "train",
+          "question_id": "4d60e9494a412d581bd5e85f4e78881914085afc",
+          "dataset_license": "https://creativecommons.org/licenses/by/4.0/",
+          "citation": "Dasigi et al., NAACL 2021, https://aclanthology.org/2021.naacl-main.365/",
+          "public_benchmark_may_be_in_pretraining": true
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "annotated_paragraph_excerpt_located_exactly_in_downloaded_pdf_pending_semantic_review",
+        "fact_slot_status": "pending_human_decomposition",
+        "category_status": "proposed_pending_human_review"
+      }
+    }
+  ]
+}

@@ -263,26 +263,21 @@ class RelevantMemory:
         return _to_messages(rows)
 
     def get_relevant_history(self, query: str) -> list[BaseMessage]:
-        """返回窗口内与 query 相关的历史；嵌入不可用时退回完整窗口。"""
-        messages = self.load_window()
+        """Keep complete turns; never promote orphan answers to factual context."""
+        from .evidence_bundle import paired_history
+        messages = paired_history(self.load_window(), self.max_turns)
         if not messages:
             return []
-
+        pairs = [messages[i:i + 2] for i in range(0, len(messages), 2)]
         try:
             embeddings = get_embedding_model()
             query_vec = np.array(embeddings.embed_query(query))
-            contents = [m.content for m in messages]
-            doc_vecs = [np.array(v) for v in embeddings.embed_documents(contents)]
-        except Exception as exc:  # noqa: BLE001
-            print(f"[memory] 跳过相关性过滤（{exc}），使用完整窗口。")
-            return messages
-
-        relevant: list[BaseMessage] = []
-        for message, vec in zip(messages, doc_vecs):
-            if _cosine(query_vec, vec) >= self.threshold:
-                relevant.append(message)
-
-        return relevant[-(self.max_turns * 2):]
+            vectors = embeddings.embed_documents([str(pair[0].content) for pair in pairs])
+            keep = [pair for index, (pair, vector) in enumerate(zip(pairs, vectors))
+                    if index >= len(pairs) - 2 or _cosine(query_vec, np.array(vector)) >= self.threshold]
+        except Exception:
+            keep = pairs
+        return [message for pair in keep for message in pair]
 
     def add_user_message(self, content: str) -> None:
         storage.add_message(self.session_id, "user", content)

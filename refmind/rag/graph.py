@@ -8,7 +8,12 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import time
+from copy import deepcopy
+from ..contracts import AnswerResult
+from ..llm.openai_metering import billing_stage
 from typing import Any, Literal, TypedDict
 
 from langchain_core.documents import Document
@@ -30,15 +35,20 @@ from ..agents import (
 )
 from ..citations import (
     build_citation_label,
+    build_citation_href,
     enrich_citation_metadata,
     finalize_answer_citations,
     normalize_answer_citations,
+    is_refusal_answer,
+    strip_citation_rendering,
 )
 from ..config import settings
 from ..llm import get_llm, get_multimodal_llm
 from ..llm.image_understanding import build_visual_content
 from ..plugins import CoreHook, get_plugin_manager
 from ..rag.compression import compress_context
+from ..rag.evidence_bundle import pack_evidence, describe_task, enforce_generation_budget, token_counter, source_identity, required_targets
+from ..rag.research_pipeline import answer_research_question, retrieve_research_evidence
 from ..rag.memory import (
     LongTermMemoryService,
     MemoryCandidate,
@@ -48,7 +58,8 @@ from ..rag.memory import (
     format_long_term_memories,
 )
 from ..rag.reranker import rerank
-from ..rag.retrieval import get_retriever
+from ..rag.retrieval import get_retriever, filter_ready_documents
+from ..agents.orchestration import EvidenceReviewAgent, AnswerReviewAgent
 
 NO_CONTEXT_REPLY = INSUFFICIENT_EVIDENCE_REPLY
 RETRIEVAL_ERROR_REPLY = "文献检索服务暂时不可用，请稍后重试；本轮未生成答案。"
@@ -60,8 +71,13 @@ ACADEMIC_NO_CONTEXT_REPLY = (
 
 
 def get_system_prompt(
-    evidence_mode: Literal["local", "academic"] = "local",
+    evidence_mode: Literal["local", "academic", "mixed"] = "local",
 ) -> str:
+    if evidence_mode == "mixed":
+        return get_system_prompt("local").replace(
+            "仅基于用户上传的论文PDF内容回答问题。提供的\"参考文档\"是从用户上传论文中检索到的片段。",
+            "仅基于本轮提供的授权论文证据回答问题。每条证据的来源级别独立保留。"
+        ) + "\n8. 外部摘要只能支持摘要明确内容；仅题录不能支持论文结论。有全文来源也不得把摘要事实包装成全文核验。标明系统推导与作者原文结论的区别。"
     if evidence_mode == "academic":
         return """你是一个专业的学术文献检索助手。你需要严格遵循以下规则：
 1. 仅基于“外部学术检索临时证据”回答问题，不得补充模型记忆中的事实。证据来自开放学术索引，
@@ -98,17 +114,37 @@ def get_system_prompt(
 
 
 def format_documents(documents: list[Document]) -> str:
-    """把检索分块渲染成带来源标签的文本，便于引用溯源。"""
-    blocks = []
+    """Render per-source evidence and one deduplicated review-scope note."""
+    blocks, review_limits = [], []
     for i, doc in enumerate(documents, start=1):
         label = build_citation_label(doc, i)
-        blocks.append(f"{label}\n{doc.page_content}")
+        metadata = doc.metadata or {}
+        coverage = str(metadata.get("coverage_limit") or "").strip()
+        scope = str(metadata.get("review_scope_limit") or "").strip()
+        if scope and scope not in review_limits:
+            review_limits.append(scope)
+        suffix = f"\n证据视图范围：{coverage}" if coverage else ""
+        blocks.append(f"{label}\n{doc.page_content}{suffix}")
+    if review_limits:
+        blocks.append("【本轮证据适用范围】\n" + "\n".join(review_limits))
     return "\n\n".join(blocks)
+
+
+def _generation_human_text(question: str, documents: list[Document], long_term_memories=None, *, evidence_mode: str = "local") -> str:
+    heading = "外部学术检索临时证据（题录与摘要，未写入本地知识库）" if evidence_mode == "academic" else "论文检索证据"
+    return (f"问题：{question}\n\n【用户长期记忆】\n{format_long_term_memories(long_term_memories or [])}"
+            f"\n\n【{heading}】\n{format_documents(documents)}")
+
+
+def _evidence_mode(documents: list[Document]) -> str:
+    levels = {(doc.metadata or {}).get("evidence_level", "full_text") for doc in documents}
+    return "academic" if levels and levels <= {"abstract", "search_snippet"} else "mixed" if levels & {"abstract", "search_snippet"} else "local"
 
 
 class GraphState(TypedDict, total=False):
     question: str
     retrieval_mode: str
+    selected_doc_ids: list[int] | None
     retrieval_question: str
     group_id: int
     user_id: str
@@ -123,6 +159,7 @@ class GraphState(TypedDict, total=False):
     academic_provider: str
     evidence_source: str
     answer: str
+    trace: dict
 
 
 def _run_text_hook(
@@ -189,7 +226,8 @@ def _retrieve_node(state: GraphState) -> GraphState:
     ):
         queries.append(expanded_question)
 
-    retriever = get_retriever(state["group_id"])
+    scope = state.get("selected_doc_ids")
+    retriever = get_retriever(state["group_id"]) if scope is None else get_retriever(state["group_id"], selected_doc_ids=tuple(scope))
     candidates: list[Document] = []
     seen: set[tuple[str, ...]] = set()
     for query in queries:
@@ -211,7 +249,7 @@ def _retrieve_node(state: GraphState) -> GraphState:
             seen.add(key)
             candidates.append(document)
     return {
-        "documents": _postprocess_documents(canonical_question, candidates)
+        "documents": (_postprocess_documents(canonical_question, candidates, trace=state["trace"]) if state.get("trace") is not None else _postprocess_documents(canonical_question, candidates))
         if candidates
         else []
     }
@@ -309,10 +347,10 @@ def _memory_update_node(state: GraphState) -> GraphState:
     return {"memory_update": result}
 
 
-def _retrieve_documents(question: str, group_id: int) -> list[Document]:
+def _retrieve_documents(question: str, group_id: int, *, selected_doc_ids: list[int] | None = None) -> list[Document]:
     """执行原始单查询链路，作为基础图与 multi-agent 的共同基线。"""
     question = canonicalize_retrieval_query(question)
-    retriever = get_retriever(group_id)
+    retriever = get_retriever(group_id) if selected_doc_ids is None else get_retriever(group_id, selected_doc_ids=tuple(selected_doc_ids))
     candidates = _invoke_retriever(retriever, question, group_id)
     if not candidates:
         return []
@@ -345,10 +383,21 @@ def _invoke_retriever(
 
 
 def _postprocess_documents(
-    question: str, candidates: list[Document]
+    question: str, candidates: list[Document], *, trace: dict | None = None
 ) -> list[Document]:
-    """多路召回合并后统一精排，避免每个子查询分别截断而丢失全局证据。"""
-    return compress_context(question, rerank(question, candidates))
+    """Keep auditable stage snapshots without rerunning any model call."""
+    started = time.perf_counter()
+    ranked = rerank(question, candidates)
+    ranked_at = time.perf_counter()
+    packed = compress_context(question, ranked)
+    if trace is not None:
+        trace.setdefault("stages", {}).update({
+            "raw_candidates": {"documents": list(candidates)},
+            "reranked": {"documents": list(ranked)},
+            "packed": {"documents": list(packed)},
+        })
+        trace.setdefault("timings", {}).update({"rerank": ranked_at - started, "pack": time.perf_counter() - ranked_at})
+    return packed
 
 
 def _generate_node(state: GraphState) -> GraphState:
@@ -357,6 +406,7 @@ def _generate_node(state: GraphState) -> GraphState:
         state.get("documents") or [],
         history_size=len(state.get("history", [])),
         group_id=state["group_id"],
+        selected_doc_ids=state.get("selected_doc_ids"),
     )
     return {
         "answer": _generate_answer(
@@ -376,12 +426,14 @@ def _prepare_documents_for_generation(
     *,
     history_size: int,
     group_id: int,
+    selected_doc_ids: list[int] | None = None,
 ) -> list[Document]:
     selected = _run_document_hook(
         CoreHook.BEFORE_GENERATE,
         documents,
         metadata={"question": question, "history_size": history_size},
     )
+    selected = filter_ready_documents(group_id, selected, selected_doc_ids)
     return enrich_citation_metadata(selected, group_id)
 
 
@@ -392,12 +444,13 @@ def _generate_answer(
     long_term_memories: list[RetrievedMemory] | None = None,
     *,
     run_after_hook: bool = True,
-    evidence_mode: Literal["local", "academic"] = "local",
+    evidence_mode: Literal["local", "academic", "mixed"] = "local",
 ) -> str:
-    """仅依据一种已选证据源生成答案；本地与外部结果绝不混入同一池。"""
+    """依据显式选择的本地、摘要或混合证据生成，并保留各来源身份。"""
     if not documents:
         return ACADEMIC_NO_CONTEXT_REPLY if evidence_mode == "academic" else NO_CONTEXT_REPLY
 
+    human_text = _generation_human_text(question, documents, long_term_memories, evidence_mode=evidence_mode)
     formatted_documents = format_documents(documents)
     formatted_memories = format_long_term_memories(long_term_memories or [])
     evidence_heading = (
@@ -407,16 +460,14 @@ def _generate_answer(
     )
     system_prompt = get_system_prompt(evidence_mode)
     # 外部学术证据没有本地 docstore 资产，绝不能借 metadata 路径加载图片。
-    visual_content = build_visual_content(documents) if evidence_mode == "local" else []
+    visual_documents = [doc for doc in documents if (doc.metadata or {}).get("evidence_level") not in {"abstract", "search_snippet"}]
+    visual_content = build_visual_content(visual_documents) if evidence_mode != "academic" else []
     if visual_content:
         # 只有摘要已命中的图片才会从 docstore 读取并发送，避免全库图片进入上下文。
         message_content = [
             {
                 "type": "text",
-                "text": (
-                    f"问题：{question}\n\n【用户长期记忆】\n{formatted_memories}"
-                    f"\n\n【{evidence_heading}】\n{formatted_documents}"
-                ),
+                "text": human_text,
             },
             *visual_content,
         ]
@@ -434,8 +485,7 @@ def _generate_answer(
                 ("placeholder", "{history}"),
                 (
                     "human",
-                    "问题：{question}\n\n【用户长期记忆】\n{user_memories}"
-                    "\n\n【{evidence_heading}】\n{documents}",
+                    "{generation_payload}",
                 ),
             ]
         )
@@ -443,6 +493,7 @@ def _generate_answer(
         response = chain.invoke(
             {
                 "history": history or [],
+                "generation_payload": human_text,
                 "question": question,
                 "user_memories": formatted_memories,
                 "evidence_heading": evidence_heading,
@@ -461,7 +512,285 @@ def _generate_answer(
             "evidence_source": evidence_mode,
         },
     )
-    return finalize_answer_citations(hooked, documents)
+    return _finalize_grounded_answer(hooked, documents)[0]
+
+
+
+def _numeric_citation_destinations(answer: str):
+    """Parse compact citation destinations, retaining balanced URL parentheses."""
+    opening = re.compile(r"(?<!\[)\[(?:\[(?P<double>\d+)]|(?P<single>\d+))]\(")
+    for match in opening.finditer(answer):
+        depth, quoted, escaped, end = 1, "", False, None
+        for index in range(match.end(), len(answer)):
+            character = answer[index]
+            if escaped:
+                escaped = False
+                continue
+            if character == "\\":
+                escaped = True
+                continue
+            if quoted:
+                if character == quoted:
+                    quoted = ""
+                continue
+            if character in {"\"", "'"} and index > match.end() and answer[index - 1].isspace():
+                quoted = character
+            elif character == "(":
+                depth += 1
+            elif character == ")":
+                depth -= 1
+                if depth == 0:
+                    end = index
+                    break
+        if end is None:
+            yield int(match.group("double") or match.group("single")), "", match.start(), len(answer)
+            continue
+        inner = answer[match.end():end].strip()
+        destination = inner[1:inner.find(">")] if inner.startswith("<") and ">" in inner else inner.split(maxsplit=1)[0] if inner else ""
+        yield int(match.group("double") or match.group("single")), destination, match.start(), end + 1
+
+
+def _finalize_grounded_answer(answer: str, documents: list[Document]) -> tuple[str, list[Document], tuple[str, ...]]:
+    """Final structural check, including plugin output; semantic review is separate."""
+    if is_refusal_answer(answer):
+        return strip_citation_rendering(answer).strip(), [], ()
+    if not documents:
+        return NO_CONTEXT_REPLY, [], ()
+    body = re.split(r"\n{2,}---\s*\n{2,}### 参考来源", str(answer), maxsplit=1)[0]
+    href_labels = {build_citation_href(doc): build_citation_label(doc, index)
+                   for index, doc in reversed(list(enumerate(documents, 1)))}
+    compact_links = list(_numeric_citation_destinations(body))
+    if any(not 1 <= number <= len(documents) or href not in href_labels
+           for number, href, _, _ in compact_links):
+        return NO_CONTEXT_REPLY, [], ("最终引用校验失败：紧凑引用不属于本轮证据来源或页码",)
+    # Compact numbers are display numbers, not stable evidence positions. Bind by
+    # the exact destination, then let the citation renderer number first use.
+    for _, href, start, end in reversed(compact_links):
+        body = body[:start] + href_labels[href] + body[end:]
+    valid = {build_citation_label(doc, index) for index, doc in enumerate(documents, 1)}
+    full_tags = re.findall(r"\[(?:GS文献|会话文献|文献)[^\]\r\n]+]", body)
+    if any(tag not in valid for tag in full_tags):
+        return NO_CONTEXT_REPLY, [], ("最终引用校验失败：回答包含本轮证据以外的来源标签",)
+    for match in re.finditer(r"(?<!\[)\[(\d+)](?!\]|\()", body):
+        if not 1 <= int(match.group(1)) <= len(documents):
+            return NO_CONTEXT_REPLY, [], ("最终引用校验失败：引用编号超出本轮证据范围",)
+    return finalize_answer_citations(body, documents), documents, ()
+
+
+def answer_from_evidence(question: str, documents: list[Document], *, history: list[BaseMessage] | None = None, user_id: str | None = None, task_description: dict | None = None, evidence_guard=None, apply_research_enhancements: bool = False) -> AnswerResult:
+    """Answer an authorized server-selected evidence package, without persistence.
+
+    The caller must enforce resource/library ACLs. Client-submitted text must not
+    be accepted as a trusted Document by an HTTP adapter.
+    """
+    selected = []
+    for document in documents:
+        metadata = dict(document.metadata or {})
+        level = metadata.get("evidence_level")
+        if metadata.get("evidence_origin") == "session_full_text":
+            if level != "full_text" or metadata.get("status") != "ready" or metadata.get("identity_verified") is not True:
+                continue
+        elif metadata.get("evidence_origin") == "academic_search":
+            if level not in {"abstract", "search_snippet"}:
+                continue
+        elif level not in {None, "full_text"}:
+            continue
+        if document.page_content.strip():
+            selected.append(Document(page_content=document.page_content, metadata=metadata))
+    original_question = question
+    description = task_description or describe_task(question, history,
+        [str(d.metadata.get("paper_title") or d.metadata.get("filename") or "") for d in selected],
+        source_ids=[source_identity(d) for d in selected]).to_dict()
+    expected_source_ids = set(required_targets(description, [source_identity(d) for d in selected]))
+    initial_source_ids = {source_identity(d) for d in selected}
+    question = description.get("resolved_query") or question
+    # Both review and generation consume the same view; source_text is internal
+    # provenance only and is removed at the HTTP boundary.
+    compression = {"enabled": False, "records": []}
+    compression_warnings = []
+    compression_started = time.perf_counter()
+    if apply_research_enhancements and getattr(settings, "research_extractive_compression_enabled", False):
+        from .extractive_views import build_extractive_views, make_embedding_scorer
+        from ..llm import get_embedding_model
+        compression["enabled"] = True
+        compression["scorer"] = "embedding_cosine"
+        try:
+            with billing_stage("evidence_compression"):
+                views = build_extractive_views(question, selected,
+                    scorer=make_embedding_scorer(get_embedding_model()),
+                    task_kind=description.get("task_type", "method"))
+            selected = views.documents
+            compression.update(records=views.records, coverage_limit=views.coverage_limit)
+            operational_failures = [r for r in views.records if r.get("status") in
+                                    {"fallback_scoring_unavailable", "fallback_scoring_error", "fallback_validation_failed"}]
+            if operational_failures:
+                compression["status"] = "degraded_originals_retained"
+                compression_warnings.append(f"证据视图处理异常，已保留 {len(operational_failures)} 个原始片段")
+        except Exception as exc:  # Keep the authorized originals on any failure.
+            compression.update(status="fallback_original", reason=type(exc).__name__)
+            compression_warnings.append("证据视图处理失败，已保留原始片段")
+    compression["elapsed_seconds"] = time.perf_counter() - compression_started
+    view_documents = deepcopy(selected)
+    bundle = pack_evidence(question, selected, history=history,
+        system_prompt=get_system_prompt("mixed"), task_type=description.get("task_type", "method"),
+        evidence_tokens=max(256, settings.context_max_tokens),
+        model_context_tokens=max(8192, settings.model_context_tokens),
+        output_reserve=max(256, settings.answer_token_reserve), required_source_ids=sorted(expected_source_ids),
+        prioritize_body=settings.context_body_priority_enabled)
+    selected, history = bundle.documents, bundle.history
+    packed_documents = deepcopy(selected)
+    pre_generation_trace = {"scope": "packed_to_generation", "gates": [], "first_blocking_stage": None}
+
+    def observe_gate(stage, before, after, *, invoked=True):
+        before_sources = {source_identity(doc) for doc in before}
+        after_sources = {source_identity(doc) for doc in after}
+        emptied = bool(before) and not after
+        required_lost = bool(expected_source_ids & before_sources) and not bool(expected_source_ids & after_sources)
+        pre_generation_trace["gates"].append({"stage": stage, "invoked": invoked,
+            "before_count": len(before), "after_count": len(after),
+            "before_source_ids": sorted(before_sources), "after_source_ids": sorted(after_sources),
+            "emptied": emptied, "required_sources_lost": required_lost})
+        if pre_generation_trace["first_blocking_stage"] is None and (emptied or required_lost):
+            pre_generation_trace["first_blocking_stage"] = stage
+
+    target_blocked = bool(expected_source_ids and expected_source_ids.isdisjoint(source_identity(d) for d in selected))
+    if target_blocked:
+        selected = []
+    observe_gate("target_before_review", packed_documents, selected)
+    review_input_documents = deepcopy(selected)
+    timings = {}
+    origins = {(doc.metadata or {}).get("evidence_level", "full_text") for doc in selected}
+    mode = "academic" if origins and origins <= {"abstract", "search_snippet"} else "mixed" if origins & {"abstract", "search_snippet"} else "local"
+    config = MultiAgentConfig(enable_evidence_review=settings.evidence_review_enabled,
+        enable_answer_review=settings.answer_review_enabled,
+        confirm_refusal=settings.refusal_confirmation_enabled,
+        max_review_documents=max(1, len(selected)),
+        max_document_chars=max(100, max((len(d.page_content) for d in selected), default=100)))
+    llm = get_llm(temperature=0.0) if selected else None
+    warnings = [*bundle.warnings, *compression_warnings]
+    before_review = bool(selected)
+    evidence_reviewer = EvidenceReviewAgent(llm, config)
+    started = time.perf_counter()
+    with billing_stage("evidence_review"):
+        selected, warning = evidence_reviewer.review(question, selected) if selected else ([], None)
+    timings["evidence_review"] = time.perf_counter() - started
+    review_info = evidence_reviewer.last_review
+    if review_info.get("scope_limit"):
+        selected = [Document(page_content=d.page_content, metadata={**d.metadata, "review_scope_limit": review_info["scope_limit"]}) for d in selected]
+    if warning:
+        warnings.append(warning)
+    reviewed_documents = deepcopy(selected)
+    observe_gate("evidence_review", review_input_documents, reviewed_documents, invoked=before_review)
+    rejection = "target_coverage" if target_blocked else "evidence_review" if before_review and not selected else None
+    if evidence_guard is not None:
+        selected = list(evidence_guard(selected))
+    guarded_documents = deepcopy(selected)
+    observe_gate("evidence_guard", reviewed_documents, guarded_documents, invoked=evidence_guard is not None)
+    if reviewed_documents and not selected and rejection is None:
+        rejection = "evidence_guard"
+    count, estimator = token_counter()
+    def measure(actual_documents, actual_history):
+        actual_mode = _evidence_mode(actual_documents)
+        system = get_system_prompt(actual_mode)
+        payload = _generation_human_text(question, actual_documents, evidence_mode=actual_mode)
+        rendered = format_documents(actual_documents)
+        history_cost = sum(count(str(message.content)) + 8 for message in actual_history)
+        images = {str(d.metadata.get("image_path")) for d in actual_documents
+                  if d.metadata.get("image_path") and d.metadata.get("evidence_level") not in {"abstract", "search_snippet"}}
+        image_reserve = min(len(images), settings.image_max_per_answer) * 4096
+        return {"prompt_tokens": count(system) + count(payload) + history_cost + 16,
+                "evidence_tokens": count(rendered), "image_token_reserve": image_reserve}
+    final_bundle = enforce_generation_budget(selected, history or [], measure=measure,
+        evidence_tokens=max(256, settings.context_max_tokens),
+        model_context_tokens=max(8192, settings.model_context_tokens),
+        output_reserve=max(256, settings.answer_token_reserve))
+    if selected and not final_bundle.documents:
+        rejection = "packing"
+    selected, history = final_bundle.documents, final_bundle.history
+    budget_documents = deepcopy(selected)
+    observe_gate("generation_budget", guarded_documents, budget_documents)
+    warnings.extend(final_bundle.warnings)
+    bundle.warnings.extend(final_bundle.warnings)
+    bundle.trace["pre_review"] = {key: value for key, value in bundle.trace.items()}
+    bundle.trace.update(final_bundle.trace)
+    bundle.trace["token_estimator"] = estimator
+    available_source_ids = {source_identity(d) for d in selected}
+    if expected_source_ids and (target_blocked or expected_source_ids.isdisjoint(available_source_ids)):
+        target_blocked = True
+        selected = []
+        rejection = "target_coverage"
+    observe_gate("target_before_generation", budget_documents, selected)
+    mode = _evidence_mode(selected)
+    actual_source_ids = {source_identity(d) for d in selected}
+    missing_source_ids = sorted(expected_source_ids - actual_source_ids)
+    bundle.trace["missing_required_source_ids"] = missing_source_ids
+    source_coverage = {"expected_source_ids": sorted(expected_source_ids),
+                       "required_source_ids": sorted(expected_source_ids),
+                       "allowed_source_ids": list(description["source_ids"]) if "source_ids" in description else sorted(initial_source_ids),
+                       "target_resolution": description.get("target_resolution", "legacy_selected_sources"),
+                       "initial_source_ids": sorted(initial_source_ids),
+                       "available_source_ids_after_review_and_pack": sorted(available_source_ids),
+                       "generation_source_ids": sorted(actual_source_ids),
+                       "missing_source_ids": missing_source_ids}
+    if description.get("task_type") in {"comparison", "summary"} and missing_source_ids:
+        coverage_warning = f"选定目标来源未被最终证据完整覆盖：缺少 {len(missing_source_ids)} 个独立来源，当前只能给出局部回答"
+        warnings.append(coverage_warning)
+        bundle.warnings.append(coverage_warning)
+    if target_blocked:
+        warning = "所选目标来源的证据全部缺失，本轮未使用其他文献代答"
+        warnings.append(warning)
+        bundle.warnings.append(warning)
+    elif description.get("task_type") in {"comparison", "summary"} and description.get("target_resolution") == "unresolved_allowed_scope":
+        warning = "尚未明确需要完整覆盖的目标文献；当前证据不能代表完整比较或综述"
+        warnings.append(warning)
+        bundle.warnings.append(warning)
+    generation_documents = list(selected)
+    generation_snapshot = {"documents": generation_documents,
+        "rendered_evidence": format_documents(selected) if selected else "",
+        "system_prompt": get_system_prompt(mode) if selected else "",
+        "user_prompt": _generation_human_text(question, selected, evidence_mode=mode) if selected else "",
+        "history": [{"role": message.type, "content": message.content} for message in history or []],
+        "request_sent": bool(selected)}
+    started = time.perf_counter()
+    with billing_stage("generation"):
+        answer = NO_CONTEXT_REPLY if target_blocked else _generate_answer(question, selected, history or [], run_after_hook=False, evidence_mode=mode)
+    timings["generation"] = time.perf_counter() - started
+    answer_stages = {"generated_draft": str(answer), "after_generate_hook": str(answer),
+                     "after_answer_review": str(answer)}
+    answer_review_info = {"status": "no_documents", "attempts": []}
+    if selected:
+        answer = _run_text_hook(CoreHook.AFTER_GENERATE, answer, metadata={"question": question, "document_count": len(selected), "evidence_source": mode, "user_id": user_id})
+        answer_stages["after_generate_hook"] = str(answer)
+        started = time.perf_counter()
+        with billing_stage("answer_review"):
+            answer_reviewer = AnswerReviewAgent(llm, config)
+            answer, warning = answer_reviewer.review(question, selected, answer)
+        timings["answer_review"] = time.perf_counter() - started
+        observed_review = getattr(answer_reviewer, "last_review", None)
+        answer_review_info = observed_review if isinstance(observed_review, dict) else {"status": "not_observed", "attempts": []}
+        if warning:
+            warnings.append(warning)
+    answer_stages["after_answer_review"] = str(answer)
+    answer, selected, validation_warnings = _finalize_grounded_answer(answer, selected)
+    answer_stages["after_citation_validation"] = str(answer)
+    if generation_documents:
+        # Attribute the final uninterrupted refusal to the stage that first introduced it.
+        rejection = None
+        for stage, snapshot in (("generation", "generated_draft"), ("after_generate_hook", "after_generate_hook"),
+                                ("answer_review", "after_answer_review"), ("citation_validation", "after_citation_validation")):
+            if not is_refusal_answer(answer_stages[snapshot]):
+                rejection = None
+            elif rejection is None:
+                rejection = stage
+    warnings.extend(validation_warnings)
+    selected = [Document(page_content=d.page_content, metadata={k: v for k, v in d.metadata.items() if k != "_evidence_pack_complete"}) for d in selected]
+    status = "insufficient" if is_refusal_answer(answer) else "scoped" if review_info.get("coverage") == "scoped" or bundle.warnings else "answered"
+    return {"answer": answer, "status": status, "review_status": "unreviewed" if target_blocked or any("失败" in str(w) for w in warnings) or not settings.answer_review_enabled else "model_reviewed",
+            "task_description": description, "evidence_review": review_info,
+            "documents": selected, "queries": [question], "used_multi_agent": False,
+            "degraded": bool(warnings), "retrieval_failed": False, "service_failed": False,
+            "evidence_source": mode if selected else "none", "rejection_stage": rejection,
+            "warnings": tuple(warnings), "trace": {"original_question": original_question, "compression": compression, "packing": bundle.trace, "source_coverage": source_coverage, "answer_stages": answer_stages, "answer_review": answer_review_info, "pre_generation": pre_generation_trace, "stages": {"selected": {"documents": list(documents)}, "extractive_views": {"documents": view_documents}, "packed": {"documents": packed_documents}, "evidence_review_input": {"documents": review_input_documents, "invoked": before_review}, "evidence_review_output": {"documents": reviewed_documents, "invoked": before_review}, "evidence_guard_output": {"documents": guarded_documents, "invoked": evidence_guard is not None}, "generation_budget_output": {"documents": budget_documents, "invoked": True}, "generation_context": generation_snapshot, "final_evidence": {"documents": list(selected)}}, "timings": timings}, "academic_documents": [d for d in selected if d.metadata.get("evidence_origin") == "academic_search"]}
 
 
 def build_graph():
@@ -575,13 +904,10 @@ def _answer_with_academic_search(
             if document.metadata.get("provider")
         )
     ) or [provider_label(search_result.provider)]
-    answer = _generate_answer(
-        question,
-        documents,
-        history,
-        long_term_memories,
-        evidence_mode="academic",
-    )
+    reviewed = answer_from_evidence(question, documents, history=history)
+    documents = reviewed["documents"]
+    answer = reviewed["answer"]
+    warnings.extend(reviewed["warnings"])
     return {
         "answer": answer,
         "documents": documents,
@@ -607,11 +933,13 @@ def _answer_with_agents(
     group_id: int,
     history: list[BaseMessage],
     long_term_memories: list[RetrievedMemory] | None = None,
+    *, selected_doc_ids: list[int] | None = None,
 ) -> dict[str, Any]:
     """运行受控 multi-agent；返回值额外携带可观测的降级信息。"""
     canonical_question = canonicalize_retrieval_query(question)
+    trace = {"stages": {}, "timings": {}}
     # 先取得一次缓存检索器，再把其 invoke 注入 worker，避免线程内并发改写全局缓存。
-    retriever = get_retriever(group_id)
+    retriever = get_retriever(group_id) if selected_doc_ids is None else get_retriever(group_id, selected_doc_ids=tuple(selected_doc_ids))
     if retriever is None:
         return {
             "answer": NO_CONTEXT_REPLY,
@@ -630,6 +958,7 @@ def _answer_with_agents(
         retrieval_timeout_seconds=settings.multi_agent_retrieval_timeout,
         enable_evidence_review=settings.evidence_review_enabled,
         enable_answer_review=settings.answer_review_enabled,
+        confirm_refusal=settings.refusal_confirmation_enabled,
     )
     # 角色只依赖 Runnable.invoke，因此继续复用现有供应商无关模型工厂与熔断能力。
     agent_llm = get_llm(temperature=0.0)
@@ -659,13 +988,13 @@ def _answer_with_agents(
 
     def _prepare(query: str, documents: list[Document]) -> list[Document]:
         return _prepare_documents_for_generation(
-            query, documents, history_size=len(history), group_id=group_id
+            query, documents, history_size=len(history), group_id=group_id, selected_doc_ids=selected_doc_ids
         )
 
     def _baseline(query: str) -> AnswerDraft:
-        documents = _retrieve_documents(query, group_id)
+        documents = _retrieve_documents(query, group_id, selected_doc_ids=selected_doc_ids)
         documents = _prepare_documents_for_generation(
-            query, documents, history_size=len(history), group_id=group_id
+            query, documents, history_size=len(history), group_id=group_id, selected_doc_ids=selected_doc_ids
         )
         return AnswerDraft(
             _generate_answer(
@@ -684,7 +1013,7 @@ def _answer_with_agents(
     result = orchestrator.run(
         canonical_question,
         retrieve=_retrieve,
-        postprocess=_postprocess_documents,
+        postprocess=lambda query, docs: _postprocess_documents(query, docs, trace=trace),
         prepare=_prepare,
         answer=_answer,
         baseline=_baseline,
@@ -712,7 +1041,16 @@ def _answer_with_agents(
                 "document_count": len(result.documents),
             },
         )
-        answer = finalize_answer_citations(answer, result.documents)
+        if answer != result.answer and settings.answer_review_enabled:
+            final_config = MultiAgentConfig(enable_answer_review=True, confirm_refusal=settings.refusal_confirmation_enabled)
+            answer, warning = AnswerReviewAgent(agent_llm, final_config).review(canonical_question, result.documents, answer)
+            if warning:
+                result.warnings = (*result.warnings, warning)
+                result.degraded = True
+        answer, result.documents, _validation_warnings = _finalize_grounded_answer(answer, result.documents)
+        if _validation_warnings:
+            result.warnings = (*result.warnings, *_validation_warnings)
+            result.degraded = True
     return {
         "answer": answer,
         "documents": result.documents,
@@ -722,6 +1060,7 @@ def _answer_with_agents(
         "retrieval_failed": result.retrieval_failed,
         "rejection_stage": result.rejection_stage,
         "warnings": result.warnings,
+        "trace": trace,
     }
 
 
@@ -730,6 +1069,7 @@ def _answer_without_agents(
     group_id: int,
     history: list[BaseMessage],
     long_term_memories: list[RetrievedMemory] | None = None,
+    *, selected_doc_ids: list[int] | None = None,
 ) -> dict[str, Any]:
     """复用基础图节点回答，但把记忆写入留给统一的请求尾部。"""
     canonical_question = canonicalize_retrieval_query(question)
@@ -739,12 +1079,15 @@ def _answer_without_agents(
             canonical_question, long_term_memories or []
         ),
         "group_id": group_id,
+        "selected_doc_ids": selected_doc_ids,
+        "trace": {"stages": {}, "timings": {}},
         "history": history,
         "long_term_memories": long_term_memories or [],
     }
     state.update(_retrieve_node(state))
     state.update(_generate_node(state))
     documents = state.get("documents") or []
+    state["answer"], documents, validation_warnings = _finalize_grounded_answer(state.get("answer", NO_CONTEXT_REPLY), documents)
     return {
         "answer": state.get("answer", NO_CONTEXT_REPLY),
         "documents": documents,
@@ -753,7 +1096,8 @@ def _answer_without_agents(
         "degraded": False,
         "retrieval_failed": False,
         "rejection_stage": None,
-        "warnings": (),
+        "warnings": validation_warnings,
+        "trace": state["trace"],
         "evidence_source": "local" if documents else "none",
     }
 
@@ -763,6 +1107,7 @@ def _answer_from_local_library(
     group_id: int,
     history: list[BaseMessage],
     long_term_memories: list[RetrievedMemory] | None = None,
+    *, selected_doc_ids: list[int] | None = None,
 ) -> dict[str, Any]:
     if settings.multi_agent_enabled:
         result = _answer_with_agents(
@@ -770,6 +1115,7 @@ def _answer_from_local_library(
             group_id,
             history,
             long_term_memories,
+            **({"selected_doc_ids": selected_doc_ids} if selected_doc_ids is not None else {}),
         )
         result.setdefault(
             "evidence_source", "local" if result.get("documents") else "none"
@@ -780,6 +1126,7 @@ def _answer_from_local_library(
         group_id,
         history,
         long_term_memories,
+        **({"selected_doc_ids": selected_doc_ids} if selected_doc_ids is not None else {}),
     )
 
 
@@ -789,8 +1136,13 @@ def answer_question(
     memory: RelevantMemory | None = None,
     *,
     retrieval_mode: str = "library",
+    selected_doc_ids: list[int] | None = None,
 ) -> dict[str, Any]:
     """跑一次完整问答；``academic`` 模式检索外部论文摘要且不持久化。"""
+    if selected_doc_ids is not None:
+        if any(isinstance(item, bool) or not isinstance(item, int) or item <= 0 for item in selected_doc_ids):
+            raise ValueError("selected_doc_ids must contain positive document IDs")
+        selected_doc_ids = sorted(set(selected_doc_ids))
     history: list[BaseMessage] = []
     if memory is not None:
         history = _remove_repeated_question_turns(
@@ -826,6 +1178,7 @@ def answer_question(
                     group_id,
                     history,
                     memories,
+                    **({"selected_doc_ids": selected_doc_ids} if selected_doc_ids is not None else {}),
                 )
                 if local_result.get("documents"):
                     warnings = [
@@ -871,6 +1224,7 @@ def answer_question(
                 group_id,
                 history,
                 memories,
+                **({"selected_doc_ids": selected_doc_ids} if selected_doc_ids is not None else {}),
             )
 
         memory_state["answer"] = result.get(
@@ -915,6 +1269,7 @@ def answer_question(
         "rejection_stage": result.get("rejection_stage"),
         "service_failed": result.get("service_failed", False),
         "warnings": result.get("warnings", ()),
+        "trace": result.get("trace", {"stages": {}, "timings": {}}),
         "retrieval_mode_requested": mode,
         "evidence_source": result.get("evidence_source", "none"),
         "academic_documents": result.get("academic_documents", []),

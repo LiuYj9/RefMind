@@ -62,6 +62,7 @@ class Settings:
 
     def __init__(self) -> None:
         self.project_root = Path(__file__).resolve().parent.parent.parent
+        self.allow_openai_library = False
 
         # 凭证 / 接口地址
         self.dashscope_api_key = os.getenv("DASHSCOPE_API_KEY", "")
@@ -219,6 +220,11 @@ class Settings:
         )
         # 送入 Prompt 的上下文字数上限
         self.context_max_chars = _get_int("CONTEXT_MAX_CHARS", 4000)
+        self.context_max_tokens = _get_int("CONTEXT_MAX_TOKENS", 4000)
+        # Experimental reference demotion; no production default change before quality acceptance.
+        self.context_body_priority_enabled = _get_bool("CONTEXT_BODY_PRIORITY", False)
+        self.model_context_tokens = _get_int("MODEL_CONTEXT_TOKENS", 32768)
+        self.answer_token_reserve = _get_int("ANSWER_TOKEN_RESERVE", 4096)
         # 去重阈值：块间余弦相似度高于此值视为重复，仅保留排名靠前者
         self.redundancy_threshold = _get_float("REDUNDANCY_THRESHOLD", 0.92)
         # 句级过滤阈值：句子与问题相似度低于此值则从上下文中剔除
@@ -228,6 +234,12 @@ class Settings:
 
         # 受控 multi-agent：规划只负责拆查询，并发只用于检索，答案审校仍受证据约束。
         self.multi_agent_enabled = _get_bool("MULTI_AGENT_ENABLED", True)
+        # Research HTTP/evaluation enhancement is opt-in; legacy behavior stays unchanged.
+        self.research_multi_query_enabled = _get_bool("RESEARCH_MULTI_QUERY_ENABLED", False)
+        self.research_extractive_compression_enabled = _get_bool("RESEARCH_EXTRACTIVE_COMPRESSION_ENABLED", False)
+        self.research_max_queries = max(1, min(3, _get_int("RESEARCH_MAX_QUERIES", 3)))
+        self.research_query_workers = max(1, min(3, _get_int("RESEARCH_QUERY_WORKERS", 3)))
+        self.research_query_timeout = max(.001, min(300., _get_float("RESEARCH_QUERY_TIMEOUT", 30.)))
         self.multi_agent_max_subqueries = min(
             3, max(1, _get_int("MULTI_AGENT_MAX_SUBQUERIES", 3))
         )
@@ -242,6 +254,7 @@ class Settings:
             "MULTI_AGENT_EVIDENCE_REVIEW", True
         )
         self.answer_review_enabled = _get_bool("MULTI_AGENT_ANSWER_REVIEW", True)
+        self.refusal_confirmation_enabled = _get_bool("MULTI_AGENT_CONFIRM_REFUSAL", True)
 
     def _resolve(self, value: str) -> Path:
         """将相对路径解析为相对于项目根目录的绝对路径。"""
@@ -263,13 +276,19 @@ class Settings:
 
     def group_chroma_dir(self, group_id: int) -> Path:
         """返回某个用户组独立的 Chroma 持久化目录。"""
-        path = self.chroma_persist_dir / f"group_{group_id}"
+        root = self.chroma_persist_dir
+        if os.getenv("EMBEDDING_PROVIDER", "dashscope") == "openai":
+            # Never mix OpenAI vectors into an existing DashScope collection.
+            root = root / "profiles" / "openai-text-embedding-3-small-1536"
+        path = root / f"group_{group_id}"
         path.mkdir(parents=True, exist_ok=True)
         return path
 
     @property
     def has_api_key(self) -> bool:
         """是否已配置 API 密钥。"""
+        if os.getenv("CHAT_PROVIDER", "dashscope") == "openai":
+            return bool(os.getenv("OPENAI_API_KEY"))
         return bool(self.dashscope_api_key)
 
     @property
@@ -277,12 +296,8 @@ class Settings:
         """当前设置能否发起外部学术检索。"""
         if not self.academic_search_enabled:
             return False
-        if self.academic_search_provider == "openalex":
-            return bool(self.openalex_api_key)
         return self.academic_search_provider in {
-            "auto",
-            "semantic_scholar",
-            "crossref",
+            "auto", "semantic_scholar", "crossref", "openalex",
         }
 
     # 设置界面可编辑项：环境变量名 -> (属性名, 类型转换)
@@ -380,9 +395,18 @@ class Settings:
         "RERANK_TOP_N": ("rerank_top_n", int),
         "CONTEXT_COMPRESSION_ENABLED": ("context_compression_enabled", _as_bool),
         "CONTEXT_MAX_CHARS": ("context_max_chars", int),
+        "CONTEXT_MAX_TOKENS": ("context_max_tokens", int),
+        "CONTEXT_BODY_PRIORITY": ("context_body_priority_enabled", _as_bool),
+        "MODEL_CONTEXT_TOKENS": ("model_context_tokens", int),
+        "ANSWER_TOKEN_RESERVE": ("answer_token_reserve", int),
         "REDUNDANCY_THRESHOLD": ("redundancy_threshold", float),
         "SENTENCE_RELEVANCE_THRESHOLD": ("sentence_relevance_threshold", float),
         "MULTI_AGENT_ENABLED": ("multi_agent_enabled", _as_bool),
+        "RESEARCH_MULTI_QUERY_ENABLED": ("research_multi_query_enabled", _as_bool),
+        "RESEARCH_EXTRACTIVE_COMPRESSION_ENABLED": ("research_extractive_compression_enabled", _as_bool),
+        "RESEARCH_MAX_QUERIES": ("research_max_queries", int),
+        "RESEARCH_QUERY_WORKERS": ("research_query_workers", int),
+        "RESEARCH_QUERY_TIMEOUT": ("research_query_timeout", float),
         "MULTI_AGENT_MAX_SUBQUERIES": ("multi_agent_max_subqueries", int),
         "MULTI_AGENT_MAX_WORKERS": ("multi_agent_max_workers", int),
         "MULTI_AGENT_RETRIEVAL_TIMEOUT": (
@@ -391,6 +415,7 @@ class Settings:
         ),
         "MULTI_AGENT_EVIDENCE_REVIEW": ("evidence_review_enabled", _as_bool),
         "MULTI_AGENT_ANSWER_REVIEW": ("answer_review_enabled", _as_bool),
+        "MULTI_AGENT_CONFIRM_REFUSAL": ("refusal_confirmation_enabled", _as_bool),
         "MINERU_BACKEND": ("mineru_backend", str),
         "MINERU_METHOD": ("mineru_method", str),
         "MINERU_MODEL_SOURCE": ("mineru_model_source", str),

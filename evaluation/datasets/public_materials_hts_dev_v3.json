@@ -1,0 +1,1405 @@
+{
+  "schema_version": 3,
+  "page_tolerance": 0,
+  "corpus": [
+    {
+      "id": "public_llzo",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1209.0690v1.pdf",
+      "sha256": "5b4c1f0bcea518a8466bf8ae7fa2215618082f41716eb24492afb348e8daf192",
+      "pages": 5,
+      "family": "arxiv:1209.0690",
+      "question_split": "dev",
+      "domain": "materials_energy",
+      "title": "Origin of the structural phase transition in Li7La3Zr2O12",
+      "authors": [
+        "N. Bernstein",
+        "M. D. Johannes",
+        "Khang Hoang"
+      ],
+      "version": "arxiv:1209.0690v1",
+      "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+      "source_url": "https://arxiv.org/pdf/1209.0690v1"
+    },
+    {
+      "id": "public_robotic_hts",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/robotic_hts_published.pdf",
+      "sha256": "d767453814ad7195b5ca593de543e092ad014810c59947d2ec6d6931376e9eeb",
+      "pages": 19,
+      "family": "doi:10.1088/1361-6668/ae2362",
+      "question_split": "dev",
+      "domain": "superconductivity_physics",
+      "title": "Robotic winding of non-planar high-temperature superconducting coils",
+      "authors": [
+        "Magnus Dam",
+        "Tabea Arndt"
+      ],
+      "version": "Superconductor Science and Technology 38 (2025) 125004 published version",
+      "license": "https://creativecommons.org/licenses/by/4.0/",
+      "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623"
+    }
+  ],
+  "items": [
+    {
+      "id": "PUBLIC-LLZO-01",
+      "question": "引言所引实验中，LLZO立方相与四方相的离子电导率分别是多少？请保留单位并区分它们不是本文MD直接测得的电导率。",
+      "ground_truth": "引言引用的立方相电导率为1.9×10^-4 S/cm，四方相为1.63×10^-6 S/cm；这是所引实验值，并非本文MD新计算的电导率。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "numerical",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 1,
+          "quote": "ould be used to improve electrolytic performance.\nThe garnet structure material Li7La3Zr2O12 (LLZO)\nhas an ionic conductivity that varies by two orders\nof magnitude depending on whether synthesis pro-\nduces a cubic (σcubic=1.9×10−4 S/cm) [1] or tetragonal\n(σtetra=1.63×10−6 S/cm) [2] phase. With the higher con-\nductivity, LLZO has excellent solid electrolyte material\ncharacteristics. Its stability against both Li metal and\nstandard cathode LiCoO2 [3], combined with a ∼5 eV\nband gap [1] and high ionic conductivity, make it suitable\nfor exploiting the full voltage diﬀerence between anode\nand cathode while circumventing the safety concerns in-\nherent to all current liquid electrolytes. Initially, the pro-\ncess by which the cubic ground state could be stabilized\nagainst the tetragonal was unknown and uncontrolled.\nThe relevant factor was event",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "cubic_conductivity_with_phase",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        },
+        {
+          "id": "tetragonal_conductivity_with_phase",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        },
+        {
+          "id": "cited_experiment_scope",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://arxiv.org/pdf/1209.0690v1",
+          "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-LLZO-02",
+      "question": "本文估计零温下稳定高电导立方LLZO所需的临界Al掺杂浓度x与每化学式单位空位数是多少？",
+      "ground_truth": "零温估计x=0.2，对应每化学式单位n_vac=0.4。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "numerical",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 1,
+          "quote": "raphic site to another always accompanies the transition. By identifying the relevant\nmechanism and critical concentrations for achieving the high conductivity phase, this work shows\nhow targeted synthesis could be used to improve electrolytic performance.\nThe garnet structure material Li7La3Zr2O12 (LLZO)\nhas an ionic conductivity that varies by two orders\nof magnitude depending on whether synthesis pro-\nduces a cubic (σcubic=1.9×10−4 S/cm) [1] or tetragonal\n(σtetra=1.63×10−6 S/cm) [2] phase. With the higher con-\nductivity, LLZO has excellent solid electrolyte material\ncharacteristics. Its stability against both Li metal and\nstandard cathode LiCoO2 [3], combined with a ∼5 eV\nband gap [1] and",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "zero_temperature_dopant",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        },
+        {
+          "id": "vacancies_per_formula_unit",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://arxiv.org/pdf/1209.0690v1",
+          "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-LLZO-03",
+      "question": "LLZO模拟采用哪个交换关联泛函、软件及软件版本？",
+      "ground_truth": "使用Perdew–Burke–Ernzerhof泛函，以及VASP的projector-augmented-wave实现，软件版本5.2.12。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 2,
+          "quote": "t sites to 16et sites,\nboth subsets of 24dc, always accompanies the tetragonal\nto cubic transition.\nAll of our simulations use density-functional theory,\nwith the Perdew-Burke-Ernzerhoﬀexchange-correlation\nfunctional [9, 10] as implemented in the Vienna Ab-initio\nSimulation Package (VASP) projector-augmented-wave\nsoftware version 5.2.12 [11, 12]. The calculations used an\nenergy cutoﬀof 400 eV, except for the relaxations used to\nexplain the microscopic basis of the structural transition,\nwhich used a cutoﬀof 600 eV. Molecular dynamics (MD)\ntime evolution is carried out using the velocity Verlet al-\ngorithm, as implemented in the libAtoms [13] package,\nwith a time step of 1 fs and using forces and stresses cal-\nculated at each time step with ",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "functional_and_software",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://arxiv.org/pdf/1209.0690v1",
+          "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-LLZO-04",
+      "question": "普通DFT计算和用于解释结构相变微观机理的弛豫计算，平面波能量截断分别设为多少？",
+      "ground_truth": "一般计算400 eV；用于解释结构转变微观基础的弛豫计算600 eV，不能把两个设置混为一个。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "numerical",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 2,
+          "quote": "enna Ab-initio\nSimulation Package (VASP) projector-augmented-wave\nsoftware version 5.2.12 [11, 12]. The calculations used an\nenergy cutoﬀof 400 eV, except for the relaxations used to\nexplain the microscopic basis of the structural transition,\nwhich used a cutoﬀof 600 eV. Molecular dynamics (MD)\ntime evolution is carried out using the velocity Verlet al-\ngorithm, as implemented in the libAtoms [13] package,\nwith a time step of 1 fs and using forces and stresses cal-\nculated at each time step with VASP. All MD simulations\nuse constant temperature and stress. The time propaga-\ntion algorithm, speciﬁed in Supplementa",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "ordinary_cutoff",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        },
+        {
+          "id": "special_relaxation_cutoff",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://arxiv.org/pdf/1209.0690v1",
+          "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-LLZO-05",
+      "question": "LLZO的MD时间步长和允许系统演化的最短时长分别是多少？",
+      "ground_truth": "时间步长1 fs，系统至少演化24 ps，并允许离子运动以及晶胞形状和体积改变。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "numerical",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 2,
+          "quote": "ried out using the velocity Verlet al-\ngorithm, as implemented in the libAtoms [13] package,\nwith a time step of 1 fs and using forces and stresses cal-\nculated at each time step with VASP. All MD simulations\nuse constant temperature and stress. The time propaga-\ntion algorithm, speciﬁed in Supplementary Information,\nis a rediscretization, using the ideas fr",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e2",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 2,
+          "quote": "plicitly and\nquote here include only DFT total internal energy. The\nsystem is allowed to evolve for at least 24 ps with ionic\nmotion as well as cell shape and volume changes, so it\ncan spontaneously transform into other structures. To\ndetermine the eﬀect of composition and temperature we\nsimulate the stoichiometric system, with 56 Li atoms, as\nwell as systems with 1, 2, and 4 Li+ ion vacancies per\nsimulated cell, at temperatures ranging from 300 ",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "time_step",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1",
+              "e2"
+            ]
+          ]
+        },
+        {
+          "id": "minimum_duration",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1",
+              "e2"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://arxiv.org/pdf/1209.0690v1",
+          "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-LLZO-06",
+      "question": "LLZO研究用多大的化学式单位晶胞、哪些Li空位数量，以及怎样的温度范围比较成分和温度效应？",
+      "ground_truth": "起始晶胞为8个化学式单位；比较化学计量体系与每模拟晶胞1、2、4个Li+空位；模拟温度范围300–1300 K。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 2,
+          "quote": "mulation starts from a unit cell of the\nexperimental tetragonal structure of Ref. 2, for a total of\n8 formula units. The structure is relaxed with respect to\nionic positions and unit cell size and shape using VASP,\nand then simulated at ﬁnite temperature and zero stress.\nWhile the MD simulation results implicitly include the\neﬀects of entropy, all energies we calculate explicitly and\nquote here include only DFT total internal energy. The\nsystem i",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e2",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 2,
+          "quote": "nsform into other structures. To\ndetermine the eﬀect of composition and temperature we\nsimulate the stoichiometric system, with 56 Li atoms, as\nwell as systems with 1, 2, and 4 Li+ ion vacancies per\nsimulated cell, at temperatures ranging from 300 K to\n1300 K. The net negative charge of the vacancies is com-\npensated by a uniform positive background charge. The\nvacancies are formed by removing Li+ ions randomly se-\nlected from the tetragonal 16f t and 32gt sites, where the\nvacancy formation energy is about 100 meV lower than\nat the 8at sites. The crystallographic site identity of each\natom is determined during each MD trajectory (see Sup-\nplementary Information).\nAn example of the time evolu",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "cell_size",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1",
+              "e2"
+            ]
+          ]
+        },
+        {
+          "id": "vacancy_counts_and_temperature_range",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1",
+              "e2"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://arxiv.org/pdf/1209.0690v1",
+          "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-LLZO-07",
+      "question": "为什么该研究不能把Li有序化或四方晶格畸变单独当成稳定四方相的充分机制？",
+      "ground_truth": "两者必须耦合：Li有序化降低Li–Li排斥但会扭曲ZrO6配位环境，体积保持的四方畸变恢复偏好的Zr–O几何；原文指出单独施加任一效应会提高总能。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "summary",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 1,
+          "quote": " bonds. The\ntwo symmetry-breaking but volume-preserving phenom-\nena always occur in conjunction and either one alone ac-\ntually raises the total energy of the system. When Al3+ is\ndoped into the system, charge compensation takes place\nthrough creation of Li+ vacancies that reduce the free en-\nergy advantage of complete ordering on the Li sublattice,\neventually leading to disorder and a transition to cubic\nsymmetry. The transition is always signaled by a sudden\nshift of Li occupation which can be used to pinpoint th",
+          "evidence_source": "pdf_text"
+        },
+        {
+          "id": "e2",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 4,
+          "quote": "nit relative to the tetrag-\nonal structure (Fig. 4), very nearly equal to the DFT\nenergy diﬀerence.\nWe therefore conclude that lithium\nordering to relieve Li-Li Coulomb repulsion leads to in-\nternal rearrangements of ions to maintain La3+−O2+ dis-\ntances, which leads to a lattice distortion that allows the\nZrO6 octahedra to preserve their preferred shape.\nIn summary, our variable cell shape DFT MD sim-\nulations of LLZO show that the DFT ground state at\nlow temperatures is the experimental ordered tetragonal\nstructure, and that at higher temperatures the system\ntransforms into the experimental disordered cubic str",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "coupled_mechanism",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1",
+              "e2"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://arxiv.org/pdf/1209.0690v1",
+          "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-LLZO-08",
+      "question": "对于所计算的DFT总内能，四方与立方结构分别在哪些n_vac范围被偏好？为何不能直接说这是有限温度自由能的相界？",
+      "ground_truth": "四方结构在n_vac≤0.25时能量有利，立方结构在n_vac≥0.5时有利；熵会移动自由能曲线，因此这些总内能比较不等于完整的有限温度相界。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "numerical",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 3,
+          "quote": "e between the minima and means of each\nof the ten structures in Fig. 3. The tetragonal structure\nis energetically favored for nvac ≤0.25, and the cubic\nis favored for nvac ≥0.5. Entropy eﬀects will shift the\nequivalent curves for the free energies. We expect that\nthis shift will reduce the free energy of the tetragonal\nphase more than the cubic phase, because the tetrago-\n−0.10\n−0.08\n−0.06\n−0.04\n−0.02\n0.00\n0.02\n0.04\n0.06\n 0\n 0.1\n 0.2\n 0.3\n 0.4\n 0.5\n 0.6\n 0.7\n 0.8\nEtetr−Ecubic (eV/formula unit)\nnvac\nFIG. 3: (Color online) Energy diﬀerence between tetragonal\nand cubic structures as a function of vacancy number, for\nminimum energy conﬁguration (solid red line) and mean con-\nﬁguration energy (dashed blue line).\n0.00\n0.02\n0.04\n0.06\n0.08\n0.10\n0.12\ndisord.\ncube\ndisord.\nrelax cell\nord.\ncube\nord.\nrelax tetr.\nZrO6\nquadratic\nparam.\nE (eV/formula uni",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "internal_energy_ranges",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        },
+        {
+          "id": "entropy_scope_limit",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://arxiv.org/pdf/1209.0690v1",
+          "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-LLZO-09",
+      "question": "表I对无Li空位样品给出的结构相变温度区间是什么？该表平均量取自每次模拟的哪段时间？",
+      "ground_truth": "n_vac=0.00的相变温度为800 K≤Tc≤1000 K；表内平均量取每次模拟最后5 ps。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "table",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 4,
+          "quote": "4\nTABLE I: Mean unit cell distortion (aα/az −1 for α=x and y, in %) (top) and occupancy of 8at sites per formula unit (bottom),\naveraged over the last 5 ps of each run, for diﬀerent vacancy numbers nvac and temperatures. Transition temperature Tc is also\nindicated for each quantity with a clear signal of a structural transition (see text).\nnvac\n300 K\n450 K\n600 K\n800 K\n1000 K\n1300 K\nTc\nax/az, ay/az\n0.00\n3.2, 3.3\n2.3, 2.8\n0.3, −0.6\n−0.1, −0.2\n800 K≤Tc ≤1000 K\n0.12\n3.0, 2.7\n1.7, 2.1\n−0.2, −1.8\n800 K≤Tc ≤1000 K\n0.25\n3.3, 3.2\n0.5, −2.2\n−0.5, −1.6\n−0.6, 0.7\n300 K≤Tc ≤450 K\n0.50\n1.3, −0.3\n0.8, 0.3\n−0.0, −0.4\n−0.2, −0.5\n−0.2, −0.4\n0.3, 0.0\nTc ≤300 K\n8at occupancy\n0.00\n1.0\n0.9\n0.3\n0.3\n800 K≤Tc ≤1000 K\n0.12\n0.9\n0.8\n0.2\n800 K≤Tc ≤1000 K\n0.25\n1.0\n0.2\n0.2\n0.3\n300 K≤Tc ≤450 K\n0.50\n0.5\n0.4\n0.4\n0.3\n0.3\n0.4\n?\nwith only a small gain (and correspondingly small change\nin unit cell shape) from relaxing the cubic unit cell con-\nstraint. Imposing the Li order while maintaining a cubic\nunit cell actually increases the energy slightly as com-\npared with the mean disordered energy. Only once the\nordered cell is allowed to relax to the tetragonal shape\ndoes its energy become lower than the disordered system,\nand the ordered system emerges as the T = 0 K ground\nstate.\nTo understand the source of the coupling between en-\nergy and structure, we calculated the ",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "zero_vacancy_transition_interval",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        },
+        {
+          "id": "last_five_ps_averaging",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://arxiv.org/pdf/1209.0690v1",
+          "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-LLZO-10",
+      "question": "在表I的n_vac=0.50条目中，8a位点占位率对应的Tc列能否当作确定的300 K？请与晶胞畸变判据区分。",
+      "ground_truth": "不能。8a位点占位率对应Tc列标为问号；晶胞畸变部分则列Tc≤300 K，不能把后者冒充占位率判据的确定温度。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "table",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 4,
+          "quote": "4\nTABLE I: Mean unit cell distortion (aα/az −1 for α=x and y, in %) (top) and occupancy of 8at sites per formula unit (bottom),\naveraged over the last 5 ps of each run, for diﬀerent vacancy numbers nvac and temperatures. Transition temperature Tc is also\nindicated for each quantity with a clear signal of a structural transition (see text).\nnvac\n300 K\n450 K\n600 K\n800 K\n1000 K\n1300 K\nTc\nax/az, ay/az\n0.00\n3.2, 3.3\n2.3, 2.8\n0.3, −0.6\n−0.1, −0.2\n800 K≤Tc ≤1000 K\n0.12\n3.0, 2.7\n1.7, 2.1\n−0.2, −1.8\n800 K≤Tc ≤1000 K\n0.25\n3.3, 3.2\n0.5, −2.2\n−0.5, −1.6\n−0.6, 0.7\n300 K≤Tc ≤450 K\n0.50\n1.3, −0.3\n0.8, 0.3\n−0.0, −0.4\n−0.2, −0.5\n−0.2, −0.4\n0.3, 0.0\nTc ≤300 K\n8at occupancy\n0.00\n1.0\n0.9\n0.3\n0.3\n800 K≤Tc ≤1000 K\n0.12\n0.9\n0.8\n0.2\n800 K≤Tc ≤1000 K\n0.25\n1.0\n0.2\n0.2\n0.3\n300 K≤Tc ≤450 K\n0.50\n0.5\n0.4\n0.4\n0.3\n0.3\n0.4\n?\nwith only a small gain (and correspondingly small change\nin unit cell shape) from relaxing the cubic unit cell con-\nstraint. Imposing the Li order while maintaining a cubic\nunit cell actually increases the energy slightly as com-\npared with the mean disordered energy. Only once the\nordered cell is allowed to relax to the tetragonal shape\ndoes its energy become lower than the disordered system,\nand the ordered system emerges as the T = 0 K ground\nstate.\nTo understand the source of the coupling between en-\nergy and structure, we calculated the pair distribution\nfunctions (PDF) of various ion pairs in the system for\nthe cubic and tetragonal ordered systems, along with a\nsimple point charge mo",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "occupancy_unknown",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        },
+        {
+          "id": "different_transition_criteria",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://arxiv.org/pdf/1209.0690v1",
+          "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-LLZO-11",
+      "question": "文中Al掺杂的Li化学计量写法与每化学式单位Li空位数n_vac和x之间的关系是什么？",
+      "ground_truth": "化学式写为Li_(7−2x)Al_xLa3Zr2O12，空位数关系为n_vac=2x；这里的空位数按化学式单位计。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "equation",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 1,
+          "quote": "ts necessary to achieve the high-conductivity\ncubic phase of Li7−2xAlxLa3Zr2O12 is x = 0.2 (vacancy\nnumber nvac = 2x = 0.4 per formula unit) at zero tem-\nperature, in good agreement with experiment. We show\nthat the cubic phase can be reached at some tempera-\nture, regardless of Li content, but that the critical tem-\nperature drops as a function of vacancy number. The\nunderstanding uncovered in this work will be useful for\nchoosing more eﬃcient dopants and further raising the\nionic conductivity.\nThe Li sublattices in the cubic and tetragonal LL",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "stoichiometry_relation",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://arxiv.org/pdf/1209.0690v1",
+          "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-LLZO-12",
+      "question": "本文MD轨迹是否包含熵的效应？作者显式计算并报告的能量是否就是包含熵的自由能？",
+      "ground_truth": "MD模拟结果隐含包含熵的效应，但文中显式计算和引用的能量只包含DFT总内能，不能将其直接当作含熵自由能。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "category": "summary",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_llzo",
+          "filename": "1209.0690v1.pdf",
+          "page": 2,
+          "quote": "s and unit cell size and shape using VASP,\nand then simulated at ﬁnite temperature and zero stress.\nWhile the MD simulation results implicitly include the\neﬀects of entropy, all energies we calculate explicitly and\nquote here include only DFT total internal energy. The\nsystem is allowed to evolve for at least 24 ps with ionic\nmotion as well as cell shape and volume changes, so it\ncan spontaneously transform into other structures. To\ndetermine the eﬀect of composition and temperature we\nsimulate the stoichiometric system, with 56 Li atoms, as\nwell as syst",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "trajectory_entropy_vs_reported_internal_energy",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://arxiv.org/pdf/1209.0690v1",
+          "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-HTS-01",
+      "question": "这项非平面HTS绕制研究的机器人硬件由哪两类主要运动机构组成？",
+      "ground_truth": "由带专用绕制工具的关节机器人与同步工件变位机构成。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 1,
+          "quote": "les consistent, safe, and adaptable construction of such non-planar coil geometries.\nWe present our robotic winding setup consisting of an articulated robot equipped with a\nspecialized winding tool and a synchronized workpiece positioner. We employ a differential\ngeometry approach to design non-planar HTS coil shapes with hard-way bending, in which the\nmechanical strain remains within material limits. Based on the coil shape, we derive winding\ntool trajectory and rotations required for robotic execution. We validate our appr",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "robot_and_synchronized_positioner",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-HTS-02",
+      "question": "作者选用怎样的线圈形状进行机器人绕制验证，几何设计主要用什么方法？",
+      "ground_truth": "验证对象为非平面超椭圆HTS线圈，采用微分几何方法控制形状和机械应变。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 1,
+          "quote": "robot equipped with a\nspecialized winding tool and a synchronized workpiece positioner. We employ a differential\ngeometry approach to design non-planar HTS coil shapes with hard-way bending, in which the\nmechanical strain remains within material limits. Based on the coil shape, we derive winding\ntool trajectory and rotations required for robotic execution. We validate our approach by\nwinding a non-planar superellipse-shaped HTS coil and experimentally characterizing its\nelectromagnetic performance.\nKeywords: robotic winding, coil shape design, HTS coil, non-planar coil, strain analysis,\nno-insulation coil, superellipse-shaped coil\n1. Introduction\nNon-planar coils wound with high-temperature superconduct-\ning (HTS) coated conductors are bein",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "validated_shape_and_design_method",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-HTS-03",
+      "question": "表1的超椭圆半长轴、半短轴、形状指数分别是多少？",
+      "ground_truth": "a=180 mm，b=60 mm，形状指数m=4。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "table",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 5,
+          "quote": "he curve is a hypoellipse; for n = 2,\nan ordinary ellipse; and for n > 2, a hyperellipse. To ensure\nTable 1. Shape parameters for the non-planar superellipse coil.\nSymbol\nDescription\nValue\nUnit\na\nSemi-major axis\n180\nmm\nb\nSemi-minor axis\n60\nmm\nm\nShape exponent\n4\n—\nκg0\nCentral geodesic curvature\n0.5\nm−1\nw\nTape width\n4\nmm\nd\nSubstrate thickness\n50\nµm\nsmoothness at every point, we assume n ⩾2 for coil design.\nBy adjusting its shape parameters, the superellipse smoothly\ntransitions between circular, elliptical, and rounded rectan-\ngular forms, providing great flexibility in coil shape design.\nIt also avoids points of zero curvature, where the Frenet–\nSerret frame is undefined, allowing the approach described in\nsection 2 to be applied directly without modification.\nTo construct a non-planar vers",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "semi_axes_and_exponent",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-HTS-04",
+      "question": "表2给出的总固有应变最小值、最大值与不可逆压缩/拉伸限值分别是多少？设计是否处于这两个限值内？",
+      "ground_truth": "固有应变范围−1.32×10^-3至1.90×10^-3；压缩限值−8×10^-3、拉伸限值5×10^-3，因此该设计处在给定限值内。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "table",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 8,
+          "quote": " tv-plane for the non-planar superellipse coil. The minimum\nand maximum strain values are listed in table 2.\nTable 2. The minimum and maximum strain values.\nSymbol\nDescription\nValue\nUnit\nεn,min\nMinimum normal strain\n−0.93 × 10−3\n—\nεn,max\nMaximum normal strain\n0\n—\nεg,min\nMinimum geodesic strain\n−1.00 × 10−3\n—\nεg,max\nMaximum geodesic strain\n1.00 × 10−3\n—\nεt,min\nMinimum twisting strain\n0\n—\nεt,max\nMaximum twisting strain\n0.91 × 10−3\n—\nεi,min\nMinimum intrinsic strain\n−1.32 × 10−3\n—\nεi,max\nMaximum intrinsic strain\n1.90 × 10−3\n—\nεmin\nCompressive strain limit\n−8 × 10−3\n—\nεmax\nTensile strain limit\n5 × 10−3\n—\nwith the total intrinsic strain (19). The strain values are com-\nputed for the HTS layer located at half the substrate thickness\nfrom the mid-surface, λ = d/2. The maximum intrinsic strain\nwithin the HTS layer is obtained when v = −w/2. The min-\nimum and maximum strain values are listed in table 2.\nThe irreversible compressive strain limit for HTS tapes is\nabout εmin = −8 × 10−3 while the irreversible tensile strain\nlimit is about εmax = 5 × 10−3 [30]. However, besides the\nintrinsic strain, the HTS layer also experiences winding strain,\nthermal strain, and Lorentz force-induced strain. ",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "intrinsic_strain_extrema",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        },
+        {
+          "id": "irreversible_limits",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-HTS-05",
+      "question": "表4的带材自场临界电流和表5的线圈估计临界电流是否是同一数值？请保留77 K和对象的区别。",
+      "ground_truth": "不是。77 K下带材自场Ic为133 A；线圈设计估计Iθc为64.7 A。它们对应不同磁场与几何对象，不能互换。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "numerical",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 11,
+          "quote": "n angle ψ as a function of t. Since h is\nindependent of y, the rotation about the x-axis is θx = 0.\nTable 4. Specifications for SuperPower SCS4050-AP (2012).\nSymbol\nDescription\nValue\nUnit\nw\nWidth\n4.0\nmm\nd\nHastelloy thickness\n50\nµm\ndcu\nCopper thickness\n2 × 50\nµm\ndcd\nTotal tape thickness\n155\nµm\nIc(s.f.,77K)\nIc at self-field, 77 K\n133\nA\nFigure 15. Estimated critical current Ic at 77 K for a 4 mm wide\nSuperPower SCS4050-AP HTS tape, along with the load line of the\ncoil. The intersection gives the coil critical current Iθc.\nTable 5 lists the specified and computed magnet parameters\nfor the non-planar superellipse coil. To maintain focus on the\nrobotic winding process, the number of turns in this demon-\nstration coil is deliberately kept low. As a result, the differ-\nence between the peak and central magnetic fields is relatively\nlarge.\nTable 5. Design parameters for the non-planar superellipse coil.\nSymbol\nDescription\nValue\nUnit\nN\nNumber of turns\n16\n—\nFw\nWinding tension\n24\nN\nvw\nWinding speed\n1.5\nrpm\nℓ\nTangential distance to tool\n0.3\nm\ndr\nCoil block radial thickness\n2.5\nmm\nℓcd\nConductor length\n14\nm\nTop\nOperating temperature\n77\nK\nαm\nPeak magnet constant\n1.87\nmT A−1\nα0\nCentral magnet constant\n0.112\nmT A−1\nIθc\nCoil critical current\n64.7\nA\nBmc\nPeak B-field on coil at Iθc\n121\nmT\nB0c\nB-field in center at Iθc\n7.22\nmT\nL\nSelf inductance\n188\nµH\nEm\nMagnetic energy at Iθc\n393\nmJ\nFigure 16. Magnetic flux density in the cross-sectional yz-plane.\nThe color plot represents field magnitude, arrows indicate field\ndirection, and the black lines show the coil boundaries. Closed white\ncurves correspond to contours of constant magnetic field magnitude.\nFigure 15 shows the tape’s estimated critical current at 77 K\ntogether with the load line of the coil. As only self-field meas-\nurements of Ic are available, the field dependence of the tape’s\ncritical current is estimated using data from the HTS ",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "tape_self_field_current",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        },
+        {
+          "id": "estimated_coil_current",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-HTS-06",
+      "question": "表6拟合得到的线圈临界电流、径向电阻和充电时间常数分别是多少？",
+      "ground_truth": "Iθc=74.0 A，径向电阻Rr=151 μΩ，充电时间常数τc=1.27 s；这些是测量数据辨识值。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "table",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 14,
+          "quote": "tant, and then ramped\ndown. The measured data for Iop, B0 and ˙B0 were used to determine\nn and Iθc.\nTable 6. Measured magnet parameters for the non-planar\nsuperellipse coil. The standard errors of the fitted parameters are\nsmaller than the precision shown, except for the power-law\nexponent n, which has a standard error of 0.3.\nSymbol\nDescription\nValue\nUnit\nα0\nCentral magnet constant\n0.119\nmT A−1\nRr\nRadial resistance\n151\nµΩ\nA\nContact surface area\n560\ncm2\nρr\nSpecific contact resistivity\n84.6\nmΩcm2\nτc\nCharging time constant\n1.27\ns\nL\nSelf inductance\n192\nµH\nn\nPower law exponent\n29.5\n—\nIθc\nCoil critical current\n74.0\nA\nEm\nMagnetic energy at Iθc\n526\nmJ\nWhile the model fits the data for B0 and ˙B0 well, it under-\nestimates Vr near the critical current, likely due to its lack\nof temperature dependence. Figure 23 shows the measured\nsteady-state pairs of Vr and Iop, together with the correspond-\ning model predictions from (45). The modeled values are com-\nputed using the steady-state B0 data from figure 20 and the pre-\nviously determined parameters Rr and α0. The model repro-\nduces Vr accurately at currents well below Iθc but deviates near\nand above it.\n14\n",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "fitted_current_resistance_time_constant",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-HTS-07",
+      "question": "表5所列演示线圈匝数、绕制张力及绕制速度各是多少？",
+      "ground_truth": "线圈16匝，绕制张力24 N，绕制速度1.5 rpm。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "numerical",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 11,
+          "quote": "ow. As a result, the differ-\nence between the peak and central magnetic fields is relatively\nlarge.\nTable 5. Design parameters for the non-planar superellipse coil.\nSymbol\nDescription\nValue\nUnit\nN\nNumber of turns\n16\n—\nFw\nWinding tension\n24\nN\nvw\nWinding speed\n1.5\nrpm\nℓ\nTangential distance to tool\n0.3\nm\ndr\nCoil block radial thickness\n2.5\nmm\nℓcd\nConductor length\n14\nm\nTop\nOperating temperature\n77\nK\nαm\nPeak magnet constant\n1.87\nmT A−1\nα0\nCentral magnet constant\n0.112\nmT A−1\nIθc\nCoil critical current\n64.7\nA\nBmc\nPeak B-field on coil at Iθc\n121\nmT\nB0c\nB-field in center at Iθc\n7.22\nmT\nL\nSelf inductance\n188\nµH\nEm\nMagnetic energy at Iθc\n393\nmJ\nFigure 16. Magnetic flux density in the cross-sectional yz-plane.\nThe color plot represents field magnitude, arrows indicate field\ndirection, and the black lines show the coil boundaries. Closed white\ncurves correspond ",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "turn_count_tension_and_speed",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-HTS-08",
+      "question": "方程42采用怎样的临界电场Ec来定义线圈临界电流？",
+      "ground_truth": "Ec=1×10^-4 V/m，用来定义方程中的线圈临界电流Iθc。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "equation",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 13,
+          "quote": "tionship:\nRθ = Rc\n( Iθ\nIθc\n)n−1\n,\nRc = Ecℓcd\nIθc\n(42)\nwhere Iθc is the coil critical current at the critical electric field\nEc = 1 × 10−4 Vm−1 and ℓcd and ℓcd is the length of the con-\nductor. Applying Kirchhoff’s voltage law across the two par-\nallel branches, gives the terminal voltage as\nVr = RrIr = L˙Iθ + RθIθ.\n(43)\nThe magnetic flux density B0 at the center of the coil is pro-\nportional to the azimuthal current:\nB0 = α0Iθ,\n(44)\nwhere α0 is the central",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "electric_field_criterion",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-HTS-09",
+      "question": "方程44给出中心磁通密度B0与哪个电流分量成正比？比例常数是什么物理量？",
+      "ground_truth": "B0=α0Iθ，与方位电流Iθ成正比，α0为中心磁体常数，而不是与总工作电流无条件等同。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "equation",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 13,
+          "quote": "\nThe magnetic flux density B0 at the center of the coil is pro-\nportional to the azimuthal current:\nB0 = α0Iθ,\n(44)\nwhere α0 is the central magnet constant. By combining (41),\n(43) and (44), we obtain\nVr = Rr\n(\nIop −1\nα0\nB0\n)\n(45)\nwhich relates the terminal voltage to the measured magnetic\nfield and operating current. This expression enables the iden-\ntification of the radial resistance Rr from measurements of Iop,\nVr, and B0. Differentiating (44) with respect to time and sub-\nstituting ˙Iθ from (43) yields\n˙B0 = Rr + Rθ\nL\n(\nα0\nRr\nRr + Rθ\nIop −B0\n)\n.\n(46)\nThis expression is used to determine the time constant τc =\nL/Rr, as well as the power-law parameters n and Iθc. We\nas",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "azimuthal_current_relation",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-HTS-10",
+      "question": "本文用于辨识的集总电路模型能否直接描述热效应和失超动力学？给出其温度和临界电流假设。",
+      "ground_truth": "不能直接描述。模型假定运行时温度恒定且Iθc固定，原文明示不包含热效应或失超动力学，接近或超过临界电流时局部发热可能降低准确度。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "summary",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 13,
+          "quote": "on is used to determine the time constant τc =\nL/Rr, as well as the power-law parameters n and Iθc. We\nassume a constant temperature during operation, and a fixed\ncritical current Iθc. As a result, the model does not capture\nthermal effects or quench dynamics, and its accuracy may\ndecrease when the operating current approaches or exceeds\nIθc, where local heating arising from current redistribution\nbecomes significant.\n7.2. Experimental setup\nVoltage taps are placed on the coil terminals to measure the\nvoltage drop Vr across the coil. A Hall probe positioned at\nthe origin of the coil coordinate system measures the magnetic\nflux density. Nanovoltmeters connected to a computer record\nthe voltage signals from the Vr voltage taps and the Hall probe,\nwhile the operating current Iop is measured u",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "fixed_temperature_and_current_limit",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        },
+        {
+          "id": "thermal_and_quench_limitation",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-HTS-11",
+      "question": "拟合幂律指数n与线圈临界电流时，作者是否使用端电压Vr数据？",
+      "ground_truth": "没有，作者明确说明该拟合不使用Vr数据；利用电流上升超过临界后再下降的测量集辨识n与Iθc。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "method",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 14,
+          "quote": " on a measured data set in which Iop\nis ramped above the critical current and then decreased again.\nThe fitting is performed without using Vr data. Figure 22 dis-\nplays the data set used to determine Iθc and n, along with the\ncorresponding model fit. The magnetic energy is calculated as\nEm = 1\n2LI2\nθc, using the inductance and critical current values\nfitted from measurements. Table 6 summarizes the paramet-\ners identified from the measurement data. The critical current\nshows no sign of degradation.\nFigure 22. Measured and fitted data of the operating current, Iop,\nvoltage drop across the coil Vr, magnetic flux density B0, and its\ntime-derivative ˙B0 as functions of time. The current is ramped up at\na rate of approximately 1 A s−1, held cons",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "fit_excludes_terminal_voltage",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    },
+    {
+      "id": "PUBLIC-HTS-12",
+      "question": "现有绕制方案对于凹部或穿孔路径的复杂几何有哪些局限？作者建议怎样扩展？",
+      "ground_truth": "凹部或穿过开口的路径需要发展新绕制技术；可能利用装置中的第二台关节机器人和专用支撑工具协同。",
+      "question_split": "dev",
+      "track": "local",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "category": "summary",
+      "expect_refusal": false,
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [
+        {
+          "id": "e1",
+          "source_id": "public_robotic_hts",
+          "filename": "robotic_hts_published.pdf",
+          "page": 15,
+          "quote": "\nreliably constructed using this robotic winding setup without\ndegradation of the critical current.\nFuture work will aim to extend the current method to\naccommodate a broader range of coil geometries. Very com-\nplex shapes, such as concave sections or winding paths loop-\ning through openings, would require the development of\nnew robotic winding techniques. While the winding method\ndescribed here only requires the positioner and a single articu-\nlated robot, these advanced techniques may involve the second\narticulated robot in our setup, using a dedicated tool to support\nthe process.\nData availability statement\nThe data cannot be made publicly available upon publication\nbecause no suitable repository exists for hosting data in this\nfield of study. The data that support the findings of this study\nare available upon reasonable request from the authors.\nAcknowledgments\nThe authors thank the staff at the KIT magnet laboratory for\ntheir support in coil construction and cryogenic testing.\nTable A1. Symbols related to geometry.\nSymbol\nDescription\nUnit\nA\nContact surface area\nm2\na\nSemi-major a",
+          "evidence_source": "pdf_text"
+        }
+      ],
+      "fact_slots": [
+        {
+          "id": "complex_geometry_limit_and_future_second_robot",
+          "required": true,
+          "evidence_sets": [
+            [
+              "e1"
+            ]
+          ]
+        }
+      ],
+      "task_metadata": {
+        "provenance": {
+          "type": "new_source_grounded_agent_draft",
+          "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623",
+          "license": "https://creativecommons.org/licenses/by/4.0/",
+          "changes": "questions, Chinese answers and proposed fact-slot decomposition authored for RefMind; no human approval"
+        },
+        "scope_mode": "selected_paper",
+        "support_status": "source_text_and_selected_tables_visually_checked_pending_human_review"
+      }
+    }
+  ],
+  "annotation_status": "agent_source_checked_pending_human_review"
+}

@@ -52,9 +52,11 @@ def extract_pdf_figures(
                 page_no = _page_number(block.get("page"))
                 if page_no > len(pdf):
                     continue
-                data = _render_bbox(pdf[page_no - 1], block.get("bbox"))
-                if data is None:
-                    data = _first_embedded_image(pdf[page_no - 1])
+                data = _render_bbox(pdf[page_no - 1], block.get("bbox"),
+                                    block.get("bbox_coordinate_system", "pdf_points"))
+                # A failed crop is not permission to bind the page's first
+                # image to an unrelated figure caption.
+
                 path = persist(data or b"", index)
                 if path is None:
                     continue
@@ -94,6 +96,7 @@ def _record(block: dict[str, Any], path: Path, page_no: int, index: int) -> dict
         "page": page_no,
         "page_end": _page_number(block.get("page_end"), page_no),
         "bbox": block.get("bbox") or [],
+        "bbox_coordinate_system": block.get("bbox_coordinate_system", "pdf_points"),
         "image_id": f"image_{index:03d}",
         "image_path": str(path),
         "image_mime_type": _mime_type(path),
@@ -107,14 +110,17 @@ def _page_number(value: Any, default: int = 1) -> int:
         return default
 
 
-def _render_bbox(page: Any, bbox: Any) -> bytes | None:
+def _render_bbox(page: Any, bbox: Any, coordinate_system: str = "pdf_points") -> bytes | None:
     if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
         return None
     try:
         import fitz
 
-        rect = page.rect
-        clip = fitz.Rect(*(float(value) for value in bbox)) & rect
+        from .coordinates import pdf_bbox
+        region = pdf_bbox(page, bbox, coordinate_system)
+        if region is None:
+            return None
+        clip = (region * page.rotation_matrix) & page.rect
         if clip.is_empty or clip.width < 2 or clip.height < 2:
             return None
         # 2x 足以保留论文图中的坐标轴和标签，同时控制传给视觉模型的大小。

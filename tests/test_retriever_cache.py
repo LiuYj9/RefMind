@@ -12,6 +12,9 @@ from refmind.rag import retrieval
 class RetrieverCacheTests(unittest.TestCase):
     def setUp(self) -> None:
         retrieval.reset_retrievers()
+        self.ready_patch = patch.object(retrieval, "allowed_ready_doc_ids", return_value=(1,))
+        self.ready_patch.start()
+        self.addCleanup(self.ready_patch.stop)
 
     def tearDown(self) -> None:
         retrieval.reset_retrievers()

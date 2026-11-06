@@ -285,6 +285,7 @@ def _enrich_figure_blocks(
     stored_pdf: Path,
     *,
     doc_id: int,
+    asset_root: Path | None = None,
 ) -> int:
     """提取原图、生成摘要，并把二者关联回 MinerU 的 figure layout block。"""
     blocks = parsed.setdefault("blocks", [])
@@ -293,7 +294,7 @@ def _enrich_figure_blocks(
     figures = [block for block in blocks if isinstance(block, dict) and block.get("type") == "figure"]
     assets = extract_pdf_figures(
         stored_pdf,
-        docstore_dir=Path(getattr(settings, "docstore_dir", settings.parsed_dir.parent / "docstore")),
+        docstore_dir=asset_root if asset_root is not None else Path(getattr(settings, "docstore_dir", settings.parsed_dir.parent / "docstore")),
         doc_id=doc_id,
         figure_blocks=figures,
     )
@@ -398,6 +399,7 @@ def _run_before_ingest_hook(
     doc_id: int,
     filename: str,
     version: str,
+    file_sha256: str,
     paper_title: str = "",
     library_index: int = 0,
 ) -> list[Document]:
@@ -417,6 +419,11 @@ def _run_before_ingest_hook(
     normalized: list[Document] = []
     for index, document in enumerate(selected):
         metadata = dict(document.metadata or {})
+        # Reject a stale hook result before binding it to the new document ID.
+        if metadata.get("file_sha256") not in (None, "", file_sha256):
+            raise ValueError("入库插件返回了与当前原文不一致的文件指纹 (fingerprint)。")
+        if metadata.get("version") not in (None, "", version):
+            raise ValueError("入库插件返回了与本次入库不一致的分块版本。")
         # 这些字段是权限隔离和失败补偿的硬约束，插件不能删除或改写。
         metadata.update(
             {
@@ -425,12 +432,13 @@ def _run_before_ingest_hook(
                 "filename": filename,
                 "source": filename,
                 "doc_id": doc_id,
+                "version": version,
+                "file_sha256": file_sha256,
                 "paper_title": paper_title or Path(filename).stem,
                 "library_index": max(0, int(library_index)),
                 "char_count": len(document.page_content),
             }
         )
-        metadata.setdefault("version", version)
         metadata.setdefault("chunk_index", index)
         metadata.setdefault("chunk_id", str(uuid.uuid4()))
         normalized.append(
@@ -592,6 +600,9 @@ def _ingest_pdf_impl(
         )
         parsed["paper_title"] = paper_title
         parsed["library_index"] = library_index
+        from ..rag.provenance import file_fingerprint, processing_versions
+        parsed["file_sha256"] = file_fingerprint(stored_pdf)
+        parsed["processing_versions"] = processing_versions(str(parsed.get("parser") or "unknown"))
         storage.update_document(doc_id, paper_title=paper_title)
 
         progress(0.28, "正在提取图片并并行生成可检索摘要 ...")
@@ -619,6 +630,7 @@ def _ingest_pdf_impl(
                 doc_id=doc_id,
                 filename=filename,
                 version=version,
+                file_sha256=parsed["file_sha256"],
                 paper_title=paper_title,
                 library_index=library_index,
             )
@@ -689,7 +701,10 @@ def _ingest_pdf_impl(
         progress(0.95, "正在提交元数据并刷新检索缓存 ...")
         invalidate_retriever(group_id)
         # ready 是最后的提交点：在此之前的任何异常都会触发补偿回滚。
-        storage.update_document(doc_id, summary=summary, status="ready")
+        storage.update_document(
+            doc_id, summary=summary, status="ready",
+            index_version=version, file_sha256=parsed["file_sha256"],
+        )
 
         result = storage.get_document(doc_id)
         if result is None:
@@ -960,7 +975,9 @@ def recover_incomplete_ingestions() -> dict[str, list[int]]:
     failed: list[int] = []
     for group in storage.list_groups():
         for document in storage.list_documents(group.id):
-            if document.status == "ready":
+            # Interrupted legacy rebuilds retain originals and citation assets.
+            # An explicit offline retry will finish them; never treat them as uploads.
+            if document.status in {"ready", "reindexing", "reindex_failed"}:
                 continue
             try:
                 remove_document(document.id)

@@ -26,7 +26,7 @@ _FULL_CITATION_RE = re.compile(
 )
 _VISIBLE_COMPACT_LINK_RE = re.compile(
     r"\[\[(?P<number>\d+)]]\("
-    r"(?:\?open_citation=[^)\s\"]+|https?://[^)\s\"]+|#参考来源)"
+    r"(?:\?(?:open_citation|open_resource)=[^)\s\"]+|https?://[^)\s\"]+|#参考来源)"
     r'(?:\s+"(?:\\.|[^"\\])*")?\)',
     re.I,
 )
@@ -182,6 +182,8 @@ def _citation_location_parts(metadata: dict) -> list[str]:
 
 
 def _paper_key(document: Document, fallback_position: int) -> tuple[str, str]:
+    if (document.metadata or {}).get("resource_id"):
+        return ("resource", str(document.metadata["resource_id"]) + ":" + str(document.metadata.get("version") or ""))
     metadata = document.metadata or {}
     if _is_external_academic(metadata):
         doi = str(metadata.get("doi") or "").strip().casefold()
@@ -256,6 +258,13 @@ def decode_citation_target(value: object) -> CitationTarget | None:
 
 def build_citation_href(document: Document) -> str:
     metadata = document.metadata or {}
+    if metadata.get("resource_id") and metadata.get("evidence_level") == "full_text":
+        params = {"open_resource": str(metadata["resource_id"]), "page": _positive_int(metadata.get("page_start") or metadata.get("page")) or 0}
+        if metadata.get("chunk_id"):
+            params["chunk_id"] = str(metadata["chunk_id"])
+        if _positive_int(metadata.get("paragraph_index")):
+            params["paragraph"] = int(metadata["paragraph_index"])
+        return "?" + urlencode(params)
     if _is_external_academic(metadata):
         return _safe_external_url(metadata.get("external_url")) or "#参考来源"
     target = citation_target_for_document(document)
@@ -301,6 +310,8 @@ def build_citation_label(document: Document, fallback_position: int = 1) -> str:
     metadata = document.metadata or {}
     paper_title = _paper_title(metadata)
     paper_number = _paper_number(metadata, fallback_position)
+    if metadata.get("resource_id") and metadata.get("evidence_level") == "full_text":
+        return "[" + "，".join([f"会话文献{fallback_position}《{paper_title}》", *_citation_location_parts(metadata)]) + "]"
     if _is_external_academic(metadata):
         parts = [
             f"GS文献{paper_number}《{paper_title}》",
@@ -352,6 +363,15 @@ def ensure_visible_citation_brackets(answer: str) -> str:
     )
 
 
+def is_refusal_answer(answer: str) -> bool:
+    body = _answer_body_without_references(str(answer or "")).strip()
+    compact = re.sub(r"[\s。.!！]", "", body)
+    return compact in {
+        "已检索历史文档，暂未找到相关内容，无法回答",
+        "已执行GS学术检索，但暂未找到含可用摘要的相关论文，无法基于可靠证据回答",
+    }
+
+
 def finalize_answer_citations(answer: str, documents: list[Document]) -> str:
     """把内部精确标签压缩成论文式编号，并在回答末尾追加聚合参考来源。"""
     body = _remove_legacy_reference_marker(
@@ -359,6 +379,8 @@ def finalize_answer_citations(answer: str, documents: list[Document]) -> str:
             normalize_answer_citations(answer, documents)
         )
     ).strip()
+    if is_refusal_answer(body):
+        return _answer_body_without_references(body).strip()
     if not body or _has_reference_block(body) or not documents:
         return body
 

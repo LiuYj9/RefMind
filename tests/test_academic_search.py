@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from urllib.error import HTTPError
 from unittest.mock import Mock, patch
 
 from langchain_core.documents import Document
@@ -12,6 +13,18 @@ from refmind.services import academic_search
 
 
 class AcademicSearchTests(unittest.TestCase):
+    def test_retry_after_larger_than_remaining_deadline_does_not_retry(self) -> None:
+        error = HTTPError("https://api.crossref.org/works", 429, "limited", {"Retry-After": "120"}, None)
+        with patch.object(academic_search, "_wait_for_provider"), patch.object(academic_search, "urlopen", side_effect=error) as request:
+            with self.assertRaises(academic_search.AcademicSearchError):
+                academic_search._request_json("https://api.crossref.org/works", params={}, headers=None, timeout=.1)
+        self.assertEqual(request.call_count, 1)
+
+    def test_metadata_client_rejects_untrusted_hosts(self) -> None:
+        with patch.object(academic_search, "urlopen") as request:
+            with self.assertRaises(academic_search.AcademicSearchError):
+                academic_search._request_json("https://127.0.0.1/private", params={}, headers=None, timeout=1)
+        request.assert_not_called()
     def test_auto_mode_keeps_crossref_results_when_semantic_scholar_is_limited(self) -> None:
         document = Document(
             page_content="论文题名：Paper\n摘要：Evidence",
@@ -118,17 +131,19 @@ class AcademicSearchTests(unittest.TestCase):
         self.assertEqual(result.documents[0].metadata["publication_year"], 2023)
         self.assertEqual(request.call_args.kwargs["params"]["mailto"], "dev@example.com")
 
-    def test_openalex_requires_api_key_and_failure_is_observable(self) -> None:
+    def test_openalex_can_search_without_key_and_failure_is_observable(self) -> None:
         with (
             patch.object(settings, "academic_search_enabled", True),
             patch.object(settings, "academic_search_provider", "openalex"),
             patch.object(settings, "openalex_api_key", ""),
+            patch.object(academic_search, "_request_json", side_effect=academic_search.AcademicSearchError("offline unavailable")) as request,
         ):
             result = academic_search.search_academic_papers("query")
 
         self.assertTrue(result.failed)
         self.assertEqual(result.documents, ())
-        self.assertIn("OPENALEX_API_KEY", result.warnings[0])
+        self.assertIn("offline unavailable", result.warnings[0])
+        self.assertNotIn("api_key", request.call_args.kwargs["params"])
 
     def test_external_url_rejects_non_http_and_credentials(self) -> None:
         self.assertEqual(academic_search.sanitize_external_url("javascript:alert(1)"), "")

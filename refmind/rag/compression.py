@@ -28,6 +28,16 @@ def _split_sentences(text: str) -> list[str]:
     return [s.strip() for s in _SENT_SPLIT.split(text) if s and s.strip()]
 
 
+def _is_atomic(doc: Document) -> bool:
+    metadata = doc.metadata or {}
+    return metadata.get("is_atomic") is True or metadata.get("content_type") in {"table", "equation", "figure", "figure_caption"}
+
+
+def _paper_identity(doc: Document) -> tuple[str, ...]:
+    meta = doc.metadata or {}
+    return tuple(str(meta.get(k) or "") for k in ("group_id", "doc_id", "resource_id", "source_id", "doi", "version", "filename"))
+
+
 def _apply_char_budget(docs: list[Document]) -> list[Document]:
     """按字数预算保留靠前的分块，超出预算处截断。"""
     budget = settings.context_max_chars
@@ -40,6 +50,10 @@ def _apply_char_budget(docs: list[Document]) -> list[Document]:
             break
         content = doc.page_content
         if used + len(content) > budget:
+            if _is_atomic(doc):
+                # Structured evidence is either admitted whole or excluded.
+                # Continue so a later smaller block may still fit.
+                continue
             content = content[: budget - used]
         if content == doc.page_content:
             out.append(doc)
@@ -57,7 +71,10 @@ def _dedup(
     kept_vecs: list[np.ndarray] = []
     for doc, vec in zip(docs, vecs):
         if any(
-            _cosine(vec, kv) >= settings.redundancy_threshold for kv in kept_vecs
+            _paper_identity(doc) == _paper_identity(other)
+            and not _is_atomic(doc) and not _is_atomic(other)
+            and _cosine(vec, kv) >= settings.redundancy_threshold
+            for other, kv in zip(kept_docs, kept_vecs)
         ):
             continue
         kept_docs.append(doc)
@@ -69,6 +86,8 @@ def _compress_one(
     doc: Document, query_vec: np.ndarray, embeddings
 ) -> Document:
     """句级压缩单个分块：保留与问题相关的句子（至少保留最相关的一句）。"""
+    if _is_atomic(doc):
+        return doc
     sentences = _split_sentences(doc.page_content)
     if len(sentences) <= 1:
         return doc

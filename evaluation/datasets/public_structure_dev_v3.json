@@ -1,0 +1,253 @@
+{
+  "schema_version": 3,
+  "corpus": [
+    {
+      "id": "public_llzo",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/1209.0690v1.pdf",
+      "sha256": "5b4c1f0bcea518a8466bf8ae7fa2215618082f41716eb24492afb348e8daf192",
+      "pages": 5,
+      "family": "arxiv:1209.0690",
+      "question_split": "dev",
+      "domain": "materials_energy",
+      "title": "Origin of the structural phase transition in Li7La3Zr2O12",
+      "authors": [
+        "N. Bernstein",
+        "M. D. Johannes",
+        "Khang Hoang"
+      ],
+      "version": "arxiv:1209.0690v1",
+      "license": "https://creativecommons.org/publicdomain/certification/1.0/us/",
+      "source_url": "https://arxiv.org/pdf/1209.0690v1"
+    },
+    {
+      "id": "public_robotic_hts",
+      "path": "evaluation/workspaces/public-source-v3/pdfs/robotic_hts_published.pdf",
+      "sha256": "d767453814ad7195b5ca593de543e092ad014810c59947d2ec6d6931376e9eeb",
+      "pages": 19,
+      "family": "doi:10.1088/1361-6668/ae2362",
+      "question_split": "dev",
+      "domain": "superconductivity_physics",
+      "title": "Robotic winding of non-planar high-temperature superconducting coils",
+      "authors": [
+        "Magnus Dam",
+        "Tabea Arndt"
+      ],
+      "version": "Superconductor Science and Technology 38 (2025) 125004 published version",
+      "license": "https://creativecommons.org/licenses/by/4.0/",
+      "source_url": "https://publikationen.bibliothek.kit.edu/1000188018/170298623"
+    }
+  ],
+  "items": [
+    {
+      "id": "PUBLIC-STRUCTURE-public_llzo-p4",
+      "question": "Identify scientific layout regions and reading order on Origin of the structural phase transition in Li7La3Zr2O12 physical page 4.",
+      "ground_truth": "Source-checked proposed regions; independent human adjudication required.",
+      "question_split": "dev",
+      "track": "structure",
+      "domain": "materials_energy",
+      "family_ids": [
+        "arxiv:1209.0690"
+      ],
+      "corpus_scope": [
+        "public_llzo"
+      ],
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "category": "layout_regions",
+      "structure_gold": {
+        "source_id": "public_llzo",
+        "page": 4,
+        "page_size": [
+          612.0,
+          792.0
+        ],
+        "objects": [
+          {
+            "id": "table_I",
+            "type": "table",
+            "bbox": [
+              52,
+              60,
+              564,
+              260
+            ],
+            "bbox_coordinate_system": "pdf_points",
+            "render_sha256": "f428410a3e87cfb67c5729708064c26dc2c24d9416e1aeca27f76c84a92d2772",
+            "render_path": "evaluation/workspaces/public-source-v3/regions/public_llzo_p4_table_I.png"
+          },
+          {
+            "id": "left_after_table",
+            "type": "text",
+            "bbox": [
+              53,
+              280,
+              299,
+              393
+            ],
+            "bbox_coordinate_system": "pdf_points",
+            "render_sha256": "af0e5ea96f5f5c4dc45dc098f86dc57f492f0c7914f0ab95272721ec4de3031b",
+            "render_path": "evaluation/workspaces/public-source-v3/regions/public_llzo_p4_left_after_table.png"
+          },
+          {
+            "id": "left_mechanism",
+            "type": "text",
+            "bbox": [
+              53,
+              397,
+              299,
+              724
+            ],
+            "bbox_coordinate_system": "pdf_points",
+            "render_sha256": "53d9b2bf73988a5d5299313969f27d3c19a8c13c0fcc1a2eb7ad8f88a4a8f701",
+            "render_path": "evaluation/workspaces/public-source-v3/regions/public_llzo_p4_left_mechanism.png"
+          },
+          {
+            "id": "right_continuation",
+            "type": "text",
+            "bbox": [
+              315,
+              280,
+              564,
+              375
+            ],
+            "bbox_coordinate_system": "pdf_points",
+            "render_sha256": "8671ae4ebaec4408c56822ad5670c67723ab7620da77989ec13b49d3535f7224",
+            "render_path": "evaluation/workspaces/public-source-v3/regions/public_llzo_p4_right_continuation.png"
+          },
+          {
+            "id": "right_summary",
+            "type": "text",
+            "bbox": [
+              315,
+              380,
+              564,
+              724
+            ],
+            "bbox_coordinate_system": "pdf_points",
+            "render_sha256": "af00008cc9821ca38571cf55479534dbcf27406cb40b4f5c15321391de484d7b",
+            "render_path": "evaluation/workspaces/public-source-v3/regions/public_llzo_p4_right_summary.png"
+          }
+        ],
+        "reading_order": [
+          "table_I",
+          "left_after_table",
+          "left_mechanism",
+          "right_continuation",
+          "right_summary"
+        ],
+        "annotation_method": "assistant_visual_page_check_pending_human",
+        "limitations": "Region proposals are not independently human-approved. Table cells and semantic formula equivalence are not labeled.",
+        "annotation_coverage": "partial_regions"
+      }
+    },
+    {
+      "id": "PUBLIC-STRUCTURE-public_robotic_hts-p5",
+      "question": "Identify scientific layout regions and reading order on Robotic winding of non-planar high-temperature superconducting coils physical page 5.",
+      "ground_truth": "Source-checked proposed regions; independent human adjudication required.",
+      "question_split": "dev",
+      "track": "structure",
+      "domain": "superconductivity_physics",
+      "family_ids": [
+        "doi:10.1088/1361-6668/ae2362"
+      ],
+      "corpus_scope": [
+        "public_robotic_hts"
+      ],
+      "annotation_status": "agent_source_checked_pending_human_review",
+      "human_review": {
+        "status": "pending"
+      },
+      "evidence": [],
+      "fact_slots": [],
+      "category": "layout_regions",
+      "structure_gold": {
+        "source_id": "public_robotic_hts",
+        "page": 5,
+        "page_size": [
+          595.280029296875,
+          841.8900146484375
+        ],
+        "objects": [
+          {
+            "id": "table_1",
+            "type": "table",
+            "bbox": [
+              305,
+              80,
+              553,
+              186
+            ],
+            "bbox_coordinate_system": "pdf_points",
+            "render_sha256": "e61dd9f30a59d3dc0be994108695854dac1a51fced20e151595c5dd7c13b3273",
+            "render_path": "evaluation/workspaces/public-source-v3/regions/public_robotic_hts_p5_table_1.png"
+          },
+          {
+            "id": "equation_16",
+            "type": "equation",
+            "bbox": [
+              60,
+              118.73007202148438,
+              296,
+              153.72996520996094
+            ],
+            "bbox_coordinate_system": "pdf_points",
+            "render_sha256": "c9d01c7c23630862f7c5c701afc7f5d64eb9cd4b2d3070f7336c360bf15dc5ee",
+            "render_path": "evaluation/workspaces/public-source-v3/regions/public_robotic_hts_p5_equation_16.png"
+          },
+          {
+            "id": "equation_17",
+            "type": "equation",
+            "bbox": [
+              60,
+              199.38107299804688,
+              296,
+              234.38096618652344
+            ],
+            "bbox_coordinate_system": "pdf_points",
+            "render_sha256": "23d4bf995cb1aa52077db346e1079b377d74332f55a690e6c07a42d36e8f5450",
+            "render_path": "evaluation/workspaces/public-source-v3/regions/public_robotic_hts_p5_equation_17.png"
+          },
+          {
+            "id": "equation_18",
+            "type": "equation",
+            "bbox": [
+              60,
+              297.18408203125,
+              296,
+              332.1839904785156
+            ],
+            "bbox_coordinate_system": "pdf_points",
+            "render_sha256": "702ecf02d470961d67bf4ecb2654da824b6ddeeedc3b5f40b61bf2cf99ae046a",
+            "render_path": "evaluation/workspaces/public-source-v3/regions/public_robotic_hts_p5_equation_18.png"
+          },
+          {
+            "id": "equation_19",
+            "type": "equation",
+            "bbox": [
+              60,
+              377.8350830078125,
+              296,
+              412.8349914550781
+            ],
+            "bbox_coordinate_system": "pdf_points",
+            "render_sha256": "0451e51c899f92a3f12fa46fc215d07d0840e947b10793eed5a2c816f9820059",
+            "render_path": "evaluation/workspaces/public-source-v3/regions/public_robotic_hts_p5_equation_19.png"
+          }
+        ],
+        "reading_order": [
+          "equation_16",
+          "equation_17",
+          "equation_18",
+          "equation_19"
+        ],
+        "annotation_method": "assistant_visual_page_check_pending_human",
+        "limitations": "Region proposals are not independently human-approved. Table cells and semantic formula equivalence are not labeled.",
+        "annotation_coverage": "partial_regions"
+      }
+    }
+  ]
+}

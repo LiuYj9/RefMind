@@ -1,7 +1,7 @@
 """面向学术论文版面的结构化切分器。
 
 解析器负责提供按阅读顺序排列的 block；本模块保留章节、页码和内容类型，
-只在单个语义单元过长时才使用字符级递归切分。
+正文过长时使用 LangChain 递归切分；表格和公式保持完整。
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 _HEADING_TYPES = {"title", "heading", "section_title"}
 _ATOMIC_TYPES = {"table", "equation", "figure", "figure_caption", "table_caption"}
+_EXPLANATION_START = re.compile(r"^(?:其中|式中|这里|上述公式中|where\b|in which\b)", re.I)
 _TEXT_TYPES = {"text", "paragraph", "list", "list_item", "reference"}
 
 
@@ -31,6 +32,10 @@ class LayoutChunk:
     image_id: str = ""
     image_path: str = ""
     image_mime_type: str = ""
+    source_locations: list[dict[str, Any]] = field(default_factory=list)
+    is_atomic: bool = False
+    oversized: bool = False
+    bbox_coordinate_system: str = "pdf_points"
 
 
 def _integer(value: Any, default: int = 1) -> int:
@@ -98,8 +103,14 @@ def layout_chunks(
         page_ends = [_integer(item.get("page_end"), page) for item, page in zip(items, pages)]
         ids = [str(item.get("block_id")) for item in items if item.get("block_id")]
         bbox = items[0].get("bbox") if len(items) == 1 else []
-        for part in _split_long(text, max_chars, overlap):
-            # 图片资产只属于单一 figure 原子块，普通段落不得继承其路径。
+        protected = content_type in {"table", "equation"}
+        parts = [text] if protected else _split_long(text, min(target_chars, max_chars), overlap)
+        locations = [
+            {"block_id": str(item.get("block_id") or ""), "page_start": page, "page_end": end}
+            for item, page, end in zip(items, pages, page_ends)
+        ]
+        for part in parts:
+            # 多块组合不继承单一图片路径或单一 bbox。
             source = items[0] if len(items) == 1 else {}
             chunks.append(
                 LayoutChunk(
@@ -107,6 +118,10 @@ def layout_chunks(
                     bbox or [], str(source.get("image_id") or ""),
                     str(source.get("image_path") or ""),
                     str(source.get("image_mime_type") or ""),
+                    source_locations=locations,
+                    is_atomic=protected,
+                    oversized=len(part) > max_chars,
+                    bbox_coordinate_system=str(source.get("bbox_coordinate_system") or "pdf_points"),
                 )
             )
 
@@ -115,7 +130,11 @@ def layout_chunks(
         emit(pending)
         pending = []
 
-    for block in _ordered(blocks):
+    ordered = _ordered(blocks)
+    consumed: set[int] = set()
+    for index, block in enumerate(ordered):
+        if index in consumed:
+            continue
         text = str(block.get("text") or "").strip()
         if not text:
             continue
@@ -126,8 +145,26 @@ def layout_chunks(
             continue
         if kind in _ATOMIC_TYPES:
             flush()
-            emit([block], kind)
+            items = [block]
+            if kind == "equation" and index + 1 < len(ordered):
+                following = ordered[index + 1]
+                explanation = str(following.get("text") or "").strip()
+                end_page = _integer(block.get("page_end"), _integer(block.get("page")))
+                following_page = _integer(following.get("page"))
+                # 只关联紧邻的一段明确符号解释，不搜索远处、不截取长段落。
+                if (
+                    _normalize_type(following) == "paragraph"
+                    and 0 < len(explanation) <= min(600, target_chars)
+                    and _EXPLANATION_START.match(explanation)
+                    and following_page in {end_page, end_page + 1}
+                ):
+                    items.append(following)
+                    consumed.add(index + 1)
+            emit(items, kind)
             continue
+        # 不跨页拼接正文，避免拆分后每块都继承整段的跨页范围。
+        if pending and _integer(block.get("page")) != _integer(pending[-1].get("page")):
+            flush()
         candidate_length = sum(len(str(item.get("text", ""))) for item in pending) + len(text)
         if pending and candidate_length > target_chars:
             flush()

@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import os
 import enum
 import time
 import threading
@@ -106,6 +107,9 @@ _circuit_breaker = _CircuitBreaker()
 
 @lru_cache(maxsize=1)
 def get_embedding_model():
+    if os.getenv("EMBEDDING_PROVIDER", "dashscope") == "openai":
+        from .openai_metering import client
+        return OpenAIEmbeddings(model="text-embedding-3-small", api_key=os.getenv("OPENAI_API_KEY"), base_url="https://api.openai.com/v1", http_client=client("embedding"), openai_proxy="", max_retries=0, request_timeout=45, chunk_size=10)
     return OpenAIEmbeddings(
         model=settings.embedding_model,
         base_url=settings.api_base,
@@ -132,16 +136,29 @@ def get_multimodal_llm(temperature: float = 0.0) -> ChatOpenAI:
     该模型只用于图片摘要和已命中图片的最终回答，不接入文本模型的熔断降级，
     以免降级模型不支持 ``image_url`` 消息格式。
     """
+    if os.getenv("VISION_PROVIDER", "dashscope") == "openai":
+        return _openai_chat("vision")
     return _build_chat(settings.multimodal_llm_model, settings.api_base, temperature)
+
+
+def _openai_chat(role):
+    from .openai_metering import client
+    return ChatOpenAI(model="gpt-5.4-mini-2026-03-17", api_key=os.getenv("OPENAI_API_KEY"),
+                      base_url="https://api.openai.com/v1", http_client=client(role), openai_proxy="",
+                      max_completion_tokens=4096, max_retries=0, timeout=45, stream_usage=True)
 
 
 @lru_cache(maxsize=4)
 def _get_primary_model(temperature: float) -> ChatOpenAI:
+    if os.getenv("CHAT_PROVIDER", "dashscope") == "openai":
+        return _openai_chat("chat")
     return _build_chat(settings.llm_model, settings.api_base, temperature)
 
 
 @lru_cache(maxsize=4)
 def _get_fallback_model(temperature: float) -> ChatOpenAI | None:
+    if os.getenv("CHAT_PROVIDER", "dashscope") == "openai":
+        return None  # Never silently spend another provider account.
     if not settings.fallback_llm_model:
         return None
     base_url = settings.fallback_api_base or settings.api_base
@@ -221,19 +238,13 @@ def get_llm(temperature: float | None = None):
 
 def get_llm_status() -> dict:
     cb = _circuit_breaker.to_dict()
-    return {
-        "primary_model": settings.llm_model,
-        "circuit_state": cb["state"],
-        "failure_count": cb["failure_count"],
-        "failure_threshold": cb["threshold"],
-        "cooldown_s": cb["cooldown_s"],
-        "fallback_model": settings.fallback_llm_model or None,
-        "active_model": (
-            settings.llm_model
-            if cb["state"] != "open"
-            else (settings.fallback_llm_model or settings.llm_model)
-        ),
-    }
+    openai_enabled = os.getenv("CHAT_PROVIDER", "dashscope") == "openai"
+    primary = "gpt-5.4-mini-2026-03-17" if openai_enabled else settings.llm_model
+    fallback = None if openai_enabled else (settings.fallback_llm_model or None)
+    return {"primary_model": primary, "circuit_state": cb["state"],
+            "failure_count": cb["failure_count"], "failure_threshold": cb["threshold"],
+            "cooldown_s": cb["cooldown_s"], "fallback_model": fallback,
+            "active_model": primary if cb["state"] != "open" else (fallback or primary)}
 
 
 def reset_model_cache() -> None:

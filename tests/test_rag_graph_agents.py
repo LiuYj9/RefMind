@@ -34,6 +34,15 @@ class _FakeRetriever:
 
 
 class AgentGraphIntegrationTests(unittest.TestCase):
+    def setUp(self):
+        patcher = patch.object(graph, "filter_ready_documents", side_effect=lambda group, docs, selected=None: docs)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        for name in ("evidence_review_enabled", "answer_review_enabled"):
+            patcher = patch.object(settings, name, False)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
     def test_baseline_retrieval_keeps_canonical_question_as_rerank_anchor(self) -> None:
         calls: list[str] = []
         rerank_questions: list[str] = []
@@ -48,7 +57,7 @@ class AgentGraphIntegrationTests(unittest.TestCase):
                 )
             ]
 
-        def postprocess(question: str, documents: list[Document]):
+        def postprocess(question: str, documents: list[Document], **_kwargs):
             rerank_questions.append(question)
             return documents
 
@@ -190,7 +199,7 @@ class AgentGraphIntegrationTests(unittest.TestCase):
             ),
         )
 
-        def postprocess(_question: str, documents: list[Document]):
+        def postprocess(_question: str, documents: list[Document], **_kwargs):
             return list(reversed(documents))
 
         with (

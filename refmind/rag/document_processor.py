@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import re
+import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -102,6 +103,10 @@ def parsed_to_documents(
         library_index = max(0, int(parsed.get("library_index") or 0))
     except (TypeError, ValueError):
         library_index = 0
+    from .provenance import parsing_provenance, processing_versions
+    parsing = parsing_provenance(parsed)
+    parser = parsing["parser"] or str(parser)
+    provenance = processing_versions(str(parser), parsing=parsing)
     documents: list[Document] = []
     section = "正文"
     chunk_index = 0
@@ -123,6 +128,18 @@ def parsed_to_documents(
             "doc_id": doc_id if doc_id is not None else -1,
             "version": version or "",
             "parser": parser,
+            "file_sha256": str(parsed.get("file_sha256") or ""),
+            "processing_config_sha256": provenance["configuration_sha256"],
+            "chunker_version": provenance["chunker"],
+            "chunk_size_config": provenance["chunk_size"],
+            "chunk_overlap_config": provenance["chunk_overlap"],
+            "layout_chunk_max_chars_config": provenance["layout_chunk_max_chars"],
+            "embedding_provider": provenance["embedding_provider"],
+            "embedding_model": provenance["embedding_model"],
+            "parser_versions": scalar_metadata(parsing["packages"]),
+            "parsing_provenance_sha256": parsing["provenance_sha256"],
+            "parsing_provenance": scalar_metadata(parsing),
+            "processing_provenance": scalar_metadata(provenance),
             "page": page_no,
             "section": sec,
             "chunk_index": chunk_index,
@@ -152,7 +169,12 @@ def parsed_to_documents(
                 "page_end": item.page_end,
                 "section_path": item.section,
                 "block_ids": scalar_metadata(item.block_ids),
+                "source_locations": scalar_metadata(item.source_locations),
+                "citation_scope": "page" if item.page_start == item.page_end else "range",
+                "is_atomic": item.is_atomic,
+                "oversized": item.oversized,
                 "bbox": scalar_metadata(item.bbox),
+                "bbox_coordinate_system": item.bbox_coordinate_system,
                 "layout_parser": parser,
                 "layout_confidence": parsed.get("layout_confidence", "high"),
                 # 路径只指向本地 docstore；生成阶段会再次校验其必须位于该目录。
@@ -202,16 +224,25 @@ def parsed_to_documents(
             "table_caption": caption,
             "continued_table": bool(table.get("continued")),
         }
-        for chunk in splitter.split_text(table_text):
-            if not chunk.strip():
-                continue
-            content = chunk if chunk.startswith("Table:") else f"{prefix}\n{chunk}"
-            documents.append(_make(content, page_start, section_name, meta))
+        # 旧 pages/tables 数据也保持表格完整，不再经过字符切分器。
+        content = table_text if table_text.startswith("Table:") else f"{prefix}\n{table_text}"
+        meta.update({
+            "is_atomic": True,
+            "oversized": len(content) > max(settings.chunk_size, settings.layout_chunk_max_chars),
+            "citation_scope": "page" if page_start == page_end else "range",
+        })
+        documents.append(_make(content, page_start, section_name, meta))
 
     return documents
 
 
 def get_vectorstore(group_id: int):
+    if os.getenv("EMBEDDING_PROVIDER") == "openai" and not settings.allow_openai_library:
+        workspace_name = os.getenv("REFMIND_EVAL_WORKSPACE")
+        workspace = Path(workspace_name).resolve() if workspace_name else None
+        if (workspace is None or not (workspace / ".refmind-eval").is_file()
+                or not settings.chroma_persist_dir.resolve().is_relative_to(workspace)):
+            raise ValueError("OpenAI embeddings require an isolated evaluation workspace; existing indexes are unchanged")
     from langchain_chroma import Chroma
 
     return Chroma(
@@ -334,15 +365,27 @@ def ingest_documents(
     return len(batch.texts)
 
 
-def load_group_documents(group_id: int) -> list[Document]:
-    """从 Chroma 读回某库全部分块，用于重建 BM25 索引。"""
+def load_group_documents(group_id: int, *, selected_doc_ids: tuple[int, ...] | None = None) -> list[Document]:
+    """Load committed evidence only; an empty selection never means all documents."""
+    from .. import storage
+    allowed = {row.id for row in storage.list_documents(group_id) if row.status == "ready"}
+    if selected_doc_ids is not None:
+        allowed.intersection_update(selected_doc_ids)
+    if not allowed:
+        return []
     vectorstore = get_vectorstore(group_id)
-    raw = vectorstore.get(include=["documents", "metadatas"])
+    raw = vectorstore.get(where={"doc_id": {"$in": sorted(allowed)}}, include=["documents", "metadatas"])
     contents = raw.get("documents") or []
     metadatas = raw.get("metadatas") or []
     documents: list[Document] = []
     for content, metadata in zip(contents, metadatas):
-        documents.append(Document(page_content=content, metadata=metadata or {}))
+        metadata = metadata or {}
+        try:
+            if int(metadata.get("doc_id", -1)) not in allowed or int(metadata.get("group_id", group_id)) != group_id:
+                continue
+        except (TypeError, ValueError):
+            continue
+        documents.append(Document(page_content=content, metadata=metadata))
     return documents
 
 

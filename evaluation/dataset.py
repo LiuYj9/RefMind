@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
@@ -23,6 +23,22 @@ class GoldenItem:
     split: str = "dev"
     category: str = "legacy"
     evidence_details: tuple[dict, ...] = ()
+    track: str = "local"
+    domain: str = "legacy"
+    family_ids: tuple[str, ...] = ()
+    corpus_scope: tuple[str, ...] = ()
+    annotation_status: str = "draft"
+    review: dict = field(default_factory=dict)
+    fact_slots: tuple[dict, ...] = ()
+    task_metadata: dict = field(default_factory=dict)
+
+    @property
+    def question_split(self) -> str:
+        return canonical_split(self.split)
+
+
+def canonical_split(value: str) -> str:
+    return "id_holdout" if value == "holdout" else value
 
 
 @dataclass(frozen=True)
@@ -33,17 +49,62 @@ class GoldenSet:
     manifest: tuple[dict, ...]
     dataset_hash: str
     schema_version: int
+    independence_audit: dict = field(default_factory=dict)
 
     def select(self, split: str = "dev", unlock_holdout: bool = False) -> "GoldenSet":
-        if split not in {"dev", "holdout", "all"}:
-            raise ValueError("split must be dev, holdout or all")
-        selected = tuple(i for i in self.items if split == "all" or i.split == split)
-        if any(i.split == "holdout" for i in selected) and not unlock_holdout:
+        if split not in {"dev", "holdout", "id_holdout", "ood_holdout", "all"}:
+            raise ValueError("invalid question split")
+        selected = tuple(i for i in self.items if split == "all" or i.question_split == canonical_split(split))
+        if any(i.question_split != "dev" for i in selected) and not unlock_holdout:
             raise ValueError("holdout is locked; use --unlock-holdout only for release acceptance")
         if not selected:
             raise ValueError("selected split is empty")
         return GoldenSet(self.corpus, selected, self.page_tolerance, self.manifest,
-                         self.dataset_hash, self.schema_version)
+                         self.dataset_hash, self.schema_version, self.independence_audit)
+
+    def scoped_manifest(self) -> tuple[dict, ...]:
+        """Retrieval corpus is explicit; acceptance may include all frozen distractors."""
+        if self.schema_version < 3:
+            partitions = {item.question_split for item in self.items}
+            return tuple(s for s in self.manifest if canonical_split(s.get("split", "dev")) in partitions)
+        ids = {source_id for item in self.items for source_id in item.corpus_scope}
+        return tuple(s for s in self.manifest if s["id"] in ids)
+
+    def exposed_item_ids(self) -> set[str]:
+        exposed=[]
+        for item in self.items:
+            for event in self.independence_audit.get("events",[]):
+                if (event.get("eligible_for_blind_acceptance") is False
+                    and item.question_split==event.get("affected_question_split")
+                    and set(item.family_ids)&set(event.get("affected_family_ids",[]))):
+                    exposed.append(item.id);break
+        return set(exposed)
+
+    def require_review(self, *, allow_draft: bool = False, independent_acceptance: bool = False) -> dict:
+        """Draft opt-in is development-only; holdout unlock never bypasses human review."""
+        exposed=self.exposed_item_ids()
+        independent_eligible = self.schema_version>=3 and not exposed and all(i.question_split!="dev" for i in self.items)
+        if independent_acceptance and not independent_eligible:
+            raise ValueError("independent acceptance requires v3 unseen holdout questions; exposed historical regression or development items cannot be approved into independence")
+        approved = 0
+        for item in self.items:
+            review = item.review
+            valid = (item.annotation_status == "human_approved"
+                     and review.get("status") == "approved"
+                     and bool(str(review.get("reviewer", "")).strip())
+                     and bool(str(review.get("reviewed_at", "")).strip()))
+            if valid and self.schema_version >= 3 and item.track == "local" and not item.expect_refusal:
+                valid = bool(item.fact_slots)
+            if valid:
+                approved += 1
+            elif not allow_draft or item.question_split != "dev":
+                raise ValueError("human review required; --allow-draft is only valid for dev diagnostics")
+        complete=approved == len(self.items)
+        return {"official": complete and not exposed, "human_review_complete":complete,"approved": approved,
+                "draft": len(self.items) - approved,
+                "label": "historical_regression" if exposed else "reviewed_evaluation" if complete else "draft_diagnostic",
+                "independent_eligible":independent_eligible,"blind_acceptance_requested":independent_acceptance,
+                "exposed_items":len(exposed),"independence_audit":self.independence_audit}
 
 
 def load_golden_set(path: str | Path, *, project_root: Path | None = None,
@@ -55,6 +116,9 @@ def load_golden_set(path: str | Path, *, project_root: Path | None = None,
     if not isinstance(data, dict):
         raise ValueError("dataset must be an object")
     version = data.get("schema_version", 1)
+    if version == 3:
+        from .v3_contract import load_v3
+        return load_v3(data, raw_bytes, root, verify_files=verify_files)
     if type(version) is not int or version not in (1, 2):
         raise ValueError("unsupported dataset schema_version")
     tolerance = data.get("page_tolerance", 0)
@@ -139,7 +203,9 @@ def load_golden_set(path: str | Path, *, project_root: Path | None = None,
         if len(set(pairs)) != len(pairs):
             raise ValueError(f"{item_id}: duplicated evidence")
         items.append(GoldenItem(item_id, question, truth, tuple(pairs), refusal, split,
-                                raw.get("category", "legacy"), tuple(evidence)))
+                                raw.get("category", "legacy"), tuple(evidence),
+                                annotation_status=raw.get("annotation_status", data.get("annotation_status", "draft")),
+                                review=raw.get("human_review", {})))
     families: dict[str, set] = {}
     for e in manifest:
         if "family" in e:
@@ -153,11 +219,11 @@ def load_golden_set(path: str | Path, *, project_root: Path | None = None,
     return golden
 
 
-def verify_corpus(golden: GoldenSet, root: Path) -> None:
+def verify_corpus(golden: GoldenSet, root: Path, *, scoped: bool = False) -> None:
     """Verify bytes, physical page numbers and exact normalized excerpts, offline."""
     import fitz
     pages = {}
-    for source in golden.manifest:
+    for source in golden.scoped_manifest() if scoped else golden.manifest:
         p = (root / source["path"]).resolve()
         actual = hashlib.sha256(p.read_bytes()).hexdigest()
         if source.get("sha256") and source["sha256"] != actual:
@@ -171,5 +237,8 @@ def verify_corpus(golden: GoldenSet, root: Path) -> None:
             source_pages = pages[ev["filename"].casefold()]
             if ev["page"] > len(source_pages):
                 raise ValueError(f"{item.id}: page outside PDF")
+            if ev.get("evidence_source", "pdf_text") == "visual":
+                # Visual observations require a pinned region and human review, not fake native PDF text.
+                continue
             if ev.get("quote") and normalize_text(ev["quote"]) not in source_pages[ev["page"]-1]:
                 raise ValueError(f"{item.id}: source quote not present on evidence page")

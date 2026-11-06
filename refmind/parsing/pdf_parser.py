@@ -13,8 +13,6 @@ import subprocess
 import sys
 import tempfile
 import uuid
-from difflib import SequenceMatcher
-from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -143,6 +141,26 @@ def _parse_with_mineru_in_dir(file_path: Path, out_dir: Path) -> dict[str, Any]:
 
     markdown, pages, tables = _collect_mineru_output(out_dir, file_path.stem)
     blocks = _collect_mineru_layout_blocks(out_dir, file_path.stem)
+    # MinerU content_list boxes are normalized, not PDF points. Convert once at
+    # the adapter boundary and retain an explicit coordinate-system marker.
+    import fitz
+    from .coordinates import pdf_bbox
+    coordinate_items = [item for item in [*blocks, *tables] if item.get("bbox")]
+    if coordinate_items:
+      with fitz.open(file_path) as source_pdf:
+        for item in coordinate_items:
+            page_no = int(item.get("page") or item.get("page_start") or 0)
+            raw_bbox = item.get("bbox")
+            if not raw_bbox or not 1 <= page_no <= len(source_pdf):
+                continue
+            page = source_pdf[page_no - 1]
+            converted = pdf_bbox(page, raw_bbox, "normalized_1000")
+            item["bbox_original"] = raw_bbox
+            item["bbox"] = list(converted) if converted is not None else []
+            item["bbox_coordinate_system"] = "pdf_points"
+            item["page_rotation"] = page.rotation
+    if not pages and not blocks:
+        raise ParseError("MinerU 输出缺少可定位的内容，改用逐页解析。")
     extracted_text = "\n".join(
         [markdown]
         + [str(page.get("text", "")) for page in pages]
@@ -210,8 +228,6 @@ def _collect_mineru_output(
         except OSError:
             continue
 
-    if not pages and markdown:
-        pages = [{"page": 1, "text": markdown}]
     if not markdown and pages:
         markdown = "\n\n".join(p["text"] for p in pages)
 
@@ -268,18 +284,16 @@ def _read_content_list(path: Path) -> list[dict[str, Any]]:
 
 
 def _content_page_number(item: dict[str, Any]) -> int:
-    """兼容 page_idx（0 起始）与 page_no/page_number（1 起始）。"""
-    if "page_idx" in item:
-        try:
-            return max(1, int(item["page_idx"]) + 1)
-        except (TypeError, ValueError):
-            return 1
-    for key in ("page_no", "page_number"):
-        try:
-            return max(1, int(item[key]))
-        except (KeyError, TypeError, ValueError):
+    """转换已提供的页码；缺失或非法时拒绝伪造第 1 页。"""
+    for key, offset in (("page_idx", 1), ("page_no", 0), ("page_number", 0)):
+        value = item.get(key)
+        if isinstance(value, bool):
             continue
-    return 1
+        if isinstance(value, int) or (isinstance(value, str) and value.isdigit()):
+            page = int(value) + offset
+            if page >= 1:
+                return page
+    raise ParseError("MinerU 内容缺少有效页码，无法建立可靠引用。")
 
 
 def _layout_type(item: dict[str, Any]) -> str:
@@ -295,6 +309,8 @@ def _layout_type(item: dict[str, Any]) -> str:
         return "equation"
     if any(token in raw for token in ("title", "heading")):
         return "heading"
+    if item.get("text_level"):
+        return "heading"
     if "list" in raw:
         return "list_item"
     return "paragraph"
@@ -305,6 +321,14 @@ def _layout_text(item: dict[str, Any], kind: str) -> str:
         return _table_text(item)
     if kind in {"table_caption", "figure_caption"}:
         return _as_text(item.get("caption") or item.get("table_caption") or item.get("text"))
+    if kind == "figure":
+        return "\n".join(filter(None, (
+            _as_text(item.get("image_caption")),
+            _as_text(item.get("content")),
+            _as_text(item.get("image_footnote")),
+        ))) or _as_text(item.get("text"))
+    if kind == "list_item":
+        return _as_text(item.get("list_items") or item.get("text"))
     return _as_text(
         item.get("text")
         or item.get("content")
@@ -340,6 +364,8 @@ def _collect_mineru_layout_blocks(out_dir: Path, stem: str) -> list[dict[str, An
                     "page_end": _content_page_number(item),
                     "reading_order": order,
                     "bbox": _bbox(item),
+                    "bbox_coordinate_system": "normalized_1000",
+                    "mineru_source": item,
                 }
             )
         # 使用已经合并、标准化的表格作为独立原子块。
@@ -354,6 +380,9 @@ def _collect_mineru_layout_blocks(out_dir: Path, stem: str) -> list[dict[str, An
                     # 表格沿用其在 content_list 中的位置；跨页合并后仍以首段为准。
                     "reading_order": table.get("reading_order", len(items)),
                     "bbox": table.get("bbox") or [],
+                    "bbox_coordinate_system": "normalized_1000",
+                    "source_items": table["source_items"],
+                    "merge_method": table["merge_method"],
                 }
             )
         return blocks
@@ -405,6 +434,8 @@ def _looks_like_table(item: dict[str, Any]) -> bool:
     kind = _as_text(
         item.get("type") or item.get("category") or item.get("block_type")
     ).lower()
+    if "caption" in kind or "footnote" in kind:
+        return False
     if "table" in kind:
         return True
     if item.get("table_caption") and _as_text(item.get("text")):
@@ -415,118 +446,9 @@ def _looks_like_table(item: dict[str, Any]) -> bool:
     )
 
 
-def _split_table_row(line: str) -> list[str]:
-    line = line.strip()
-    if not line:
-        return []
-    if "|" in line:
-        cells = [cell.strip() for cell in line.strip("|").split("|")]
-    elif "\t" in line:
-        cells = [cell.strip() for cell in line.split("\t")]
-    else:
-        return []
-    if cells and all(re.fullmatch(r"[:\-\s]+", cell or "-") for cell in cells):
-        return []
-    return cells
-
-
-class _HTMLTableParser(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__()
-        self.rows: list[list[str]] = []
-        self._row: list[str] | None = None
-        self._cell: list[str] | None = None
-        self._colspan = 1
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag == "tr":
-            self._row = []
-        elif tag in {"td", "th"}:
-            attr_map = dict(attrs)
-            try:
-                self._colspan = max(1, int(attr_map.get("colspan") or 1))
-            except ValueError:
-                self._colspan = 1
-            self._cell = []
-
-    def handle_data(self, data: str) -> None:
-        if self._cell is not None:
-            self._cell.append(data)
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag in {"td", "th"} and self._row is not None and self._cell is not None:
-            text = " ".join("".join(self._cell).split())
-            self._row.extend([text] * self._colspan)
-            self._cell = None
-            self._colspan = 1
-        elif tag == "tr" and self._row is not None:
-            if any(cell.strip() for cell in self._row):
-                self.rows.append(self._row)
-            self._row = None
-
-
-def _rows_from_html(text: str) -> list[list[str]]:
-    if "<tr" not in text.lower() and "<table" not in text.lower():
-        return []
-    parser = _HTMLTableParser()
-    parser.feed(text)
-    return parser.rows
-
-
-def _rows_from_text(text: str) -> list[list[str]]:
-    html_rows = _rows_from_html(text)
-    if html_rows:
-        return html_rows
-
-    rows: list[list[str]] = []
-    for line in text.splitlines():
-        row = _split_table_row(line)
-        if row:
-            rows.append(row)
-    return rows
-
-
-def _header(rows: list[list[str]]) -> list[str]:
-    return next((row for row in rows if any(cell.strip() for cell in row)), [])
-
-
-def _col_count(rows: list[list[str]]) -> int:
-    return max((len(row) for row in rows), default=0)
-
-
 def _caption_no(caption: str) -> str:
     match = _TABLE_NO_RE.search(caption or "")
     return match.group(1).lower() if match else ""
-
-
-def _similarity(left: list[str], right: list[str]) -> float:
-    a = " | ".join(cell.lower().strip() for cell in left)
-    b = " | ".join(cell.lower().strip() for cell in right)
-    if not a or not b:
-        return 0.0
-    return SequenceMatcher(None, a, b).ratio()
-
-
-def _page_height(item: dict[str, Any]) -> float | None:
-    for key in ("page_height", "height"):
-        try:
-            value = float(item.get(key))
-            if value > 0:
-                return value
-        except (TypeError, ValueError):
-            pass
-    size = item.get("page_size") or item.get("page")
-    if isinstance(size, (list, tuple)) and len(size) >= 2:
-        try:
-            return float(size[1])
-        except (TypeError, ValueError):
-            return None
-    if isinstance(size, dict):
-        try:
-            return float(size.get("height"))
-        except (TypeError, ValueError):
-            return None
-    return None
 
 
 def _bbox(item: dict[str, Any]) -> list[float]:
@@ -550,7 +472,6 @@ def _extract_tables(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         caption = _as_text(item.get("table_caption") or item.get("caption"))
         if not text and not caption:
             continue
-        rows = _rows_from_text(text)
         page_no = _content_page_number(item)
         tables.append(
             {
@@ -560,124 +481,51 @@ def _extract_tables(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "page_end": page_no,
                 "continued": False,
                 "raw_text": text,
-                "rows": rows,
-                "col_count": _col_count(rows),
+                "footnote": _as_text(item.get("table_footnote")),
+                "source_items": [item],
+                "merge_method": "mineru",
                 "bbox": _bbox(item),
-                "page_height": _page_height(item),
                 "reading_order": reading_order,
             }
         )
     return tables
 
 
-def _near_page_bottom(table: dict[str, Any]) -> bool:
-    bbox = table.get("bbox") or []
-    height = table.get("page_height")
-    return bool(bbox and height and bbox[3] / height >= 0.78)
-
-
-def _near_page_top(table: dict[str, Any]) -> bool:
-    bbox = table.get("bbox") or []
-    height = table.get("page_height")
-    return bool(bbox and height and bbox[1] / height <= 0.25)
-
-# 合并连续表格的逻辑
 def _is_continued_table(prev: dict[str, Any], cur: dict[str, Any]) -> bool:
-    if cur["page_start"] != prev["page_end"] + 1:
-        return False
-
+    """仅补充明确标注的续表；不靠相似度或坐标猜测关联。"""
     prev_no = _caption_no(prev.get("caption", ""))
-    cur_no = _caption_no(cur.get("caption", ""))
     cur_caption = cur.get("caption", "")
-    if cur_no and prev_no and cur_no != prev_no:
-        return False
-    if cur_no and not prev_no and not _CONTINUED_RE.search(cur_caption):
-        return False
-
-    score = 2
-    same_cols = prev.get("col_count") and prev.get("col_count") == cur.get("col_count")
-    if same_cols:
-        score += 3
-
-    header_sim = _similarity(_header(prev.get("rows", [])), _header(cur.get("rows", [])))
-    if header_sim >= 0.82:
-        score += 4
-    elif header_sim >= 0.55:
-        score += 2
-
-    if _CONTINUED_RE.search(cur_caption):
-        score += 5
-    elif not cur_caption:
-        score += 2
-    elif prev_no and cur_no == prev_no:
-        score += 4
-    else:
-        score -= 3
-
-    if _near_page_bottom(prev):
-        score += 2
-    if _near_page_top(cur):
-        score += 2
-
-    return score >= 7
-
-
-def _merge_rows(prev: list[list[str]], cur: list[list[str]]) -> list[list[str]]:
-    if prev and cur and _similarity(_header(prev), _header(cur)) >= 0.82:
-        return prev + cur[1:]
-    return prev + cur
+    return bool(
+        cur["page_start"] == prev["page_end"] + 1
+        and cur["reading_order"] == prev.get("last_reading_order", prev["reading_order"]) + 1
+        and prev_no
+        and prev_no == _caption_no(cur_caption)
+        and _CONTINUED_RE.search(cur_caption)
+    )
 
 
 def _merge_two_tables(prev: dict[str, Any], cur: dict[str, Any]) -> dict[str, Any]:
+    # 保留两段原文和上游字段；不删除所谓重复表头、不修改单元格。
     prev["page_end"] = cur["page_end"]
+    prev["last_reading_order"] = cur["reading_order"]
     prev["continued"] = True
-    prev["raw_text"] = "\n".join(
-        text for text in (prev.get("raw_text", ""), cur.get("raw_text", "")) if text
-    )
-    prev["rows"] = _merge_rows(prev.get("rows", []), cur.get("rows", []))
-    prev["col_count"] = max(prev.get("col_count", 0), cur.get("col_count", 0))
-    if not prev.get("caption"):
-        prev["caption"] = cur.get("caption", "")
+    prev["merge_method"] = "caption_continuation"
+    prev["raw_text"] = "\n".join(filter(None, (prev["raw_text"], cur["raw_text"])))
+    prev["footnote"] = "\n".join(filter(None, (prev["footnote"], cur["footnote"])))
+    prev["source_items"].extend(cur["source_items"])
     return prev
 
 
-def _fill_down_rows(rows: list[list[str]]) -> list[list[str]]:
-    width = _col_count(rows)
-    filled: list[list[str]] = []
-    carry = [""] * width
-    for row in rows:
-        current = (row + [""] * width)[:width]
-        for idx, cell in enumerate(current):
-            if cell:
-                carry[idx] = cell
-            elif carry[idx]:
-                current[idx] = carry[idx]
-        filled.append(current)
-    return filled
-
-
 def _table_to_text(table: dict[str, Any]) -> str:
+    """使用 MinerU 原始 HTML/Markdown，避免猜表头及填充空值。"""
     caption = table.get("caption") or table.get("table_id", "table")
-    page_start = table.get("page_start")
-    page_end = table.get("page_end")
-    page_text = str(page_start) if page_start == page_end else f"{page_start}-{page_end}"
+    start, end = table["page_start"], table["page_end"]
+    page_text = str(start) if start == end else f"{start}-{end}"
     lines = [f"Table: {caption}", f"Pages: {page_text}"]
-
-    rows = _fill_down_rows(table.get("rows", []))
-    if rows:
-        columns = rows[0]
-        lines.append("Columns: " + "; ".join(columns))
-        for idx, row in enumerate(rows[1:], start=1):
-            pairs = []
-            for col, cell in zip(columns, row):
-                name = col or "column"
-                if cell:
-                    pairs.append(f"{name}={cell}")
-            if pairs:
-                lines.append(f"Row {idx}: " + "; ".join(pairs))
-    elif table.get("raw_text"):
+    if table.get("raw_text"):
         lines.extend(["Content:", table["raw_text"]])
-
+    if table.get("footnote"):
+        lines.extend(["Footnotes:", table["footnote"]])
     return "\n".join(lines).strip()
 
 

@@ -1,0 +1,108 @@
+{
+  "schema_version": 3,
+  "kind": "construction_manifest",
+  "status": "incomplete",
+  "tracks": {
+    "local": {
+      "unit": "primary_question",
+      "total": 600,
+      "splits": {
+        "dev": 360,
+        "id_holdout": 120,
+        "ood_holdout": 120
+      }
+    },
+    "external": {
+      "unit": "external_task",
+      "total": 120,
+      "splits": {
+        "dev": 72,
+        "id_holdout": 24,
+        "ood_holdout": 24
+      }
+    },
+    "dialogue": {
+      "unit": "four_turn_scenario",
+      "total": 30,
+      "turns_per_scenario": 4,
+      "splits": {
+        "dev": 18,
+        "id_holdout": 6,
+        "ood_holdout": 6
+      }
+    },
+    "structure": {
+      "unit": "annotated_pdf_page",
+      "total": 120,
+      "splits": {
+        "dev": 72,
+        "id_holdout": 24,
+        "ood_holdout": 24
+      }
+    }
+  },
+  "core_domains": {
+    "superconductivity_physics": {
+      "families": 16,
+      "dev": 120,
+      "id_holdout": 40,
+      "ood_holdout": 0
+    },
+    "materials_energy": {
+      "families": 16,
+      "dev": 120,
+      "id_holdout": 40,
+      "ood_holdout": 0
+    },
+    "computer_science_ml": {
+      "families": 16,
+      "dev": 120,
+      "id_holdout": 40,
+      "ood_holdout": 0
+    },
+    "mechanical_thermofluids": {
+      "families": 6,
+      "dev": 0,
+      "id_holdout": 0,
+      "ood_holdout": 60
+    },
+    "chemical_process": {
+      "families": 6,
+      "dev": 0,
+      "id_holdout": 0,
+      "ood_holdout": 60
+    }
+  },
+  "core_categories": {
+    "numerical": 100,
+    "method": 70,
+    "table": 80,
+    "equation": 60,
+    "figure": 50,
+    "comparison": 70,
+    "summary": 50,
+    "unanswerable": 120
+  },
+  "dataset_files": [
+    "evaluation/datasets/real_v3_draft.json",
+    "evaluation/datasets/public_qasper_dev_v3_160.json",
+    "evaluation/datasets/public_materials_hts_dev_v3.json",
+    "evaluation/datasets/public_external_dev_v3.json",
+    "evaluation/datasets/public_dialogues_dev_v3.json",
+    "evaluation/datasets/public_structure_dev_v3.json"
+  ],
+  "counting_rules": [
+    "variants/provider runs/seeds are not new primary questions",
+    "four dialogue turns count as one scenario",
+    "structure samples count by PDF page",
+    "targets do not represent authored or human-approved records",
+    "legacy categories remain unassigned until reviewed; do not label every fact numerical"
+  ],
+  "legacy": {
+    "source": "evaluation/datasets/real_v1.json",
+    "items": 100,
+    "dev": 70,
+    "id_holdout": 30,
+    "preserve_original_bytes": true
+  }
+}

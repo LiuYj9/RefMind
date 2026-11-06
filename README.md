@@ -1,225 +1,156 @@
-# RefMind 文献知识库助手
+# RefMind · 科研阅读工作台
 
-RefMind 是一个面向科研文献阅读的 RAG 问答系统，基于 LangChain 1.0 与 LangGraph 搭建，
-将离线入库与在线问答分开：
-- 离线：PDF 解析清洗 → 按语义切分 Chunk → 标注来源/章节/页码/版本/权限等 metadata
-  → 建立向量索引与 BM25 关键词索引。
-- 在线：Query → 规划少量检索角度 → 并行混合召回 → 全局 reranker 精排 → 上下文压缩
-  （去重、句级过滤、字数预算）→ LLM 生成并基于证据审校可溯源答案。
+RefMind 把论文检索、全文研读、证据问答和文献管理放在一个工作空间中。提问时可以同时查看原文与引用，区分本地全文、外部摘要和会话全文，追踪答案使用了哪些证据。
 
-目标是在读论文时能快速问答，同时尽量避免大模型脱离原文乱答。
+目前主界面使用 **Vue 3 + TypeScript**，服务端使用 **FastAPI**。旧 Streamlit 界面保留作兼容回退。项目处于开发验证阶段，完整人工金标准及独立科研质量验收尚未完成。
 
-## 功能
+## 工作空间
 
-- 混合召回：BM25 关键词 + Chroma 向量，等权融合，中文用 jieba 分词
-- 重排精排：召回候选交给 rerank 模型（DashScope gte-rerank，缺失时回退嵌入相似度）
-- 上下文压缩：去除重复分块、剔除离题句子、按字数预算截断，压缩进 Prompt 的内容
-- 分块 metadata：来源、文档 id、页码、章节、版本、权限（按库隔离）、分块序号、字数
-- PDF 解析与论文切分：优先 MinerU 保留标题、段落、公式、图表、页码、阅读顺序和 bbox；按章节边界合并语义块，未安装或失败时回退 PyMuPDF
-- PDF 分阶段并行：解析、图片摘要、Embedding 批次和文档中文摘要使用独立全局上限；
-  摘要与向量化重叠执行，设置页可调整并发并查看逐阶段耗时
-- 论文身份与引用：从 PDF 首页恢复原始论文题名并分配稳定库内序号；正文采用论文式
-  `[1][2]`，悬浮显示题名/页码/章节/证据段落，回答末尾按论文聚合参考来源
-- PDF 引用定位：点击正文引用可在受控窗口中预览目标页，并依据 bbox 或证据原文尽力高亮；
-  本地运行还可请求系统 PDF 阅读器跳到对应页，不公开上传文件路径
-- GS 外部学术检索：输入区可按会话选中 `GS检索`；将问题改写为学术检索式，并行查询
-  Semantic Scholar 与 Crossref（配置 Key 后可选 OpenAlex），按 DOI 去重、Reranker 精选后，
-  仅把题录与摘要作为本轮临时证据；外链引用与本地 PDF 页码引用严格分离
-- 文档库治理：按论文原始题名展示，可多选后批量清理文档记录、向量/BM25、原 PDF、
-  解析结果与图片资产，单篇失败不影响其余删除
-- 图片检索与问答：入库时将原图保存到本地 docstore，并用 `qwen3.5-omni-plus-2026-03-15` 生成结构化摘要写入文本索引；命中图片摘要后才读取原图、Base64 编码并交给全模态模型回答
-- 多文献库隔离：每个库独立的 Chroma 集合与持久化目录，互不干扰
-- 三层记忆：SQLite 会话历史、SQLite 用户长期语义/情景记忆、Chroma + BM25 论文知识严格隔离
-- 翻译与摘要：流式输出，翻译可结合当前文献库做术语对齐，入库时自动生成摘要
-- 熔断降级：主对话模型连续失败后临时切到备选模型，冷却后再探测切回
-- 受控 multi-agent：规划、并行检索、直接可回答性审查与答案审校职责分离，失败自动回退基线
-- 稳定重复问答：统一中英文尾部标点，原问题始终参与召回与重排，记忆仅扩展检索角度，
-  重复问题不会携带上一次回答作为生成历史
-- 插件扩展：解析、入库、检索和生成阶段提供类型化 hook，第三方异常不会打断主流程
-- 可选 MCP：支持 stdio / Streamable HTTP 的能力探测、工具调用与资源读取，默认不把外部内容送入答案
-- 可恢复入库：原子文件写入 + 异常补偿 + 启动恢复，未提交向量不会长期混入检索
+| 页面 | 主要用途 |
+|---|---|
+| 研读空间 | 问答与原文并排查看；点击引用定位论文和页面；查看实际证据及处理过程 |
+| 文献发现 | 主动搜索论文、筛选题录、选择摘要问答或获取公开全文 |
+| 文献库 | 管理私有与课题组共享资料；按可研读、处理中、需要关注筛选；查看索引维护状态 |
+| 任务中心 | 查看下载、解析、问答、入库和维护申请；取消、重试及刷新后恢复 |
+| 账号管理 | 管理员创建账号；文献库所有者单独授予共享库阅读或编辑权限 |
 
-## 技术栈
+![文献库状态概览](docs/images/library-workspace.png)
 
-- Python 3.11+
-- LangChain 1.0 + LangGraph（RAG 流程与状态编排）
-- Chroma（向量检索）、rank-bm25 + jieba（关键词检索与中文分词）
-- Streamlit（前端）
-- DashScope（OpenAI 兼容接口的对话/嵌入模型）
-- Semantic Scholar / OpenAlex / Crossref（用户显式开启时的开放学术检索）
-- MCP Python SDK（可选，用于连接显式配置的外部工具与资源）
-- SQLite（组、文档、会话、消息等元数据）
-
-## 目录结构
-
-```
-app.py                     Streamlit 前端
-refmind/
-    config/                配置（.env 驱动，前端设置页可改）
-    storage/               SQLite 持久化
-    parsing/               PDF 解析（MinerU + PyMuPDF 回退）
-    llm/                   模型工厂 + 熔断降级、翻译、摘要
-    agents/                规划、并行检索、证据审查与答案审校
-    plugins/               hook 协议、插件注册与发现
-    integrations/          可选 MCP 客户端与外部上下文信任边界
-    rag/                   分块入库、混合召回、重排、上下文压缩、记忆、LangGraph 流程
-    services/              上传入库、开放学术索引检索等业务编排
-evaluation/                RAG 评测（检索/生成指标）
-scripts/                   冒烟测试、模型探测等脚本
-tests/                     不依赖真实 API 的单元与集成回归测试
-```
+*界面示例使用隔离的合成资料，不代表真实论文数量或科研测评成绩。*
 
 ## 快速开始
 
-```bash
-git clone https://github.com/LiuYj9/RefMind.git
-cd RefMind
-
-python -m venv .venv
-.venv\Scripts\activate            # Windows
-
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-
-# 只有需要连接 MCP 服务时才安装
-.venv\Scripts\python.exe -m pip install -r requirements-mcp.txt
-
-copy .env.example .env            # 填入 DASHSCOPE_API_KEY
-
-.venv\Scripts\python.exe -m streamlit run app.py  # 默认 http://localhost:8888
-```
-
-> Windows 上请勿直接运行裸 `streamlit`：它可能来自另一套 Python。始终用项目
-> `.venv\Scripts\python.exe -m streamlit`，确保 DashScope、LangChain 与前端版本一致。
-
-若出现 `No module named 'dashscope'` 或“调用报错”，先执行：
+准备 Python 3.11+、Git，以及符合 `frontend/package-lock.json` 中 Vite 要求的 Node.js（20.19+ 或22.12+）。以下命令适用于 Windows PowerShell，在项目根目录执行。
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m pip check
-.\.venv\Scripts\python.exe -m streamlit run app.py
+git clone https://github.com/LiuYj9/RefMind.git
+cd RefMind
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-api.txt
+Copy-Item .env.example .env
 ```
 
-需要高精度解析时再额外安装 MinerU：`pip install mineru`。
+在本机 `.env` 填入所选供应商的密钥和模型配置，再构建界面、创建首个管理员账号：
 
-详细架构见 [docs/architecture.md](./docs/architecture.md)，插件与 MCP 配置见
-[docs/plugins-and-mcp.md](./docs/plugins-and-mcp.md)。
-
-## 主要设计
-
-- 分块 metadata：每个 Chunk 带来源、文档 id、页码、章节、版本、权限（按库隔离）、
-  分块序号与字数，既支持答案溯源，也为后续按条件过滤/治理留出空间。
-- 混合召回：向量负责语义泛化，BM25 负责专业术语精确匹配，两者等权融合出候选池。
-- 重排精排：候选交给 reranker 按 (query, chunk) 相关性重新打分排序，优先 DashScope
-  rerank 模型，未安装或失败时回退到嵌入余弦相似度，只保留最相关的前若干条。
-- 上下文压缩：精排后再去掉近似重复分块、按句子粒度剔除离题内容、按字数预算截断，
-  在保留关键证据的同时降低冗余与 token 消耗；嵌入不可用时退化为仅按字数截断。
-- 记忆治理：会话历史按相关性过滤；跨会话用户记忆经原子提取、价值阈值、重复合并、
-  同主题冲突失效和按类型时间衰减后再召回。论文事实从不写入用户记忆表。
-- 无检索即拒答：LangGraph 的论文 `retrieve→generate` 核心段中，检索为空时直接返回“未找到相关内容”，减少幻觉。
-- 解析容错：MinerU 失败自动回退 PyMuPDF，保证基本可用。
-- 可恢复写入/删除：源 PDF 使用 `doc_id` 唯一路径，解析 JSON 原子替换；异常时按
-  `doc_id` 补偿，进程强杀留下的非 `ready` 记录会在下次启动继续清理。
-- 并行入库安全：每篇 PDF 使用独立事务与临时文件；单篇失败不取消其他任务，同一文献库的
-  Chroma 变更细粒度串行提交，SQLite 使用 WAL 与 busy timeout 缓解短写锁竞争。
-- 受控 multi-agent：规划最多三个子查询，并发召回后统一重排/压缩；证据门禁始终对照用户原问题，
-  仅有关键词重合或相邻主题时拒答。规划、单路检索、审校任一失败都保留上一阶段有效结果或
-  回退单查询，不让增强能力成为单点故障。
-- GS 检索边界：只有用户主动选中按钮才会把改写后的查询发送给外部学术索引；外部论文摘要
-  不写入 Chroma/SQLite 文献表，不与本地全文分块混排，也不伪造页码。外部无可用摘要时会
-  明确告警后回退本地库。项目不抓取 Google Scholar HTML，避免验证码、封禁与页面结构风险。
-- 插件隔离：hook 按注册顺序变换数据，插件注册和运行异常会被记录并隔离；核心阶段还会校验
-  返回类型，避免错误插件污染主链路。
-- MCP 信任边界：只连接 `.env` 显式声明的服务；外部结果默认只供探测/人工检查，必须由代码
-  明确设置 `allow_in_answers=True` 才能进入答案上下文。
-- 熔断降级：连续失败达到阈值后走备选模型，冷却后只允许一个 half-open 探测；流式输出中途
-  失败不会与备选模型输出拼接。
-- 动态配置：设置页改完参数写回 `.env`，并清掉模型/检索器缓存即时生效。
-
-> multi-agent 只扩展检索角度，合并后仍复用同一套“重排 → 压缩 → 生成”生产链路；关闭后直接
-> 回到原 LangGraph 基线，便于做同口径评测。
-
-## 常用配置
-
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| `DASHSCOPE_API_KEY` | DashScope API Key | 必填 |
-| `REFMIND_USER_ID` | 本地长期记忆的用户隔离 ID | `local_user` |
-| `LLM_MODEL` | 对话模型 | `qwen3.7-plus` |
-| `MULTIMODAL_LLM_MODEL` | 图片摘要及携图回答模型 | `qwen3.5-omni-plus-2026-03-15` |
-| `LLM_FALLBACK_MODEL` | 备选模型（留空则不降级） | 空 |
-| `LLM_CIRCUIT_FAILURE_THRESHOLD` | 连续失败多少次熔断 | `3` |
-| `LLM_HEALTH_CHECK_INTERVAL` | 熔断冷却秒数 | `60` |
-| `EMBEDDING_MODEL` | 嵌入模型 | `text-embedding-v4` |
-| `CHUNK_SIZE` / `CHUNK_OVERLAP` | 普通段落目标大小 / 超长块内部重叠 | `1000` / `200` |
-| `LAYOUT_CHUNK_MAX_CHARS` | 表格、公式等原子版面块的二次切分上限 | `1800` |
-| `PDF_MAX_PARALLEL_DOCUMENTS` | 同批上传最大并行解析文档数（1~8） | `2` |
-| `DOCSTORE_DIR` | 原图本地存储目录（不进入向量库） | `./data/docstore` |
-| `IMAGE_SUMMARY_ENABLED` | 入库时是否调用全模态模型生成图片摘要 | `true` |
-| `IMAGE_SUMMARY_MAX_WORKERS` | 全局图片摘要并发请求数（1~8） | `4` |
-| `EMBEDDING_MAX_PARALLEL_BATCHES` | 全局 Embedding 并发批数（1~8） | `4` |
-| `DOCUMENT_SUMMARY_MAX_WORKERS` | 全局文档中文摘要并发请求数（1~8） | `4` |
-| `IMAGE_MAX_PER_ANSWER` | 单次回答最多携带的已命中图片数 | `3` |
-| `IMAGE_MAX_BYTES` | 单张允许 Base64 发送的最大原图字节数 | `4194304` |
-| `RETRIEVAL_TOP_K` | 检索返回片段数 | `5` |
-| `RECALL_TOP_K` | 重排前的召回候选数 | `20` |
-| `RERANK_ENABLED` | 是否启用重排 | `true` |
-| `RERANK_MODEL` | 重排模型（DashScope） | `gte-rerank-v2` |
-| `RERANK_TOP_N` | 重排后保留片段数 | `5` |
-| `CONTEXT_COMPRESSION_ENABLED` | 是否启用上下文压缩 | `true` |
-| `CONTEXT_MAX_CHARS` | 送入 Prompt 的上下文字数上限 | `4000` |
-| `MEMORY_MAX_TURNS` | 记忆保留轮数 | `30` |
-| `MEMORY_RELEVANCE_THRESHOLD` | 记忆相关性阈值 | `0.3` |
-| `ACADEMIC_SEARCH_ENABLED` | 是否显示并允许使用 GS检索 | `true` |
-| `ACADEMIC_SEARCH_PROVIDER` | `auto` / `semantic_scholar` / `openalex` / `crossref` | `auto` |
-| `ACADEMIC_SEARCH_TOP_K` | 重排后送入 LLM 的外部论文摘要数 | `5` |
-| `ACADEMIC_SEARCH_CANDIDATE_K` | 每个学术索引的候选召回数 | `15` |
-| `SEMANTIC_SCHOLAR_API_KEY` | Semantic Scholar Key（可选，可提高限流稳定性） | 空 |
-| `OPENALEX_API_KEY` | OpenAlex 免费 API Key（选择/融合 OpenAlex 时需要） | 空 |
-| `CROSSREF_MAILTO` | Crossref polite pool 联系邮箱（建议） | 空 |
-| `LONG_TERM_MEMORY_ENABLED` | 启用跨会话语义/情景记忆 | `true` |
-| `LONG_TERM_MEMORY_TOP_K` | 单轮最多召回长期记忆数 | `6` |
-| `LONG_TERM_MEMORY_MIN_IMPORTANCE` | 候选写入最低重要度 | `0.45` |
-| `LONG_TERM_MEMORY_MIN_CONFIDENCE` | 候选写入最低置信度 | `0.70` |
-| `LONG_TERM_MEMORY_DUPLICATE_THRESHOLD` | 重复记忆合并阈值 | `0.92` |
-| `SEMANTIC_MEMORY_HALF_LIFE_DAYS` | 语义记忆权重半衰期（天） | `180` |
-| `EPISODIC_MEMORY_HALF_LIFE_DAYS` | 情景记忆权重半衰期（天） | `45` |
-| `MULTI_AGENT_ENABLED` | 启用受控 multi-agent | `true` |
-| `MULTI_AGENT_MAX_SUBQUERIES` | 最大检索子查询数（1~3） | `3` |
-| `MULTI_AGENT_MAX_WORKERS` | 并行检索线程数 | `3` |
-| `MULTI_AGENT_RETRIEVAL_TIMEOUT` | 并行检索等待上限（秒） | `30` |
-| `MULTI_AGENT_EVIDENCE_REVIEW` | 检查证据能否直接回答原问题 | `true` |
-| `MULTI_AGENT_ANSWER_REVIEW` | 检查问题对齐并基于证据审校草稿 | `true` |
-| `REFMIND_PLUGIN_MODULES` | 逗号分隔的插件模块 | 空 |
-| `REFMIND_MCP_SERVERS` | MCP 服务 JSON 数组 | 空 |
-
-其余配置见 `.env.example`。
-
-## 说明
-
-- 对话与嵌入都依赖有效的 `DASHSCOPE_API_KEY`。
-- BM25 是内存索引，文档增删后会自动重建。
-- 数据默认放在 `./data/`（已在 `.gitignore` 忽略）。
-- 图片不会写入 Chroma：Chroma 仅保存结构化摘要、页码和 docstore 路径；生成阶段会再次校验路径位于 `DOCSTORE_DIR`，并且只加载被当前检索命中的图片。
-- 单 GPU 本地运行 MinerU 时，解析并发建议先设为 `2` 或 `3`；更高数值可能因模型重复加载与显存争用反而变慢。
-
-## 测试与探测
-
-```bash
-# 全部离线回归测试（不调用真实模型或 MCP 服务）
-python -m unittest discover -s tests -v
-
-# 探测 .env 中声明的 MCP 服务能力
-python scripts/probe_mcp.py
-
-# 调用已确认安全的 MCP 工具
-python scripts/probe_mcp.py --server papers --tool search --arguments '{"query":"RAG"}'
+```powershell
+npm --prefix frontend ci
+npm --prefix frontend run build
+.\.venv\Scripts\python.exe -m refmind.web.manage create-user admin --admin
+.\scripts\start_research.ps1
 ```
 
-端到端模型与向量库烟测仍使用 `python scripts/smoke_test.py`；它需要有效 API Key 和
-`data/sample_paper.pdf`，不属于离线测试。
+打开 **http://127.0.0.1:8000**。账号密码通过命令行交互输入，没有默认密码。API 文档在 `/docs`，健康检查在 `/api/health`。
 
-## 界面预览
+首次使用可创建私有文献库并上传 PDF；解析与嵌入完成后，在文献详情发起研读。任务状态可在任务中心查看。
 
-| 对话问答 | 设置页 |
-|----------|--------|
-| ![主界面](./pictures/主界面.png) | ![设置界面](./pictures/设置界面.png) |
+若需要开发前端，可另开终端运行 `npm --prefix frontend run dev`；Vite通过代理访问本机8000端口的API。只启动一个API进程，不使用多个worker共享写入同一数据库。详细启动和内网配置见 [运行指南](docs/research-workspace.md)。
+
+## 科研证据流程
+
+```mermaid
+flowchart LR
+    A[本地 PDF 或用户选定的公开全文] --> B[核验文件与版本]
+    B --> C[结构解析与保真切分]
+    C --> D[索引与授权范围]
+    D --> E[关键词与向量混合召回]
+    E --> F[重排与完整证据装配]
+    F --> G[可回答性审核]
+    G --> H[生成与答案审校]
+    H --> I[引用检查与原文定位]
+```
+
+- **结构与来源**：优先MinerU解析，失败时可回退PyMuPDF；保留章节、物理页码、表格、公式、图像和位置。原始证据与检索表示分别保留。
+- **检索范围**：检索使用选定且就绪的授权文献；生成前再次检查权限、就绪状态和已登记的索引版本/文件指纹。历史记录缺少可信版本时，需要核对来源后显式重建。
+- **回答边界**：只有摘要时只回答摘要支持的内容；证据不足、范围受限、系统错误分别记录。图片派生描述不能代替原图成为精确数值的唯一依据。
+- **可追溯性**：保存召回、重排、装包、实际生成上下文和引用信息。界面中的处理过程是诊断记录，不是答案可信度百分比。
+- **可选增强**：多角度检索与抽取式证据压缩通过独立开关启用，默认关闭。压缩保留原文精确片段及省略边界，表格/公式等结构内容保持完整；异常时保留完整证据。机制测试不等于科研正确性验证。
+
+参阅 [架构说明](docs/architecture.md)、[解析约定](docs/parsing-policy.md)、[切分约定](docs/chunking-policy.md) 与 [抽取式证据视图](docs/extractive-evidence-views.md)。
+
+## 外部论文发现与全文研读
+
+默认研读使用本地论文库，外部检索由用户主动提交。适配器支持Semantic Scholar、OpenAlex和Crossref，显示分源状态和部分成功结果。
+
+1. 搜索关键词、完整题名或DOI，按年份、类型、来源和公开全文候选筛选；没有摘要的题录也保留。
+2. 选择论文后，可以使用摘要回答，或明确点击获取公开全文。勾选论文不会自动下载。
+3. 下载、文件身份核验、解析、索引分别显示状态。身份冲突阻止进入回答；部分解析需要用户确认可用范围。
+4. 全文首先进入发起用户的私有会话，默认保留7天。只有显式选择目标文献库并具有编辑权限时才入库。
+5. 相同文件重复入库复用已有文档，不同版本分别保留。资料到期后，历史回答保留最小引用快照，原文不可用时明确提示。
+
+日期排序等仅作用于已取回候选的操作，会标明“当前结果”。外部服务失败不会静默换成另一组论文回答。供应商可用性和限流与算法质量分别记录。
+
+## 配置与费用
+
+`.env.example` 是完整配置模板，密钥只放在本机 `.env`。
+
+| 配置 | 用途 |
+|---|---|
+| `CHAT_PROVIDER` / `EMBEDDING_PROVIDER` / `VISION_PROVIDER` | 分别选择 `openai` 或 `dashscope` |
+| `OPENAI_API_KEY` / `DASHSCOPE_API_KEY` | 所选供应商的本机凭证 |
+| `USE_FALLBACK_PARSER` | 强制使用PyMuPDF；未安装或无法运行MinerU时也有回退路径 |
+| `CHUNK_SIZE` / `CHUNK_OVERLAP` | 普通文本切分目标和重叠；表格、公式遵循结构规则 |
+| `ACADEMIC_SEARCH_ENABLED` | 是否允许用户主动发起外检，不代表自动联网 |
+| `RESEARCH_MULTI_QUERY_ENABLED` | 科研路径的多角度检索，默认 `false` |
+| `RESEARCH_EXTRACTIVE_COMPRESSION_ENABLED` | 抽取式证据压缩，默认 `false` |
+| `DATABASE_PATH` / `UPLOAD_DIR` / `PARSED_DIR` / `CHROMA_PERSIST_DIR` | 数据库、原文、解析产物和索引位置 |
+
+上传解析、嵌入、生成及审核可能产生供应商费用。OpenAI沿用应用费用账本，默认每日2美元、累计10美元；失败但实际用量未知的预占不自动释放。账本是应用估算，不能替代供应商账单。DashScope结果与OpenAI分开记录。不同嵌入供应商使用独立索引，不自动迁移或混用。
+
+## 账号、维护与恢复
+
+私有库仅所有者可访问；共享库区分所有者、编辑与只读成员。管理员身份不自动取得他人私有资料。API、Streamlit及离线维护使用写入锁，不能同时写入相同运行数据。
+
+旧库归属需管理员显式登记。历史索引重建可在文献详情申请，申请只保存任务，不会在线自动重建。管理员停止写入服务、完成备份并独立核对原文指纹后执行；成功保留原文献ID与历史引用，失败时暂停该文献新问答并允许显式重试。
+
+旧界面的本机回退命令为：
+
+```powershell
+.\.venv\Scripts\python.exe -m streamlit run app.py --server.address 127.0.0.1
+```
+
+已有团队账号的数据库默认禁止旧界面直接启动，回退操作与 `REFMIND_LEGACY_ADMIN_MODE` 的限制见 [运行指南](docs/research-workspace.md)。当前Dockerfile仍面向旧Streamlit入口，不等同于新版工作台部署。
+
+备份、验证恢复、旧库认领及逐篇维护命令统一见 [运行指南](docs/research-workspace.md)。普通恢复先提取到独立目录；不会覆盖已有数据或费用账本。
+
+## 开发验证与科研验收
+
+```powershell
+# 离线工程回归：使用隔离环境与测试替身，不是付费科研测评
+.\.venv\Scripts\python.exe -B -m unittest discover -s tests -v
+npm --prefix frontend test
+npm --prefix frontend run build
+```
+
+科研测评分为四条独立轨道，分别报告，不合成一个总分：
+
+| 轨道 | 目标 | 当前草案库存 | 正式人工批准 |
+|---|---:|---:|---:|
+| 科研问答 | 600题 | 284题 | 0 |
+| 外部论文检索 | 120项 | 72项 | 0 |
+| 四轮对话 | 30组 | 4组 | 0 |
+| 结构解析 | 120页 | 2页局部标注 | 0 |
+
+以上为2026-11-06的建设库存，不是验收通过数量。按领域配额和历史暴露情况扣除后，主问答候选上限为214题；仍需满足任务、语言、家族多样性与人工复核要求。旧100题文件及70/30归属保留，已暴露的旧保留题只能历史回归，不能充当新的独立盲验。
+
+分阶段验证覆盖数据规范、冻结基线、解析/切分、召回/重排、上下文、生成/拒答/引用、外检、全文、多模态/多轮及独立试运行。模型评分仅辅助筛查，正式科研正确性以原文和真实人工审定为准。500篇论文与3–5人并发容量也需实测，不能用编译或单元测试通过替代。
+
+详见 [测评说明](evaluation/README.md) 和 [阶段进度](docs/staged-acceptance-progress.md)。运行报告、冻结快照和人工复核工作包保存在本地；干净克隆不包含这些运行产物，也不包含原始论文、向量库或费用账本。
+
+## 目录
+
+```text
+frontend/                  Vue工作台、PDF阅读器与处理过程展示
+refmind/web/               FastAPI、账号权限、任务与离线管理
+refmind/services/          入库、论文发现、全文与历史索引重建
+refmind/rag/               检索、证据组织、生成与审核
+refmind/parsing/           PDF结构解析、坐标和图片资产
+refmind/storage/           SQLite、版本身份与运行锁
+refmind/llm/               供应商适配、调用与费用记录
+evaluation/                数据规范、指标、执行与人工审定工具
+tests/                     离线工程测试
+scripts/                   启动、诊断和测评辅助脚本
+docs/                      架构、运行与验收说明
+app.py                     旧Streamlit兼容入口
+```
+
+插件和可选MCP扩展见 [插件说明](docs/plugins-and-mcp.md)，相关依赖按需安装 `requirements-mcp.txt`。

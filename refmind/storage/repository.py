@@ -91,6 +91,8 @@ def update_document(
     summary: str | None = None,
     num_chunks: int | None = None,
     status: str | None = None,
+    index_version: str | None = None,
+    file_sha256: str | None = None,
 ) -> None:
     """更新文档字段（仅更新非 None 的字段）。"""
     fields, values = [], []
@@ -112,6 +114,12 @@ def update_document(
     if status is not None:
         fields.append("status = ?")
         values.append(status)
+    if index_version is not None:
+        fields.append("index_version = ?")
+        values.append(index_version)
+    if file_sha256 is not None:
+        fields.append("file_sha256 = ?")
+        values.append(file_sha256)
     if not fields:
         return
     values.append(doc_id)

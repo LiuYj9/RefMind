@@ -29,3 +29,13 @@ Thumbs.db
 .vscode/
 
 evaluation/workspaces/
+
+# Independent web frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.writer.lock
+
+# Local evaluation run snapshots and assigned review work packets
+evaluation/candidate_freeze*.json
+evaluation/review_packets/

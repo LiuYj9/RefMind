@@ -1,0 +1,843 @@
+{
+  "schema_version": 3,
+  "kind": "public_source_candidates",
+  "collected_at": "2026-11-05T14:35:46.042376+00:00",
+  "qasper_source": "https://qasper-dataset.s3.us-west-2.amazonaws.com/qasper-train-dev-v0.3.tgz",
+  "qasper_archive_sha256": "a28fdf966db827bcee3d873107d6b6669864fb7ca8fbf73a192f5e39191bdb5a",
+  "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+  "family_independence": "pending_human_review",
+  "candidates": [
+    {
+      "candidate_id": "arxiv:1601.00901",
+      "family_candidate": "arxiv:1601.00901",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "dev",
+      "title": "Joint learning of ontology and semantic parser from text",
+      "source_url": "https://arxiv.org/abs/1601.00901",
+      "public_pdf_url": "https://arxiv.org/pdf/1601.00901",
+      "version": "1601.00901v1",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review",
+      "file_sha256": "3d95063ad147f8793ed5f49c146b2be3ba7f284fc737a945f440ff2760aa9316",
+      "local_path": "evaluation/workspaces/public-source-v3/pdfs/1601.00901.pdf",
+      "matched_draft_questions": 2
+    },
+    {
+      "candidate_id": "arxiv:1601.01705",
+      "family_candidate": "arxiv:1601.01705",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "dev",
+      "title": "Learning to Compose Neural Networks for Question Answering",
+      "source_url": "https://arxiv.org/abs/1601.01705",
+      "public_pdf_url": "https://arxiv.org/pdf/1601.01705",
+      "version": "1601.01705v4",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review",
+      "file_sha256": "eea0ca8433a1bb118f8a2fe87c159750b5ecca88e7dd2c00fc18a6152848d288",
+      "local_path": "evaluation/workspaces/public-source-v3/pdfs/1601.01705.pdf",
+      "matched_draft_questions": 1
+    },
+    {
+      "candidate_id": "arxiv:1601.02166",
+      "family_candidate": "arxiv:1601.02166",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "dev",
+      "title": "Empirical Gaussian priors for cross-lingual transfer learning",
+      "source_url": "https://arxiv.org/abs/1601.02166",
+      "public_pdf_url": "https://arxiv.org/pdf/1601.02166",
+      "version": "not_yet_pinned",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review"
+    },
+    {
+      "candidate_id": "arxiv:1601.02543",
+      "family_candidate": "arxiv:1601.02543",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "dev",
+      "title": "Evaluating the Performance of a Speech Recognition based System",
+      "source_url": "https://arxiv.org/abs/1601.02543",
+      "public_pdf_url": "https://arxiv.org/pdf/1601.02543",
+      "version": "1601.02543v1",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review",
+      "file_sha256": "c233bfa49b82cc284bf6c47ffacfc03274f29b3eaf30d25babe66687879ae024",
+      "local_path": "evaluation/workspaces/public-source-v3/pdfs/1601.02543.pdf",
+      "matched_draft_questions": 1
+    },
+    {
+      "candidate_id": "arxiv:1601.04012",
+      "family_candidate": "arxiv:1601.04012",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "dev",
+      "title": "Detecting and Extracting Events from Text Documents",
+      "source_url": "https://arxiv.org/abs/1601.04012",
+      "public_pdf_url": "https://arxiv.org/pdf/1601.04012",
+      "version": "1601.04012v1",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review",
+      "file_sha256": "64e7ad46dbc832fd3ded82eb43b3e2b4f06895bd4cd70a00f9991505b88dd88d",
+      "local_path": "evaluation/workspaces/public-source-v3/pdfs/1601.04012.pdf",
+      "matched_draft_questions": 1
+    },
+    {
+      "candidate_id": "arxiv:1601.06068",
+      "family_candidate": "arxiv:1601.06068",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "dev",
+      "title": "Paraphrase Generation from Latent-Variable PCFGs for Semantic Parsing",
+      "source_url": "https://arxiv.org/abs/1601.06068",
+      "public_pdf_url": "https://arxiv.org/pdf/1601.06068",
+      "version": "1601.06068v2",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review",
+      "file_sha256": "3444762771ba7640f84a0922ad053574bfd96886543308c46affc697f0de346f",
+      "local_path": "evaluation/workspaces/public-source-v3/pdfs/1601.06068.pdf",
+      "matched_draft_questions": 3
+    },
+    {
+      "candidate_id": "arxiv:1601.06081",
+      "family_candidate": "arxiv:1601.06081",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "dev",
+      "title": "Why Do Urban Legends Go Viral?",
+      "source_url": "https://arxiv.org/abs/1601.06081",
+      "public_pdf_url": "https://arxiv.org/pdf/1601.06081",
+      "version": "not_yet_pinned",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review"
+    },
+    {
+      "candidate_id": "arxiv:1601.06738",
+      "family_candidate": "arxiv:1601.06738",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "dev",
+      "title": "A Label Semantics Approach to Linguistic Hedges",
+      "source_url": "https://arxiv.org/abs/1601.06738",
+      "public_pdf_url": "https://arxiv.org/pdf/1601.06738",
+      "version": "not_yet_pinned",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review"
+    },
+    {
+      "candidate_id": "arxiv:1602.00812",
+      "family_candidate": "arxiv:1602.00812",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "dev",
+      "title": "The Grail theorem prover: Type theory for syntax and semantics",
+      "source_url": "https://arxiv.org/abs/1602.00812",
+      "public_pdf_url": "https://arxiv.org/pdf/1602.00812",
+      "version": "1602.00812v2",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review",
+      "file_sha256": "b81ea822f6717b10687b4d0c0cb028e2efcdaf0764354159100dbe02219d0364",
+      "local_path": "evaluation/workspaces/public-source-v3/pdfs/1602.00812.pdf",
+      "matched_draft_questions": 2
+    },
+    {
+      "candidate_id": "arxiv:1602.01208",
+      "family_candidate": "arxiv:1602.01208",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "dev",
+      "title": "Spatial Concept Acquisition for a Mobile Robot that Integrates Self-Localization and Unsupervised Word Discovery from Spoken Sentences",
+      "source_url": "https://arxiv.org/abs/1602.01208",
+      "public_pdf_url": "https://arxiv.org/pdf/1602.01208",
+      "version": "1602.01208v3",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review",
+      "file_sha256": "ee38c0004251adcfe7b76d30e9b0186efa835c7525e7368cf0ac863f9c97e4cb",
+      "local_path": "evaluation/workspaces/public-source-v3/pdfs/1602.01208.pdf",
+      "matched_draft_questions": 4
+    },
+    {
+      "candidate_id": "arxiv:1602.01595",
+      "family_candidate": "arxiv:1602.01595",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "dev",
+      "title": "Many Languages, One Parser",
+      "source_url": "https://arxiv.org/abs/1602.01595",
+      "public_pdf_url": "https://arxiv.org/pdf/1602.01595",
+      "version": "1602.01595v4",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review",
+      "file_sha256": "c084a246414ee2921c21066ef78bbf8b2bd0d59066051f7ae3267307e6dc2423",
+      "local_path": "evaluation/workspaces/public-source-v3/pdfs/1602.01595.pdf",
+      "matched_draft_questions": 1
+    },
+    {
+      "candidate_id": "arxiv:1602.03661",
+      "family_candidate": "arxiv:1602.03661",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "dev",
+      "title": "On the emergence of syntactic structures: quantifying and modelling duality of patterning",
+      "source_url": "https://arxiv.org/abs/1602.03661",
+      "public_pdf_url": "https://arxiv.org/pdf/1602.03661",
+      "version": "1602.03661v1",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review",
+      "file_sha256": "2247ed68c0de712a870065bed992264217da0cb3da9c88b8ae4b2c4d6227d262",
+      "local_path": "evaluation/workspaces/public-source-v3/pdfs/1602.03661.pdf",
+      "matched_draft_questions": 1
+    },
+    {
+      "candidate_id": "arxiv:1602.06291",
+      "family_candidate": "arxiv:1602.06291",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "id_holdout",
+      "title": "Contextual LSTM (CLSTM) models for Large scale NLP tasks",
+      "source_url": "https://arxiv.org/abs/1602.06291",
+      "public_pdf_url": "https://arxiv.org/pdf/1602.06291",
+      "version": "not_yet_pinned",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review"
+    },
+    {
+      "candidate_id": "arxiv:1602.07618",
+      "family_candidate": "arxiv:1602.07618",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "id_holdout",
+      "title": "From quantum foundations via natural language meaning to a theory of everything",
+      "source_url": "https://arxiv.org/abs/1602.07618",
+      "public_pdf_url": "https://arxiv.org/pdf/1602.07618",
+      "version": "not_yet_pinned",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review"
+    },
+    {
+      "candidate_id": "arxiv:1602.08741",
+      "family_candidate": "arxiv:1602.08741",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "id_holdout",
+      "title": "Gibberish Semantics: How Good is Russian Twitter in Word Semantic Similarity Task?",
+      "source_url": "https://arxiv.org/abs/1602.08741",
+      "public_pdf_url": "https://arxiv.org/pdf/1602.08741",
+      "version": "not_yet_pinned",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review"
+    },
+    {
+      "candidate_id": "arxiv:1603.00968",
+      "family_candidate": "arxiv:1603.00968",
+      "domain": "computer_science_ml",
+      "proposed_question_split": "id_holdout",
+      "title": "MGNC-CNN: A Simple Approach to Exploiting Multiple Word Embeddings for Sentence Classification",
+      "source_url": "https://arxiv.org/abs/1603.00968",
+      "public_pdf_url": "https://arxiv.org/pdf/1603.00968",
+      "version": "not_yet_pinned",
+      "qa_dataset": "QASPER v0.3 train",
+      "qa_license": "https://creativecommons.org/licenses/by/4.0/",
+      "pdf_license": "check_individual_arxiv_record",
+      "annotation_status": "metadata_checked_candidate_pending_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.supcon.2025.100173",
+      "family_candidate": "doi:10.1016/j.supcon.2025.100173",
+      "doi": "10.1016/j.supcon.2025.100173",
+      "title": "Advanced intelligent quench diagnostics for high temperature superconducting coils based on principal component analysis of voltage harmonic ratios and Support Vector Machine",
+      "domain": "superconductivity_physics",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1016/j.supcon.2025.100173",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "2a553008ee82838f9f23586e9a5d041d88c2e8e6ee622b83a9685ee0999d142b",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.supcon.2024.100140",
+      "family_candidate": "doi:10.1016/j.supcon.2024.100140",
+      "doi": "10.1016/j.supcon.2024.100140",
+      "title": "Quench behaviors of parallel-wound no-insulation high temperature superconductor coils",
+      "domain": "superconductivity_physics",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1016/j.supcon.2024.100140",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "522b2b596c7021bbc4bc3ea7450739715367bc4019e4bb60bf20bc0c1eb81342",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.supcon.2023.100044",
+      "family_candidate": "doi:10.1016/j.supcon.2023.100044",
+      "doi": "10.1016/j.supcon.2023.100044",
+      "title": "AC loss mitigation for high temperature superconducting coils in wireless power transfer",
+      "domain": "superconductivity_physics",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1016/j.supcon.2023.100044",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by-nc-nd/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "452185f84b9077c0750219fb8d22eb904925214109a2f6ebf8de9a55684e90a1",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.phpro.2014.09.071",
+      "family_candidate": "doi:10.1016/j.phpro.2014.09.071",
+      "doi": "10.1016/j.phpro.2014.09.071",
+      "title": "Quench Detection and Protection for High Temperature Superconducting Transformers by Using the Active Power Method",
+      "domain": "superconductivity_physics",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1016/j.phpro.2014.09.071",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by-nc-nd/3.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "4068e64bb130fc3fb77587d28d7c28dd59339a4ad546349f4310545186c73bf2",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1088/1361-6668/ae2362",
+      "family_candidate": "doi:10.1088/1361-6668/ae2362",
+      "doi": "10.1088/1361-6668/ae2362",
+      "title": "Robotic winding of non-planar high-temperature superconducting coils",
+      "domain": "superconductivity_physics",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1088/1361-6668/ae2362",
+      "public_pdf_urls": [
+        "https://iopscience.iop.org/article/10.1088/1361-6668/ae2362/pdf",
+        "https://iopscience.iop.org/article/10.1088/1361-6668/ae2362/pdf",
+        "https://iopscience.iop.org/article/10.1088/1361-6668/ae2362/pdf",
+        "https://iopscience.iop.org/article/10.1088/1361-6668/ae2362/pdf",
+        "https://iopscience.iop.org/article/10.1088/1361-6668/ae2362/pdf",
+        "https://iopscience.iop.org/article/10.1088/1361-6668/ae2362/pdf"
+      ],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "63daf8ad9a3b052f126ff04e48972e270e679a6d9f62630637d512dc27a2fd50",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1038/s41598-021-87437-y",
+      "family_candidate": "doi:10.1038/s41598-021-87437-y",
+      "doi": "10.1038/s41598-021-87437-y",
+      "title": "Publisher Correction: Prototype REBCO Z1 and Z2 shim coils for ultra high-field high-temperature superconducting NMR magnets",
+      "domain": "superconductivity_physics",
+      "proposed_question_split": "id_holdout",
+      "source_url": "https://doi.org/10.1038/s41598-021-87437-y",
+      "public_pdf_urls": [
+        "https://www.nature.com/articles/s41598-021-87437-y.pdf",
+        "https://www.nature.com/articles/s41598-021-87437-y.pdf"
+      ],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0",
+        "https://creativecommons.org/licenses/by/4.0"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "aa41a070c7cdbc8c71c18f75f2c9f7ca987f45d30b051329cbd2de69bf038ee9",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1002/aenm.202300973",
+      "family_candidate": "doi:10.1002/aenm.202300973",
+      "doi": "10.1002/aenm.202300973",
+      "title": "Insights into Influencing Electrode Calendering on the Battery Performance",
+      "domain": "materials_energy",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1002/aenm.202300973",
+      "public_pdf_urls": [
+        "https://advanced.onlinelibrary.wiley.com/doi/pdf/10.1002/aenm.202300973"
+      ],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by-nc-nd/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "2b9a73161de70f00427771b6d2eff0c389640a296dec79eb323a32d3b075faa4",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.ensm.2026.105437",
+      "family_candidate": "doi:10.1016/j.ensm.2026.105437",
+      "doi": "10.1016/j.ensm.2026.105437",
+      "title": "Machine learning surrogate modeling of materials extrusion for lithium-ion battery electrode dry manufacturing",
+      "domain": "materials_energy",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1016/j.ensm.2026.105437",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "8ad2f11f35af41c5aa64113cebe53a8f2a50284bebb96a34cf12d28aca85b757",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1002/cey2.19",
+      "family_candidate": "doi:10.1002/cey2.19",
+      "doi": "10.1002/cey2.19",
+      "title": "Carbon materials from melamine sponges for supercapacitors and lithium battery electrode materials: A review",
+      "domain": "materials_energy",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1002/cey2.19",
+      "public_pdf_urls": [
+        "https://onlinelibrary.wiley.com/doi/pdf/10.1002/cey2.19"
+      ],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "19aac078d857df97158af2996c9202523555b93d5f91ce83835e515a8b013cfc",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.matre.2021.01.003",
+      "family_candidate": "doi:10.1016/j.matre.2021.01.003",
+      "doi": "10.1016/j.matre.2021.01.003",
+      "title": "Organic electrode materials for fast-rate, high-power battery applications",
+      "domain": "materials_energy",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1016/j.matre.2021.01.003",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "1822137cd8a8d3d4b76d116f02d459fa7c89a631dff12e5488cc8edce1ba42bf",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.matre.2023.100213",
+      "family_candidate": "doi:10.1016/j.matre.2023.100213",
+      "doi": "10.1016/j.matre.2023.100213",
+      "title": "Computational design of promising 2D electrode materials for Li-ion and Li–S battery applications",
+      "domain": "materials_energy",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1016/j.matre.2023.100213",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by-nc-nd/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "c3f1539a2cb99b4618f94002c273b30e3e92aed33a5dd87bea70f823395f4b51",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.3389/fenrg.2018.00076",
+      "family_candidate": "doi:10.3389/fenrg.2018.00076",
+      "doi": "10.3389/fenrg.2018.00076",
+      "title": "A Cylindrical Cell for Operando Neutron Diffraction of Li-Ion Battery Electrode Materials",
+      "domain": "materials_energy",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.3389/fenrg.2018.00076",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "9c0fe3d27e4c8de2f99bdb9d1e2eb08b5013916ef2e983f18eb34f68e77cbaa8",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1063/5.0173690",
+      "family_candidate": "doi:10.1063/5.0173690",
+      "doi": "10.1063/5.0173690",
+      "title": "Study on the influence of electrode materials on energy storage power station in lithium battery",
+      "domain": "materials_energy",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1063/5.0173690",
+      "public_pdf_urls": [
+        "https://pubs.aip.org/aip/adv/article-pdf/doi/10.1063/5.0173690/18237229/125105_1_5.0173690.pdf",
+        "https://pubs.aip.org/aip/adv/article-pdf/doi/10.1063/5.0173690/18237229/125105_1_5.0173690.pdf"
+      ],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0/",
+        "https://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "0f15ed0a468c45ecad03ef9b8cfd2ef4378e7c4de2baf558f0712b2d116c4b56",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.3389/fenrg.2021.754317",
+      "family_candidate": "doi:10.3389/fenrg.2021.754317",
+      "doi": "10.3389/fenrg.2021.754317",
+      "title": "Battery Electrode Mass Loading Prognostics and Analysis for Lithium-Ion Battery–Based Energy Storage Systems",
+      "domain": "materials_energy",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.3389/fenrg.2021.754317",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "24d1739c299a051db3ef82d983c7b8763407cccc165b4dd991e5099a2979748d",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.ensm.2024.103818",
+      "family_candidate": "doi:10.1016/j.ensm.2024.103818",
+      "doi": "10.1016/j.ensm.2024.103818",
+      "title": "Carbon-binder-domain porosity extraction through lithium-ion battery electrode impedance data",
+      "domain": "materials_energy",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1016/j.ensm.2024.103818",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "1086b6e6be8e61ec37602df81fc3914d46a68ba70e466953b8b8bc74e9efa385",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1021/acsaem.6c00531",
+      "family_candidate": "doi:10.1021/acsaem.6c00531",
+      "doi": "10.1021/acsaem.6c00531",
+      "title": "Flowability Evaluation for PVDF-Mediated Solvent-Free Li-Ion Battery Electrode Powders",
+      "domain": "materials_energy",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1021/acsaem.6c00531",
+      "public_pdf_urls": [
+        "https://pubs.acs.org/doi/pdf/10.1021/acsaem.6c00531"
+      ],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by-nc-nd/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "a0e563c20d9b7904109050f8d4ba233509e1b9a87a08d637787abe332509cc27",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1002/eem2.12870",
+      "family_candidate": "doi:10.1002/eem2.12870",
+      "doi": "10.1002/eem2.12870",
+      "title": "Electrochemical Precipitation Energy‐Assisted Aqueous Battery with High Voltage and High Electrode Utilization",
+      "domain": "materials_energy",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1002/eem2.12870",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "47649b8176df25e433c573b1b80833f18193a31389034d37d20b5ab857f7e708",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.ensm.2024.103254",
+      "family_candidate": "doi:10.1016/j.ensm.2024.103254",
+      "doi": "10.1016/j.ensm.2024.103254",
+      "title": "VOLTA: A tool for battery screening bridging the gap between virtual electrode materials and practical applications",
+      "domain": "materials_energy",
+      "proposed_question_split": "dev",
+      "source_url": "https://doi.org/10.1016/j.ensm.2024.103254",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "b89acc956221a44922ea52f47b47ae0179d4a8e4ea4ecd295ac304b1157bf552",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1039/d5se01171j",
+      "family_candidate": "doi:10.1039/d5se01171j",
+      "doi": "10.1039/d5se01171j",
+      "title": "Asymmetric electrode configurations enhance operating power density and energy efficiency of an aqueous, electrode-decoupled titanium–cerium redox flow battery",
+      "domain": "materials_energy",
+      "proposed_question_split": "id_holdout",
+      "source_url": "https://doi.org/10.1039/d5se01171j",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by-nc/3.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "3835a5e9953ea1610fe3a57f11ca19eb169c0f9193a25c79c3c5f49cb811bdc9",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.ensm.2021.04.022",
+      "family_candidate": "doi:10.1016/j.ensm.2021.04.022",
+      "doi": "10.1016/j.ensm.2021.04.022",
+      "title": "High-performance Li-air battery after limiting inter-electrode crosstalk",
+      "domain": "materials_energy",
+      "proposed_question_split": "id_holdout",
+      "source_url": "https://doi.org/10.1016/j.ensm.2021.04.022",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "28c819c544feb89bad1ecdbdf210337a192e6190cf6012f463cd4c5ba506e19a",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1002/admi.202500262",
+      "family_candidate": "doi:10.1002/admi.202500262",
+      "doi": "10.1002/admi.202500262",
+      "title": "Influence of Battery Electrode Chemistry on Electrolyte Decomposition",
+      "domain": "materials_energy",
+      "proposed_question_split": "id_holdout",
+      "source_url": "https://doi.org/10.1002/admi.202500262",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "883a935855cc4958e9e38415c3cea55b944ada47769dc870f0f21846283be3f6",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.ensm.2022.10.035",
+      "family_candidate": "doi:10.1016/j.ensm.2022.10.035",
+      "doi": "10.1016/j.ensm.2022.10.035",
+      "title": "An experimentally-validated 3D electrochemical model revealing electrode manufacturing parameters’ effects on battery performance",
+      "domain": "materials_energy",
+      "proposed_question_split": "id_holdout",
+      "source_url": "https://doi.org/10.1016/j.ensm.2022.10.035",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "66ba934a1fe0ad8d20c6744287090502847ee02bea488049f357c9c1b0dfe01f",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1177/1687814020981184",
+      "family_candidate": "doi:10.1177/1687814020981184",
+      "doi": "10.1177/1687814020981184",
+      "title": "Impact of pseudoplaticity and dilatancy of fluid on peristaltic flow and heat transfer: Reiner-Philippoff fluid model",
+      "domain": "mechanical_thermofluids",
+      "proposed_question_split": "ood_holdout",
+      "source_url": "https://doi.org/10.1177/1687814020981184",
+      "public_pdf_urls": [
+        "https://journals.sagepub.com/doi/pdf/10.1177/1687814020981184"
+      ],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "4555729e788264ff2aaf5499ec6433701c0ff7ce4d8594f2c32e320e403da0e1",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/s0142-727x(97)10014-5",
+      "family_candidate": "doi:10.1016/s0142-727x(97)10014-5",
+      "doi": "10.1016/s0142-727x(97)10014-5",
+      "title": "What's new in convective heat transfer?",
+      "domain": "mechanical_thermofluids",
+      "proposed_question_split": "ood_holdout",
+      "source_url": "https://doi.org/10.1016/s0142-727x(97)10014-5",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by-nc-nd/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "d09f580cc197bde1d0b0ce868f52fce61682d33cbf8a7d8f0191d6035187458b",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1177/16878140211040731",
+      "family_candidate": "doi:10.1177/16878140211040731",
+      "doi": "10.1177/16878140211040731",
+      "title": "Fluid flow and convection heat transfer in concentric and eccentric cylindrical annuli of different radii ratios for Taylor-Couette-Poiseuille flow",
+      "domain": "mechanical_thermofluids",
+      "proposed_question_split": "ood_holdout",
+      "source_url": "https://doi.org/10.1177/16878140211040731",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "a3c353dfea0a037c421685ec995ebf8afd44b2a721a4ccbee69fc417779545ba",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.3390/en12163044",
+      "family_candidate": "doi:10.3390/en12163044",
+      "doi": "10.3390/en12163044",
+      "title": "Special Issue “Fluid Flow and Heat Transfer”",
+      "domain": "mechanical_thermofluids",
+      "proposed_question_split": "ood_holdout",
+      "source_url": "https://doi.org/10.3390/en12163044",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "802a1b6a874c5cab2f5e8b0bd203e7620c6e764153c1f11153471f7c8c7fea6d",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1177/16878132231157159",
+      "family_candidate": "doi:10.1177/16878132231157159",
+      "doi": "10.1177/16878132231157159",
+      "title": "Fluid flow and heat transfer characteristics of Williamson fluids flowing in saturated porous media",
+      "domain": "mechanical_thermofluids",
+      "proposed_question_split": "ood_holdout",
+      "source_url": "https://doi.org/10.1177/16878132231157159",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "d1caaeaf1a8f17929ee59574c6545dd11525dbe29cccf8c4dfb39cfc17e7a86f",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1177/16878132241290942",
+      "family_candidate": "doi:10.1177/16878132241290942",
+      "doi": "10.1177/16878132241290942",
+      "title": "Heat transfer characteristics in the squeezing flow of casson fluid between circular plates: A comprehensive study",
+      "domain": "mechanical_thermofluids",
+      "proposed_question_split": "ood_holdout",
+      "source_url": "https://doi.org/10.1177/16878132241290942",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "6c9476a3b3362a4e0ccdcfafd57ec45db52a9bf64add30a2b41a02be3f2ea13c",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.dche.2025.100280",
+      "family_candidate": "doi:10.1016/j.dche.2025.100280",
+      "doi": "10.1016/j.dche.2025.100280",
+      "title": "Early-stage chemical process screening through hybrid modeling: Introduction and case study of a reaction–crystallization process",
+      "domain": "chemical_process",
+      "proposed_question_split": "ood_holdout",
+      "source_url": "https://doi.org/10.1016/j.dche.2025.100280",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by-nc-nd/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "4c28a21044f5ccb416720afc2e96bf1c3f4026b3ae65d8079722c354306df5d7",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.cep.2021.108515",
+      "family_candidate": "doi:10.1016/j.cep.2021.108515",
+      "doi": "10.1016/j.cep.2021.108515",
+      "title": "Analysing separation and reaction stage performance in a reactive cyclic distillation process",
+      "domain": "chemical_process",
+      "proposed_question_split": "ood_holdout",
+      "source_url": "https://doi.org/10.1016/j.cep.2021.108515",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "821705569ac3161063f0bd9e67ad22557b15543001d9c37eccb6f752f8c74509",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.3390/pr10071294",
+      "family_candidate": "doi:10.3390/pr10071294",
+      "doi": "10.3390/pr10071294",
+      "title": "Process Intensification in Chemical Reaction Engineering",
+      "domain": "chemical_process",
+      "proposed_question_split": "ood_holdout",
+      "source_url": "https://doi.org/10.3390/pr10071294",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "0726f480287c6376af2038cd5f0bbb75f584cbe4679d681c5ff933f8b0ea6431",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.3390/pr10010099",
+      "family_candidate": "doi:10.3390/pr10010099",
+      "doi": "10.3390/pr10010099",
+      "title": "Process Intensification in Chemical Reaction Engineering",
+      "domain": "chemical_process",
+      "proposed_question_split": "ood_holdout",
+      "source_url": "https://doi.org/10.3390/pr10010099",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "027839c1cd33de8142e874af702229331dc1676823ae8aa55817b4057fb506a0",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.1016/j.cep.2021.108475",
+      "family_candidate": "doi:10.1016/j.cep.2021.108475",
+      "doi": "10.1016/j.cep.2021.108475",
+      "title": "Lipase catalyzed solvent free synthesis of monoacylglycerols in various reaction systems and coupling reaction with pervaporation for in situ water removal",
+      "domain": "chemical_process",
+      "proposed_question_split": "ood_holdout",
+      "source_url": "https://doi.org/10.1016/j.cep.2021.108475",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "http://creativecommons.org/licenses/by-nc-nd/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "650ffe2e5e4f9cbb20699d444f6c1e882b403f21ee0493975170b64f7e922541",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    },
+    {
+      "candidate_id": "doi:10.3389/fceng.2024.1480523",
+      "family_candidate": "doi:10.3389/fceng.2024.1480523",
+      "doi": "10.3389/fceng.2024.1480523",
+      "title": "Chemical reaction engineering of nutritional phenomena in the human body",
+      "domain": "chemical_process",
+      "proposed_question_split": "ood_holdout",
+      "source_url": "https://doi.org/10.3389/fceng.2024.1480523",
+      "public_pdf_urls": [],
+      "license_urls": [
+        "https://creativecommons.org/licenses/by/4.0/"
+      ],
+      "version": "publisher_metadata_version_unverified",
+      "record_sha256": "3e7d2e496b143813dac53852acb9fe9faf9f3aae6a449801f1dcec5af3fdce58",
+      "annotation_status": "metadata_checked_candidate_pending_domain_family_review"
+    }
+  ],
+  "download_or_match_failures": [
+    {
+      "candidate_id": "arxiv:1601.02166",
+      "reason": "no_annotated_evidence_exactly_matched_downloaded_version"
+    },
+    {
+      "candidate_id": "arxiv:1601.06081",
+      "reason": "no_annotated_evidence_exactly_matched_downloaded_version"
+    },
+    {
+      "candidate_id": "arxiv:1601.06738",
+      "reason": "no_annotated_evidence_exactly_matched_downloaded_version"
+    }
+  ]
+}

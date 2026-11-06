@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS documents (
     summary           TEXT,
     num_chunks        INTEGER DEFAULT 0,
     status            TEXT DEFAULT 'pending',
+    index_version     TEXT,
+    file_sha256       TEXT,
     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(group_id) REFERENCES groups(id) ON DELETE CASCADE
 );
@@ -106,6 +108,8 @@ class DocumentRow:
     num_chunks: int
     status: str
     created_at: str
+    index_version: Optional[str] = None
+    file_sha256: Optional[str] = None
 
 
 @dataclass

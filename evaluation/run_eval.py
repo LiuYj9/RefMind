@@ -18,8 +18,10 @@ from zoneinfo import ZoneInfo
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
-from evaluation.dataset import load_golden_set
+from evaluation.dataset import load_golden_set, verify_corpus
 from evaluation.evaluator import evaluate_items
+from evaluation.runtime import parse_overrides,validate_overrides
+from evaluation.fingerprints import implementation_hashes
 
 
 def _workspace(path: Path, *, create: bool) -> Path:
@@ -36,7 +38,7 @@ def _workspace(path: Path, *, create: bool) -> Path:
     return path
 
 
-def worker_environment(workspace: Path) -> dict:
+def worker_environment(workspace: Path, overrides=None) -> dict:
     env = os.environ.copy()
     for key, relative in {"DATABASE_PATH": "db/evaluation.db", "UPLOAD_DIR": "uploads",
                           "PARSED_DIR": "parsed", "DOCSTORE_DIR": "docstore",
@@ -46,6 +48,7 @@ def worker_environment(workspace: Path) -> dict:
                LONG_TERM_MEMORY_ENABLED="false", ACADEMIC_SEARCH_ENABLED="false",
                REFMIND_PLUGIN_MODULES="", REFMIND_MCP_SERVERS="[]",
                PYTHONIOENCODING="utf-8", PYTHONDONTWRITEBYTECODE="1")
+    env.update(validate_overrides(overrides or {}))
     return env
 
 
@@ -57,8 +60,8 @@ def run_backend(request: dict, workspace: Path) -> dict:
         try:
             proc = subprocess.run([sys.executable, "-B", "-m", "evaluation.worker"],
                                   input=json.dumps(request), text=True, encoding="utf-8",
-                                  cwd=PROJECT_ROOT, env=worker_environment(workspace),
-                                  capture_output=True, timeout=1800)
+                                  cwd=PROJECT_ROOT, env=worker_environment(workspace,request.get("runtime_overrides")),
+                                  capture_output=True, timeout=int(os.getenv("REFMIND_EVAL_TIMEOUT_SECONDS", "1800")))
         except subprocess.TimeoutExpired:
             return {"schema_version": 2, "mode": request["mode"], "status": "failed",
                     "error": {"type": "TimeoutExpired", "message": "isolated worker exceeded 1800 seconds"}}
@@ -76,7 +79,7 @@ def run_backend(request: dict, workspace: Path) -> dict:
         return report
 
 
-def offline_bm25(golden, k_values):
+def offline_bm25(golden, k_values, *, allow_draft=False):
     """Diagnostic page-level lexical baseline, explicitly NOT production hybrid RAG."""
     import fitz
     import jieba
@@ -89,23 +92,29 @@ def offline_bm25(golden, k_values):
             if t and not all(unicodedata.category(c).startswith("P") for c in t):
                 result.append(t.casefold())
         return result
-    splits = {i.split for i in golden.items}
     docs = []
-    for source in golden.manifest:
-        if source.get("split", "dev") not in splits:
-            continue
+    for source in golden.scoped_manifest():
         p = PROJECT_ROOT / source["path"]
         with fitz.open(p) as pdf:
             for page, pg in enumerate(pdf, 1):
                 text = pg.get_text()
                 if text.strip():
-                    docs.append({"page_content": text, "metadata": {"filename": p.name, "page": page}})
-    model = BM25Okapi([tokens(d["page_content"]) for d in docs])
-    def retrieve(question):
-        scores = model.get_scores(tokens(question))
-        ranked = sorted(range(len(docs)), key=lambda i: (-scores[i], i))
-        return [docs[i] for i in ranked[:max(k_values)] if scores[i] > 0]
-    report = evaluate_items(golden, mode="retrieval", component=retrieve, k_values=k_values)
+                    docs.append({"page_content": text, "metadata": {"filename": p.name, "page": page,
+                                 "source_id": source.get("id", source["path"])}})
+    cache = {}
+    def retrieve(item):
+        scope = tuple(sorted(item.corpus_scope)) if golden.schema_version >= 3 else None
+        if scope not in cache:
+            scoped_docs = [d for d in docs if scope is None or d["metadata"]["source_id"] in scope]
+            cache[scope] = (scoped_docs, BM25Okapi([tokens(d["page_content"]) for d in scoped_docs]) if scoped_docs else None)
+        scoped_docs, model = cache[scope]
+        if model is None:
+            return []
+        scores = model.get_scores(tokens(item.question))
+        ranked = sorted(range(len(scoped_docs)), key=lambda i: (-scores[i], i))
+        return [scoped_docs[i] for i in ranked[:max(k_values)] if scores[i] > 0]
+    report = evaluate_items(golden, mode="retrieval", component=retrieve, k_values=k_values,
+                            allow_draft=allow_draft, component_accepts_item=True)
     report["retrieval_stage"] = "diagnostic_bm25_pdf_pages"
     report["limitations"] = ["Not production hybrid retrieval; no vector search, reranking or answer generation.",
                              "Evidence labels were agent-authored and source-checked, pending human review."]
@@ -119,6 +128,9 @@ def markdown(report):
              f"- Time: {report['created_at']}", f"- Dataset SHA256: {report.get('dataset_hash', 'N/A')}"]
     if "summary" in report:
         lines += ["", "## Summary", "", "```json", json.dumps(report["summary"], ensure_ascii=False, indent=2), "```"]
+    if report.get("review_gate"):
+        lines += ["", "- Review status: " + report["review_gate"]["label"],
+                  "- Evidence-slot coverage measures available source evidence, not answer correctness."]
     if report.get("limitations"):
         lines += ["", "## Limitations", ""] + ["- " + s for s in report["limitations"]]
     if "items" in report:
@@ -133,18 +145,27 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=("validate", "prepare", "retrieval", "answer", "judge"))
     parser.add_argument("--golden", type=Path, default=PROJECT_ROOT / "evaluation/golden_set.json")
-    parser.add_argument("--split", choices=("dev", "holdout", "all"), default="dev")
+    parser.add_argument("--split", choices=("dev", "holdout", "id_holdout", "ood_holdout", "all"), default="dev")
     parser.add_argument("--unlock-holdout", action="store_true")
     parser.add_argument("--backend", choices=("production", "bm25"), default="production")
+    parser.add_argument("--pipeline", choices=("legacy", "research"), default="legacy")
+    parser.add_argument("--set",dest="runtime_overrides",action="append",default=[],metavar="KEY=VALUE")
     parser.add_argument("--workspace", type=Path)
     parser.add_argument("--input", type=Path, help="Saved answer report; required for judge")
     parser.add_argument("--allow-api", action="store_true", help="Explicitly allow billable model calls")
+    parser.add_argument("--allow-draft", action="store_true", help="Allow unreviewed dev diagnostics only, never acceptance")
+    parser.add_argument("--independent-acceptance",action="store_true",help="Require unseen v3 holdout; human review cannot repair prior exposure")
     parser.add_argument("--no-judge", action="store_true", help="Deprecated alias for retrieval mode")
     parser.add_argument("--k", type=int, nargs="+", default=[1, 3, 5, 10])
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "evaluation/reports")
     args = parser.parse_args(argv)
     mode = args.mode or ("retrieval" if args.no_judge else "validate")
     try:
+        runtime_overrides=parse_overrides(args.runtime_overrides)
+        if args.independent_acceptance and mode=="validate":
+            raise ValueError("independent acceptance is an execution gate, not a schema-validation result")
+        if runtime_overrides and (mode in {"validate","judge"} or args.backend=="bm25"):
+            raise ValueError("runtime RAG overrides require prepare/retrieval/answer with production backend")
         if args.no_judge and mode != "retrieval":
             raise ValueError("--no-judge is only compatible with retrieval")
         if any(k < 1 for k in args.k):
@@ -155,7 +176,7 @@ def main(argv=None):
         if paid and not args.allow_api:
             raise ValueError("this mode may call paid APIs; --allow-api is required")
         if mode != "judge":
-            golden = load_golden_set(args.golden, verify_files=True)
+            golden = load_golden_set(args.golden, verify_files=mode == "validate")
             # Validation checks all labels, but never runs a query or exposes holdout questions.
             if mode == "validate":
                 report = {"schema_version": 2, "mode": mode, "status": "completed", "dataset_hash": golden.dataset_hash,
@@ -165,8 +186,10 @@ def main(argv=None):
                           "api_usage": {"calls": 0, "cost_usd": 0}}
             else:
                 selected = golden.select(args.split, args.unlock_holdout)
+                selected.require_review(allow_draft=args.allow_draft,independent_acceptance=args.independent_acceptance)
+                verify_corpus(selected, PROJECT_ROOT, scoped=True)
         if mode == "retrieval" and args.backend == "bm25":
-            report = offline_bm25(selected, tuple(args.k))
+            report = offline_bm25(selected, tuple(args.k), allow_draft=args.allow_draft)
         elif paid:
             if mode == "judge" and (args.input is None or not args.input.is_file()):
                 raise ValueError("judge requires --input answer_report.json")
@@ -176,10 +199,12 @@ def main(argv=None):
             workspace = _workspace(path, create=mode in {"prepare", "judge"})
             report = run_backend({"mode": mode, "golden": str(args.golden.resolve()), "split": args.split,
                                   "unlock_holdout": args.unlock_holdout, "k_values": args.k,
+                                  "allow_draft": args.allow_draft,
+                                  "independent_acceptance":args.independent_acceptance,
+                                  "pipeline": args.pipeline,
+                                  "runtime_overrides":runtime_overrides,
                                   "input": str(args.input.resolve()) if args.input else None}, workspace)
             report["workspace"] = str(workspace)
-        source_files = ("evaluation/dataset.py", "evaluation/evaluator.py", "evaluation/run_eval.py",
-                        "evaluation/worker.py", "evaluation/metrics/retrieval.py", "evaluation/metrics/generation.py")
         packages = {}
         for package in ("langchain", "langchain-core", "langchain-openai", "chromadb", "pymupdf", "rank-bm25", "jieba"):
             try:
@@ -187,8 +212,10 @@ def main(argv=None):
             except PackageNotFoundError:
                 packages[package] = None
         report.update(run_id=uuid.uuid4().hex, created_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
-                      source_hashes={p: hashlib.sha256((PROJECT_ROOT/p).read_bytes()).hexdigest() for p in source_files},
+                      source_hashes=implementation_hashes(PROJECT_ROOT),
                       environment={"python": platform.python_version(), "platform": platform.platform(), "packages": packages})
+        report["pipeline"] = "diagnostic_bm25_pdf_pages" if args.backend == "bm25" else args.pipeline
+        report["runtime_overrides"]=runtime_overrides
         args.output_dir.mkdir(parents=True, exist_ok=True)
         stem = args.output_dir / (mode + "_" + report["run_id"])
         stem.with_suffix(".json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

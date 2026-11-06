@@ -211,6 +211,7 @@ class IngestionAtomicityTests(unittest.TestCase):
                 doc_id=12,
                 filename="paper.pdf",
                 version="v1",
+                file_sha256="a" * 64,
             )
 
         metadata = documents[0].metadata
@@ -219,6 +220,25 @@ class IngestionAtomicityTests(unittest.TestCase):
         self.assertEqual(metadata["permission"], "group:4")
         self.assertEqual(metadata["filename"], "paper.pdf")
         self.assertTrue(metadata["chunk_id"])
+        self.assertEqual(metadata["version"], "v1")
+        self.assertEqual(metadata["file_sha256"], "a" * 64)
+
+    def test_ingest_hook_rejects_stale_source_fingerprint_or_version(self) -> None:
+        current = {"file_sha256": "a" * 64, "version": "v2"}
+        for field, value in (("file_sha256", "b" * 64), ("version", "v1")):
+            with self.subTest(field=field):
+                chunk = ingestion.Document(page_content="stale plugin content",
+                                           metadata={**current, field: value})
+                manager = types.SimpleNamespace(
+                    run_hook=Mock(return_value=types.SimpleNamespace(value=[chunk]))
+                )
+                with (
+                    patch.object(ingestion, "get_plugin_manager", return_value=manager),
+                    self.assertRaises(ValueError),
+                ):
+                    ingestion._run_before_ingest_hook(
+                        [], group_id=4, doc_id=12, filename="paper.pdf", **current
+                    )
 
     def test_remove_preserves_record_when_vector_cleanup_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

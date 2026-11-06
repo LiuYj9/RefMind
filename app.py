@@ -55,15 +55,27 @@ st.set_page_config(
 @st.cache_resource
 def _initialize_runtime() -> dict[str, list[int]]:
     """每个进程只执行一次建库/恢复，避免不同 Streamlit 会话互相清理。"""
-    storage.init_db()
-    report = recover_incomplete_ingestions()
-    title_report = backfill_document_titles()
-    report["titles_updated"] = title_report["updated"]
-    report["title_failures"] = title_report["failed"]
-    return report
+    from refmind.storage.runtime_lock import acquire_runtime_lock, release_runtime_lock
+    from refmind.storage.legacy_guard import ensure_legacy_access
+    acquire_runtime_lock(settings.database_path, "streamlit")
+    try:
+        ensure_legacy_access(settings.database_path, server_address=st.get_option("server.address"))
+        storage.init_db()
+        report = recover_incomplete_ingestions()
+        title_report = backfill_document_titles()
+        report["titles_updated"] = title_report["updated"]
+        report["title_failures"] = title_report["failed"]
+        return report
+    except BaseException:
+        release_runtime_lock(settings.database_path)
+        raise
 
 
-_startup_recovery = _initialize_runtime()
+try:
+    _startup_recovery = _initialize_runtime()
+except RuntimeError as startup_error:
+    st.error(str(startup_error))
+    st.stop()
 
 
 # 会话状态
@@ -708,8 +720,6 @@ def render_chat(group: storage.Group) -> None:
         "把本轮问题发送到配置的开放学术索引，精选论文摘要作为临时证据；"
         "结果不会写入本地文献库。"
     )
-    if settings.academic_search_provider == "openalex" and not settings.openalex_api_key:
-        gs_help = "当前选择 OpenAlex，但尚未配置 OPENALEX_API_KEY。"
 
     with st.bottom:
         with st.container(key="refmind_composer", gap="small"):

@@ -15,6 +15,7 @@ from .graph import (
     RETRIEVAL_ERROR_REPLY,
     SERVICE_ERROR_REPLY,
     answer_question,
+    answer_from_evidence,
     build_graph,
     format_documents,
     get_system_prompt,
@@ -57,6 +58,7 @@ __all__ = [
     "format_long_term_memories",
     # 对话图
     "answer_question",
+    "answer_from_evidence",
     "build_graph",
     "get_system_prompt",
     "format_documents",

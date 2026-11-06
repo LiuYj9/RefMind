@@ -62,6 +62,7 @@ def render_pdf_location(
     *,
     evidence_text: str = "",
     bbox: object = None,
+    bbox_coordinate_system: str = "pdf_points",
 ) -> PdfLocationPreview:
     """渲染 1-based 目标页；有 bbox/文本匹配时裁剪并高亮证据区域。"""
     import fitz
@@ -81,11 +82,10 @@ def render_pdf_location(
         page_rect = page.rect
         rectangles: list[Any] = []
 
-        parsed_bbox = _metadata_bbox(bbox)
-        if parsed_bbox is not None:
-            candidate = fitz.Rect(*parsed_bbox) & page_rect
-            if not candidate.is_empty and not candidate.is_infinite:
-                rectangles = [candidate]
+        from .parsing.coordinates import pdf_bbox
+        candidate = pdf_bbox(page, bbox, bbox_coordinate_system)
+        if candidate is not None:
+            rectangles = [candidate]
         if not rectangles and evidence_text:
             rectangles = _search_evidence_rects(page, evidence_text)
 
@@ -97,8 +97,9 @@ def render_pdf_location(
 
         clip = page_rect
         if rectangles:
-            focus = fitz.Rect(rectangles[0])
-            for rectangle in rectangles[1:]:
+            displayed = [rectangle * page.rotation_matrix for rectangle in rectangles]
+            focus = fitz.Rect(displayed[0])
+            for rectangle in displayed[1:]:
                 focus.include_rect(rectangle)
             margin_x = max(24.0, focus.width * 0.12)
             margin_y = max(48.0, focus.height * 1.2)

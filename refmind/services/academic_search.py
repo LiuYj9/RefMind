@@ -12,6 +12,9 @@ import json
 import logging
 import re
 import time
+import threading
+from email.utils import parsedate_to_datetime
+from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any, Callable
@@ -35,6 +38,36 @@ _PROVIDER_LABELS = {
     "crossref": "Crossref",
 }
 _MAX_RESPONSE_BYTES = 8 * 1024 * 1024
+_RATE_LOCK = threading.Lock()
+_NEXT_REQUEST: dict[str, float] = {}
+
+
+def _wait_for_provider(base_url: str, deadline: float) -> None:
+    """One process-wide gate per provider, shared by browser sessions and retries."""
+    host = urlparse(base_url).hostname or ""
+    interval = 1.0 if host.endswith("semanticscholar.org") else 0.5
+    with _RATE_LOCK:
+        now = time.monotonic()
+        scheduled = max(now, _NEXT_REQUEST.get(host, now))
+        if scheduled >= deadline:
+            raise AcademicSearchError("学术索引请求超过总时限")
+        _NEXT_REQUEST[host] = scheduled + interval
+    delay = scheduled - now
+    if delay > 0:
+        time.sleep(delay)
+
+
+def _retry_delay(error: HTTPError | None, attempt: int) -> float:
+    value = error.headers.get("Retry-After") if error is not None and error.headers else None
+    if value:
+        try:
+            return max(0.0, float(value))
+        except ValueError:
+            try:
+                return max(0.0, (parsedate_to_datetime(value) - datetime.now(timezone.utc)).total_seconds())
+            except (ValueError, TypeError):
+                pass
+    return 0.4 * (2 ** attempt)
 
 
 class AcademicSearchError(RuntimeError):
@@ -108,10 +141,17 @@ def _request_json(
     params: dict[str, object],
     headers: dict[str, str] | None,
     timeout: float,
-    retries: int = 2,
+    retries: int = 1,
+    deadline: float | None = None,
 ) -> dict[str, Any]:
     """请求固定的官方 API 端点，并对限流/瞬时故障做短退避。"""
-    url = f"{base_url}?{urlencode(params)}"
+    parsed = urlparse(base_url)
+    if parsed.scheme != "https" or parsed.hostname not in {
+        "api.semanticscholar.org", "api.openalex.org", "api.crossref.org"
+    } or parsed.username or parsed.password:
+        raise AcademicSearchError("仅允许固定官方学术索引地址")
+    deadline = deadline if deadline is not None else time.monotonic() + max(1.0, float(timeout))
+    url = f"{base_url}?{urlencode(params)}" if params else base_url
     request = Request(
         url,
         headers={
@@ -122,10 +162,15 @@ def _request_json(
         method="GET",
     )
     for attempt in range(max(0, retries) + 1):
+        retry_error = None
+        _wait_for_provider(base_url, deadline)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise AcademicSearchError("学术索引请求超过总时限")
         try:
             # URL 是模块内固定的官方 API 端点，不接受调用方提供主机名。
             with urlopen(  # noqa: S310
-                request, timeout=max(1.0, float(timeout))
+                request, timeout=max(0.01, min(float(timeout), remaining))
             ) as response:
                 payload = response.read(_MAX_RESPONSE_BYTES + 1)
             if len(payload) > _MAX_RESPONSE_BYTES:
@@ -140,13 +185,17 @@ def _request_json(
                 raise AcademicSearchError(
                     f"学术索引 HTTP {exc.code}"
                 ) from exc
+            retry_error = exc
         except URLError as exc:
             if attempt >= retries:
                 reason = _clean_text(getattr(exc, "reason", "网络连接失败"), max_chars=160)
                 raise AcademicSearchError(f"学术索引连接失败：{reason}") from exc
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise AcademicSearchError("学术索引返回了无效 JSON") from exc
-        time.sleep(0.4 * (2**attempt))
+        delay = _retry_delay(retry_error, attempt)
+        if time.monotonic() + delay >= deadline:
+            raise AcademicSearchError("学术索引退避超过总时限")
+        time.sleep(delay)
     raise AcademicSearchError("学术索引请求失败")
 
 
@@ -291,16 +340,12 @@ def _abstract_from_inverted_index(value: object) -> str:
 
 
 def _openalex_search(query: str, limit: int) -> list[Document]:
-    if not settings.openalex_api_key:
-        raise AcademicSearchError("OpenAlex 当前要求配置 OPENALEX_API_KEY")
+    params = {"search": query, "sort": "relevance_score:desc", "per_page": limit}
+    if settings.openalex_api_key:
+        params["api_key"] = settings.openalex_api_key
     payload = _request_json(
         "https://api.openalex.org/works",
-        params={
-            "api_key": settings.openalex_api_key,
-            "search": query,
-            "sort": "relevance_score:desc",
-            "per_page": limit,
-        },
+        params=params,
         headers=None,
         timeout=settings.academic_search_timeout_seconds,
     )

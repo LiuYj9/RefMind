@@ -73,6 +73,7 @@ class MultiAgentConfig:
     retrieval_timeout_seconds: float = 30.0
     enable_evidence_review: bool = False
     enable_answer_review: bool = False
+    confirm_refusal: bool = True
     max_review_documents: int = 12
     max_document_chars: int = 2_000
 
@@ -146,6 +147,19 @@ def _response_text(response: Any) -> str:
 
 def _invoke_text(llm: Invokable, prompt: str) -> str:
     return _response_text(llm.invoke(prompt))
+
+
+def _invoke_review_text(llm: Invokable, prompt: str, documents: list[Document]) -> str:
+    # New pre-budgeted packages expose exactly the same original visual evidence
+    # to the reviewer and generator. Legacy callers keep their existing policy.
+    if any(d.metadata.get("_evidence_pack_complete") and d.metadata.get("image_path") for d in documents):
+        from ..llm.image_understanding import build_visual_content
+        from ..llm import get_multimodal_llm
+        from langchain_core.messages import HumanMessage
+        visual = build_visual_content([d for d in documents if d.metadata.get("evidence_level") not in {"abstract", "search_snippet"}])
+        if visual:
+            return _response_text(get_multimodal_llm(temperature=0.0).invoke([HumanMessage(content=[{"type": "text", "text": prompt}, *visual])]))
+    return _invoke_text(llm, prompt)
 
 
 def _parse_json_payload(text: str) -> Any:
@@ -429,7 +443,7 @@ def _format_review_documents(
         documents[: config.max_review_documents], start=1
     ):
         metadata = document.metadata or {}
-        content = document.page_content[: config.max_document_chars]
+        content = document.page_content if metadata.get("_evidence_pack_complete") else document.page_content[: config.max_document_chars]
         blocks.append(f"[{index}] {build_citation_label(document, index)}\n{content}")
     return "\n\n".join(blocks)
 
@@ -440,6 +454,7 @@ class EvidenceReviewAgent:
     def __init__(self, llm: Invokable | None, config: MultiAgentConfig) -> None:
         self._llm = llm
         self._config = config
+        self.last_review: dict[str, Any] = {}
 
     def review(
         self, question: str, documents: list[Document]
@@ -466,12 +481,14 @@ keep 只保留直接证据、理解核心概念所必需的证据，以及完成
 {_format_review_documents(documents, self._config)}"""
 
         def _evaluate(prompt_text: str) -> list[Document]:
-            payload = _parse_json_payload(_invoke_text(self._llm, prompt_text))
+            payload = _parse_json_payload(_invoke_review_text(self._llm, prompt_text, documents))
             answerable = (
                 payload.get("answerable") if isinstance(payload, dict) else None
             )
             if not isinstance(answerable, bool):
                 raise ValueError("证据审查响应缺少布尔值 answerable")
+            self.last_review = {key: str(payload.get(key) or "")[:1500] for key in
+                ("question_type", "requested_relation", "coverage", "scope_limit", "reason")}
             coverage = payload.get("coverage")
             if coverage not in _EVIDENCE_COVERAGE:
                 raise ValueError("证据审查响应 coverage 无效")
@@ -501,7 +518,9 @@ keep 只保留直接证据、理解核心概念所必需的证据，以及完成
             selected = _evaluate(prompt)
             if selected:
                 return selected, None
-            # 单次 LLM 否定可能有采样抖动；只有两次独立判断都不足才真正拒答。
+            if not self._config.confirm_refusal:
+                return [], None
+            # 同一模型复核可单独消融；这不等同于独立人工审定。
             confirmed = _evaluate(
                 prompt
                 + "\n\n请独立复核上一判断。不要因倾向拒答而提高门槛，仍严格按上述框架输出 JSON。"
@@ -519,6 +538,7 @@ class AnswerReviewAgent:
     def __init__(self, llm: Invokable | None, config: MultiAgentConfig) -> None:
         self._llm = llm
         self._config = config
+        self.last_review: dict[str, Any] = {"status": "not_observed", "attempts": []}
 
     def review(
         self,
@@ -526,9 +546,16 @@ class AnswerReviewAgent:
         documents: list[Document],
         draft: str,
     ) -> tuple[str, str | None]:
-        if not self._config.enable_answer_review or not documents:
+        attempts: list[dict[str, Any]] = []
+        self.last_review = {"status": "not_observed", "attempts": attempts}
+        if not documents:
+            self.last_review["status"] = "no_documents"
+            return draft, None
+        if not self._config.enable_answer_review:
+            self.last_review["status"] = "disabled"
             return draft, None
         if self._llm is None:
+            self.last_review["status"] = "no_model"
             return draft, "未注入答案审校模型，已保留原答案"
 
         prompt = f"""你是答案审校智能体。仅依据给定证据检查草稿是否回答了原问题，
@@ -550,8 +577,10 @@ coverage 为 scoped 时，审校后的答案必须显式保留证据支持的较
 证据：
 {_format_review_documents(documents, self._config)}"""
 
-        def _evaluate(prompt_text: str) -> str | None:
-            payload = _parse_json_payload(_invoke_text(self._llm, prompt_text))
+        def _evaluate(prompt_text: str, phase: str) -> str | None:
+            attempt: dict[str, Any] = {"phase": phase, "status": "failed"}
+            attempts.append(attempt)
+            payload = _parse_json_payload(_invoke_review_text(self._llm, prompt_text, documents))
             answerable = (
                 payload.get("answerable") if isinstance(payload, dict) else None
             )
@@ -563,26 +592,37 @@ coverage 为 scoped 时，审校后的答案必须显式保留证据支持的较
             if not answerable:
                 if coverage != "insufficient":
                     raise ValueError("不可回答时 coverage 必须为 insufficient")
-                return None
-            if coverage == "insufficient":
-                raise ValueError("可回答时 coverage 不能为 insufficient")
-            answer = payload.get("answer") if isinstance(payload, dict) else None
-            if not isinstance(answer, str) or not answer.strip():
-                raise ValueError("答案审校响应缺少非空 answer")
-            return answer.strip()
+                answer = None
+            else:
+                if coverage == "insufficient":
+                    raise ValueError("可回答时 coverage 不能为 insufficient")
+                answer = payload.get("answer")
+                if not isinstance(answer, str) or not answer.strip():
+                    raise ValueError("答案审校响应缺少非空 answer")
+                answer = answer.strip()
+            reason = payload.get("reason")
+            attempt.update(status="validated", answerable=answerable, coverage=coverage,
+                           reason=reason[:1500] if isinstance(reason, str) else None)
+            return answer
 
         try:
-            answer = _evaluate(prompt)
+            answer = _evaluate(prompt, "initial")
+            self.last_review["status"] = "completed"
             if answer is not None:
                 return answer, None
+            if not self._config.confirm_refusal:
+                return INSUFFICIENT_EVIDENCE_REPLY, None
             confirmed = _evaluate(
                 prompt
-                + "\n\n请独立复核上一拒答判断。不要因草稿措辞可修正就否定证据，仍严格输出 JSON。"
+                + "\n\n请独立复核上一拒答判断。不要因草稿措辞可修正就否定证据，仍严格输出 JSON。",
+                "confirmation",
             )
             if confirmed is not None:
                 return confirmed, "答案审校首次拒答，二次复核后确认可回答"
             return INSUFFICIENT_EVIDENCE_REPLY, None
         except Exception as exc:  # noqa: BLE001 - 审校是可选增强，必须保留草稿
+            self.last_review["status"] = "failed"
+            attempts[-1]["error_type"] = type(exc).__name__
             return draft, f"答案审校失败，已保留原答案：{exc}"
 
 

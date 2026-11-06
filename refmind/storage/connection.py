@@ -23,6 +23,12 @@ def _migrate_documents_schema(conn: sqlite3.Connection) -> None:
             "ALTER TABLE documents ADD COLUMN library_index INTEGER NOT NULL DEFAULT 0"
         )
 
+    # Historical rows have no trusted index identity. Never derive it from index chunks.
+    if "index_version" not in columns:
+        conn.execute("ALTER TABLE documents ADD COLUMN index_version TEXT")
+    if "file_sha256" not in columns:
+        conn.execute("ALTER TABLE documents ADD COLUMN file_sha256 TEXT")
+
     # 旧数据全部为 0。按最早入库顺序分配稳定序号；后续删除不重排，避免历史引用漂移。
     group_rows = conn.execute(
         "SELECT DISTINCT group_id FROM documents ORDER BY group_id"
